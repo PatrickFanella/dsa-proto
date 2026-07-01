@@ -10,6 +10,7 @@ const envSchema = z.object({
 
 export type DirectoryRepository = {
   listEntities(): Promise<DirectoryEntity[]>;
+  getEntity(id: string): Promise<DirectoryEntity | undefined>;
   ingestMockRecords(records: MockRecordEnvelope[]): Promise<void>;
 };
 
@@ -31,6 +32,9 @@ export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterS
   return {
     async listEntities() {
       return records;
+    },
+    async getEntity(id: string) {
+      return records.find((record) => record.id === id);
     },
     async ingestMockRecords(nextRecords) {
       for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
@@ -98,6 +102,58 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           record: row.record,
         };
       });
+    },
+    async getEntity(id: string) {
+      const result = await pool.query(`
+        select
+          directory_entities.id,
+          directory_entities.record_uri,
+          directory_entities.entity_type,
+          directory_entities.name,
+          directory_entities.short_name,
+          atproto_records.collection,
+          directory_entities.handle,
+          directory_entities.did,
+          directory_entities.jurisdiction_name,
+          directory_entities.jurisdiction_region,
+          directory_entities.description,
+          directory_entities.trust_label,
+          directory_entities.status,
+          directory_entities.website,
+          directory_entities.search_text,
+          atproto_records.record
+        from directory_entities
+        join atproto_records on atproto_records.uri = directory_entities.record_uri
+        where directory_entities.id = $1
+      `, [id]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      const entityType = row.entity_type as DirectoryEntity['type'];
+      const jurisdiction = entityType === 'chapter'
+        ? `${row.jurisdiction_name}, ${row.jurisdiction_region}`
+        : entityType === 'member-affiliation'
+          ? `affiliated with ${row.jurisdiction_name}`
+          : row.jurisdiction_name;
+      return {
+        id: row.id,
+        recordUri: row.record_uri,
+        type: entityType,
+        name: row.name,
+        shortName: row.short_name,
+        collection: row.collection,
+        handle: row.handle,
+        did: row.did,
+        jurisdiction,
+        focusArea: entityType === 'caucus' ? row.jurisdiction_region : undefined,
+        publicRole: entityType === 'member-affiliation' ? row.description ?? undefined : undefined,
+        memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
+        organizationHandle: entityType === 'member-affiliation' ? row.jurisdiction_name : undefined,
+        trustLabel: row.trust_label,
+        status: row.status,
+        website: row.website,
+        searchText: row.search_text,
+        record: row.record,
+      };
     },
     async ingestMockRecords(nextRecords) {
       for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
@@ -182,6 +238,12 @@ export function createApp(repository: DirectoryRepository) {
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
     if (req.url === '/api/entities' && req.method === 'GET') return toJson(res, 200, { prototype: true, data: await repository.listEntities() });
+    if (req.method === 'GET' && req.url?.startsWith('/api/entities/')) {
+      const id = decodeURIComponent(req.url.slice('/api/entities/'.length));
+      const entity = await repository.getEntity(id);
+      if (!entity) return toJson(res, 404, { error: 'not_found' });
+      return toJson(res, 200, { prototype: true, data: entity });
+    }
     if (req.url === '/api/chapters' && req.method === 'GET') {
       const chapters = (await repository.listEntities()).filter((entity) => entity.type === 'chapter');
       return toJson(res, 200, { prototype: true, data: chapters });

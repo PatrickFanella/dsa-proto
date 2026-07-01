@@ -15,6 +15,7 @@ describe('App', () => {
       jurisdiction: 'New York City, NY',
       trustLabel: 'mock-official',
       status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
     }, {
       id: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
       name: 'DSA Climate Caucus',
@@ -27,6 +28,7 @@ describe('App', () => {
       trustLabel: 'experimental',
       status: 'active',
       focusArea: 'climate justice organizing',
+      record: { record: { $type: 'org.dsa.profile.caucus', name: 'DSA Climate Caucus' } },
     }, {
       id: 'at://did:plc:memberalpha/org.dsa.affiliation.member/self',
       name: 'Alex Rivera',
@@ -39,11 +41,17 @@ describe('App', () => {
       trustLabel: 'self-declared',
       status: 'active',
       publicRole: 'neighborhood canvass volunteer',
+      record: { record: { $type: 'org.dsa.affiliation.member', displayName: 'Alex Rivera' } },
     }]} />);
     expect(html).toContain('Directory entities');
     expect(html).toContain('Mocked public chapter, caucus, and member-affiliation records');
     expect(html).toContain('public prototype records, not verified membership records');
     expect(html).toContain('org.dsa.profile.caucus');
     expect(html).toContain('Public prototype member affiliation record; not verified membership.');
+    expect(html).toContain('Protocol provenance');
+    expect(html).toContain('Collection:');
+    expect(html).toContain('AT URI:');
+    expect(html).toContain('Trust label:');
+    expect(html).toContain('org.dsa.profile.chapter');
   });
 });

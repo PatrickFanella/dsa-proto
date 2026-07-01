@@ -52,6 +52,28 @@ describe('API response', () => {
     expect(json.data.some((item) => item.type === 'member-affiliation')).toBe(true);
   });
 
+  it('serves a directory entity detail payload', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/entities/at%3A%2F%2Fdid%3Aplc%3Anycdsa%2Forg.dsa.profile.chapter%2Fself`);
+    const json = await response.json() as { prototype: boolean; data: { did: string; handle: string; collection: string; record: { record: { $type: string } } } };
+    expect(response.status).toBe(200);
+    expect(json.prototype).toBe(true);
+    expect(json.data.did).toBe('did:plc:nycdsa');
+    expect(json.data.record.record.$type).toBe('org.dsa.profile.chapter');
+  });
+
+  it('returns 404 for missing entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/entities/at%3A%2F%2Fmissing`);
+    expect(response.status).toBe(404);
+  });
+
   it('keeps the chapter endpoint chapter-only', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));
