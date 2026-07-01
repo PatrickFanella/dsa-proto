@@ -141,6 +141,8 @@ export async function replayFixtureRecords(records: unknown[], sink: RecordEnvel
 
 This preserves deterministic tests and avoids requiring live network access for `make verify`.
 
+The implemented helper should report rejected records by index and validation reason, while still ingesting the valid records in a mixed batch.
+
 ## Setup requirements for a future live spike
 
 - Add dependencies only in the spike branch or follow-up implementation issue:

@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, matchesDirectoryEntity, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type RecordEnvelope } from './domain.js';
+import { replayFixtureRecords } from './fixture-replay.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -264,7 +265,7 @@ export function createApp(repository: DirectoryRepository) {
 export async function bootstrapRepository(databaseUrl: string) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await repo.ingestRecordEnvelopes([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]);
+    await replayFixtureRecords([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords], repo);
     return repo;
   } catch {
     return createMemoryRepository();

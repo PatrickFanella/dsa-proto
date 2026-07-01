@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity } from './domain.js';
+import { replayFixtureRecords } from './fixture-replay.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 
 describe('getConfig', () => {
@@ -32,6 +33,39 @@ describe('ingestion and read path', () => {
     expect(entities[2].record.record.$type).toBe('org.dsa.affiliation.member');
     expect(normalizeDirectoryEntity(caucusSeedRecords[0]).searchText).toContain('climate caucus');
     expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0]).searchText).toContain('member.alpha.example');
+  });
+
+  it('replays fixtures through validation before ingestion', async () => {
+    const repo = createMemoryRepository([]);
+    const report = await replayFixtureRecords([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0]], repo);
+
+    expect(report).toMatchObject({ acceptedCount: 3, ingestedCount: 3, rejected: [] });
+    expect(await repo.listEntities()).toHaveLength(3);
+  });
+
+  it('reports rejected records while still ingesting valid ones', async () => {
+    const repo = createMemoryRepository([]);
+    const invalidRecord = { ...chapterSeedRecords[0], uri: 'not-at-uri' };
+    const report = await replayFixtureRecords([chapterSeedRecords[0], invalidRecord, memberAffiliationSeedRecords[0]], repo);
+
+    const entities = await repo.listEntities();
+    expect(entities).toHaveLength(2);
+    expect(report.acceptedCount).toBe(2);
+    expect(report.ingestedCount).toBe(2);
+    expect(report.rejected).toHaveLength(1);
+    expect(report.rejected[0]).toMatchObject({ index: 1 });
+    expect(report.rejected[0].reason).toContain('uri');
+    expect(report.rejected[0].reason).not.toContain('New York City DSA');
+  });
+
+  it('replay stays idempotent for deterministic fixture records', async () => {
+    const repo = createMemoryRepository([]);
+    await replayFixtureRecords([chapterSeedRecords[0], caucusSeedRecords[0]], repo);
+    await replayFixtureRecords([chapterSeedRecords[0], caucusSeedRecords[0]], repo);
+
+    const entities = await repo.listEntities();
+    expect(entities).toHaveLength(2);
+    expect(entities.map((entity) => entity.id)).toEqual([chapterSeedRecords[0].uri, caucusSeedRecords[0].uri]);
   });
 });
 
