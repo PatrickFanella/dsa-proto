@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is a base template for derived SUBCULT projects. Keep changes small, reviewable, and useful across stacks.
+This repository is the `dsa-proto` prototype. Keep changes small, reviewable, and aligned with the public-data safety boundary in `docs/dsa-atproto/`.
 
 ## Development flow
 
@@ -24,7 +24,7 @@ Prefer concise conventional-style subjects:
 feat: add stack recipe
 docs: update Open Pilot guidance
 fix: correct make target detection
-chore: refresh template metadata
+chore: refresh project metadata
 ```
 
 ## Open Pilot issues
@@ -37,7 +37,7 @@ Open Pilot requires:
 - `agent:queued`
 - a deterministic `Test Command`
 
-The template adds `ready-for-agent`; add `agent:queued` only after the issue is complete and ready for automation.
+The issue template adds `ready-for-agent`; add `agent:queued` only after the issue is complete and ready for automation.
 
 Good Open Pilot tasks are:
 
@@ -56,7 +56,7 @@ Default full check:
 make verify
 ```
 
-Examples for derived templates:
+Examples for narrower checks:
 
 ```bash
 go test ./...
@@ -66,8 +66,6 @@ cargo test --all
 docker compose config --quiet
 ```
 
-## Template boundaries
+## Prototype boundaries
 
-This base template should stay stack-neutral. Do not add application scaffolding here unless the issue explicitly changes the role of this repository.
-
-Stack-specific scaffolds should live in derived template repositories.
+Keep sensitive internal organizing data out of scope unless a future issue explicitly introduces privacy architecture and security review.

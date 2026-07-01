@@ -11,7 +11,7 @@ body:
 
         The `Test Command` field is required because Open Pilot refuses to commit or open a PR without a deterministic verification command.
 
-        This template adds `ready-for-agent`, but it intentionally does **not** add `agent:queued`. Add `agent:queued` only when the issue is complete and ready for automation.
+        This issue form adds `ready-for-agent`, but it intentionally does **not** add `agent:queued`. Add `agent:queued` only when the issue is complete and ready for automation.
 
   - type: input
     id: goal

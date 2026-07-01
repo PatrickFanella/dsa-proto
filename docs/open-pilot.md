@@ -13,10 +13,10 @@ The issue template adds `ready-for-agent`. A human should add `agent:queued` onl
 
 ## Bootstrap labels
 
-Run this after creating a repository from the template:
+Run this after creating the repository:
 
 ```bash
-open-pilot labels bootstrap OWNER/REPO
+open-pilot labels bootstrap patrickfanella/dsa-proto
 ```
 
 ## Issue requirements

@@ -1,7 +1,7 @@
 {
-  "name": "@subculture/project-template-ts-vite-react-ts-postgres-docker-web",
+  "name": "@subculture/dsa-proto-web",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {

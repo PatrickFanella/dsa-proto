@@ -11,4 +11,4 @@ Good runbooks include:
 - Rollback or cleanup steps
 - Verification
 
-Add stack-specific runbooks as this template is specialized.
+Add project-specific runbooks as operational procedures emerge.

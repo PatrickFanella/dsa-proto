@@ -1,6 +1,7 @@
-import { createApp, getConfig } from './server.js';
+import { bootstrapRepository, createApp, getConfig } from './server.js';
 
 const config = getConfig();
-createApp().listen(config.PORT, () => {
+const repository = await bootstrapRepository(config.DATABASE_URL);
+createApp(repository).listen(config.PORT, () => {
   console.log(`api listening on ${config.PORT}`);
 });

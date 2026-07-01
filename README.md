@@ -1,8 +1,8 @@
-# TypeScript Backend + Vite React TypeScript + Postgres + Docker Template
+# dsa-proto
 
-Full-stack TypeScript template with Node backend, Vite React TypeScript Tailwind frontend, Postgres, Docker Compose, and Open Pilot conventions.
+dsa-proto is a prototype for exploring how Democratic Socialists of America chapters, caucuses, committees, campaigns, and publications could use AT Protocol as a shared public civic data layer.
 
-Created from `subculture-collective/project-template`.
+The first project notes live in [`docs/dsa-atproto/`](docs/dsa-atproto/). This repository uses a TypeScript Node backend, Vite React TypeScript frontend, Postgres, Docker Compose, and Open Pilot conventions.
 
 ## Quick start
 
@@ -10,13 +10,26 @@ Created from `subculture-collective/project-template`.
 make verify
 ```
 
+## Current planning docs
+
+- [`docs/dsa-atproto/README.md`](docs/dsa-atproto/README.md) — concept overview
+- [`docs/dsa-atproto/architecture.md`](docs/dsa-atproto/architecture.md) — infrastructure layers
+- [`docs/dsa-atproto/lexicons.md`](docs/dsa-atproto/lexicons.md) — proposed record namespaces and schemas
+- [`docs/dsa-atproto/governance.md`](docs/dsa-atproto/governance.md) — verification, disputes, schema evolution, and safety
+- [`docs/dsa-atproto/app-ideas.md`](docs/dsa-atproto/app-ideas.md) — possible applications
+- [`docs/dsa-atproto/requirements-interview.md`](docs/dsa-atproto/requirements-interview.md) — first milestone interview
+- [`docs/dsa-atproto/answers.md`](docs/dsa-atproto/answers.md) — answered requirements interview
+- [`docs/dsa-atproto/prototype-plan.md`](docs/dsa-atproto/prototype-plan.md) — first local prototype scope
+- [`docs/dsa-atproto/technical-architecture.md`](docs/dsa-atproto/technical-architecture.md) — implementation architecture
+- [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
+- [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
+
 ## Open Pilot
 
-This repository keeps the base Open Pilot issue template and PR template.
-Bootstrap labels after creating a repo from this template:
+This repository keeps the Open Pilot issue template and PR template. Bootstrap labels after creating the repository:
 
 ```bash
-open-pilot labels bootstrap subculture-collective/project-template-ts-vite-react-ts-postgres-docker
+open-pilot labels bootstrap patrickfanella/dsa-proto
 ```
 
 ## License

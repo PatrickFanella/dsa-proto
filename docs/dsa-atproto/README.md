@@ -78,3 +78,8 @@ Use a hybrid architecture:
 - [lexicons.md](lexicons.md): proposed record namespaces and example schemas
 - [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
 - [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
+- [answers.md](answers.md): answered requirements interview
+- [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
+- [technical-architecture.md](technical-architecture.md): implementation architecture for the mocked-record prototype
+- [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
+- [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation

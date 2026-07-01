@@ -1,13 +1,13 @@
 # Agent Instructions
 
-This repository is a TypeScript full-stack with Vite React TypeScript, Postgres, and Docker template derived from `subculture-collective/project-template`.
+This repository is `dsa-proto`, a TypeScript full-stack prototype exploring AT Protocol as a public civic data layer for DSA-adjacent organizational records.
 
 ## Priorities
 
-1. Keep the template runnable and minimal.
+1. Keep the prototype runnable and minimal.
 2. Preserve Open Pilot issue and PR templates.
 3. Keep generated caches, secrets, and local data out of git.
-4. Update this file and `README.md` when stack conventions change.
+4. Keep `README.md` and `docs/dsa-atproto/` aligned with project direction.
 
 ## Verification
 
