@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { caucusSeedRecords, chapterSeedRecords, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type MockRecordEnvelope } from './domain.js';
+import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type MockRecordEnvelope } from './domain.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -26,7 +26,7 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
   res.end(JSON.stringify(body));
 }
 
-export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords]): DirectoryRepository {
+export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]): DirectoryRepository {
   const records = seed.map((record) => normalizeDirectoryEntity(mockRecordEnvelopeSchema.parse(record)));
   return {
     async listEntities() {
@@ -60,6 +60,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           directory_entities.did,
           directory_entities.jurisdiction_name,
           directory_entities.jurisdiction_region,
+          directory_entities.description,
           directory_entities.trust_label,
           directory_entities.status,
           directory_entities.website,
@@ -71,7 +72,11 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       `);
       return result.rows.map((row) => {
         const entityType = row.entity_type as DirectoryEntity['type'];
-        const jurisdiction = entityType === 'chapter' ? `${row.jurisdiction_name}, ${row.jurisdiction_region}` : row.jurisdiction_region;
+        const jurisdiction = entityType === 'chapter'
+          ? `${row.jurisdiction_name}, ${row.jurisdiction_region}`
+          : entityType === 'member-affiliation'
+            ? `affiliated with ${row.jurisdiction_name}`
+            : row.jurisdiction_name;
         return {
           id: row.id,
           recordUri: row.record_uri,
@@ -83,6 +88,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           did: row.did,
           jurisdiction,
           focusArea: entityType === 'caucus' ? row.jurisdiction_region : undefined,
+          publicRole: entityType === 'member-affiliation' ? row.description ?? undefined : undefined,
+          memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
+          organizationHandle: entityType === 'member-affiliation' ? row.jurisdiction_name : undefined,
           trustLabel: row.trust_label,
           status: row.status,
           website: row.website,
@@ -94,9 +102,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
     async ingestMockRecords(nextRecords) {
       for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
         const recordData = record.record.record;
-        const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : 'caucus';
-        const jurisdictionRegion = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.state : recordData.focusArea;
-        const description = recordData.$type === 'org.dsa.profile.chapter' ? null : recordData.focusArea;
+        const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : recordData.$type === 'org.dsa.affiliation.member' ? recordData.organizationHandle : 'caucus';
+        const jurisdictionRegion = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.state : recordData.$type === 'org.dsa.affiliation.member' ? recordData.memberHandle : recordData.focusArea;
+        const description = recordData.$type === 'org.dsa.profile.chapter' ? null : recordData.$type === 'org.dsa.affiliation.member' ? recordData.publicRole ?? null : recordData.focusArea;
         await pool.query(
           `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
            values ($1, $2, $3, $4, $5, $6, $7)
@@ -185,7 +193,7 @@ export function createApp(repository: DirectoryRepository) {
 export async function bootstrapRepository(databaseUrl: string) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await repo.ingestMockRecords([...chapterSeedRecords, ...caucusSeedRecords]);
+    await repo.ingestMockRecords([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]);
     return repo;
   } catch {
     return createMemoryRepository();
