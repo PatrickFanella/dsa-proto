@@ -52,6 +52,24 @@ describe('API response', () => {
     expect(json.data.some((item) => item.type === 'member-affiliation')).toBe(true);
   });
 
+  it('filters entities by type and search text', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/entities?type=member-affiliation&q=alex`);
+    const json = (await response.json()) as { data: Array<{ type: string; name: string }> };
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0]).toMatchObject({ type: 'member-affiliation', name: 'Alex Rivera' });
+  });
+
+  it('filters postgres-shaped repository memory results consistently', async () => {
+    const repo = createMemoryRepository();
+    const chapters = await repo.listEntities({ type: 'chapter', search: 'michigan' });
+    expect(chapters).toHaveLength(1);
+    expect(chapters[0].name).toBe('Michigan DSA');
+  });
+
   it('serves a directory entity detail payload', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));

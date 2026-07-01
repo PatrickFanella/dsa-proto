@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type DirectoryCard = {
   id: string;
@@ -64,12 +64,17 @@ const fallbackEntities: DirectoryCard[] = [
   },
 ];
 
-export default function App({ initialEntities = fallbackEntities }: { initialEntities?: DirectoryCard[] }) {
+export default function App({ initialEntities = fallbackEntities, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
+  const [search, setSearch] = useState(initialSearch);
+  const [typeFilter, setTypeFilter] = useState<'all' | DirectoryCard['type']>(initialTypeFilter);
   const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`)
+    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
+    if (typeFilter !== 'all') url.searchParams.set('type', typeFilter);
+    if (search.trim()) url.searchParams.set('q', search.trim());
+    fetch(url.toString())
       .then((response) => response.json())
       .then((payload) => {
         const nextEntities = payload.data ?? initialEntities;
@@ -77,9 +82,15 @@ export default function App({ initialEntities = fallbackEntities }: { initialEnt
         setSelectedId((current) => (nextEntities.some((entity: DirectoryCard) => entity.id === current) ? current : nextEntities[0]?.id ?? ''));
       })
       .catch(() => setEntities(initialEntities));
-  }, [initialEntities]);
+  }, [initialEntities, search, typeFilter]);
 
-  const selectedEntity = entities.find((entity) => entity.id === selectedId) ?? entities[0];
+  const visibleEntities = useMemo(() => entities.filter((entity) => {
+    const matchesType = typeFilter === 'all' || entity.type === typeFilter;
+    const matchesSearch = !search.trim() || `${entity.name} ${entity.shortName} ${entity.handle} ${entity.did} ${entity.jurisdiction} ${entity.organizationHandle ?? ''} ${entity.memberHandle ?? ''} ${entity.focusArea ?? ''}`.toLowerCase().includes(search.trim().toLowerCase());
+    return matchesType && matchesSearch;
+  }), [entities, search, typeFilter]);
+
+  const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
 
   return (
     <main className="min-h-screen bg-zinc-950 px-8 py-12 text-zinc-100">
@@ -88,9 +99,24 @@ export default function App({ initialEntities = fallbackEntities }: { initialEnt
         <h1 className="mt-4 text-4xl font-bold">Directory entities</h1>
         <p className="mt-4 text-zinc-300">Mocked public chapter, caucus, and member-affiliation records are shown below as prototype data.</p>
         <p className="mt-2 text-sm text-amber-300">Member examples are public prototype records, not verified membership records, and exclude private roster data.</p>
+        <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
+          <label className="grid gap-2 text-sm text-zinc-300">
+            Search
+            <input aria-label="Search directory" value={search} onChange={(event) => setSearch(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" placeholder="Search names, handles, DIDs, jurisdictions" />
+          </label>
+          <label className="grid gap-2 text-sm text-zinc-300">
+            Type
+            <select aria-label="Filter by type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
+              <option value="all">All</option>
+              <option value="chapter">Chapter</option>
+              <option value="caucus">Caucus</option>
+              <option value="member-affiliation">Member affiliation</option>
+            </select>
+          </label>
+        </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
           <div className="grid gap-4">
-            {entities.map((entity) => (
+            {visibleEntities.map((entity) => (
               <button
                 key={entity.id}
                 type="button"
@@ -117,6 +143,7 @@ export default function App({ initialEntities = fallbackEntities }: { initialEnt
                 </dl>
               </button>
             ))}
+            {!visibleEntities.length ? <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">No directory records match the current search and type filters.</p> : null}
           </div>
           <aside className="rounded-xl border border-cyan-400/40 bg-zinc-950 p-5">
             {selectedEntity ? (

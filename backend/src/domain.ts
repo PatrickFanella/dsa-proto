@@ -81,6 +81,11 @@ export type DirectoryEntity = {
   record: MockRecordEnvelope;
 };
 
+export type DirectoryEntityFilters = {
+  type?: DirectoryEntity['type'] | 'all';
+  search?: string;
+};
+
 export const chapterSeedRecords: MockRecordEnvelope[] = [
   {
     uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
@@ -289,4 +294,12 @@ export function normalizeDirectoryEntity(record: MockRecordEnvelope): DirectoryE
     searchText: [recordData.name, recordData.shortName, normalized.handle, normalized.did, jurisdiction].join(' ').toLowerCase(),
     record: normalized,
   };
+}
+
+export function matchesDirectoryEntity(entity: DirectoryEntity, filters: DirectoryEntityFilters = {}) {
+  const normalizedSearch = filters.search?.trim().toLowerCase() ?? '';
+  const typeFilter = filters.type ?? 'all';
+  if (typeFilter !== 'all' && entity.type !== typeFilter) return false;
+  if (!normalizedSearch) return true;
+  return entity.searchText.includes(normalizedSearch);
 }

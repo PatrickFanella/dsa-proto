@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type MockRecordEnvelope } from './domain.js';
+import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, matchesDirectoryEntity, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type MockRecordEnvelope } from './domain.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -9,7 +9,7 @@ const envSchema = z.object({
 });
 
 export type DirectoryRepository = {
-  listEntities(): Promise<DirectoryEntity[]>;
+  listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
   ingestMockRecords(records: MockRecordEnvelope[]): Promise<void>;
 };
@@ -30,8 +30,8 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
 export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]): DirectoryRepository {
   const records = seed.map((record) => normalizeDirectoryEntity(mockRecordEnvelopeSchema.parse(record)));
   return {
-    async listEntities() {
-      return records;
+    async listEntities(filters: DirectoryEntityFilters = {}) {
+      return records.filter((entity) => matchesDirectoryEntity(entity, filters));
     },
     async getEntity(id: string) {
       return records.find((record) => record.id === id);
@@ -51,7 +51,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
   await pool.query('select 1');
   await ensurePrototypeSchema(pool);
   return {
-    async listEntities() {
+    async listEntities(filters: DirectoryEntityFilters = {}) {
       const result = await pool.query(`
         select
           directory_entities.id,
@@ -72,8 +72,10 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           atproto_records.record
         from directory_entities
         join atproto_records on atproto_records.uri = directory_entities.record_uri
+        where ($1 = 'all' or directory_entities.entity_type = $1)
+          and ($2 = '' or directory_entities.search_text like '%' || $2 || '%')
         order by directory_entities.name asc
-      `);
+      `, [filters.type ?? 'all', filters.search?.trim().toLowerCase() ?? '']);
       return result.rows.map((row) => {
         const entityType = row.entity_type as DirectoryEntity['type'];
         const jurisdiction = entityType === 'chapter'
@@ -237,7 +239,14 @@ export function createApp(repository: DirectoryRepository) {
       return;
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
-    if (req.url === '/api/entities' && req.method === 'GET') return toJson(res, 200, { prototype: true, data: await repository.listEntities() });
+    if (req.method === 'GET' && req.url?.startsWith('/api/entities')) {
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/entities') {
+        const type = url.searchParams.get('type') ?? 'all';
+        const search = url.searchParams.get('q') ?? url.searchParams.get('search') ?? '';
+        return toJson(res, 200, { prototype: true, data: await repository.listEntities({ type: type as DirectoryEntityFilters['type'], search }) });
+      }
+    }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities/')) {
       const id = decodeURIComponent(req.url.slice('/api/entities/'.length));
       const entity = await repository.getEntity(id);

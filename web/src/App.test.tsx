@@ -54,4 +54,36 @@ describe('App', () => {
     expect(html).toContain('Trust label:');
     expect(html).toContain('org.dsa.profile.chapter');
   });
+
+  it('renders search and type filters with filtered results', () => {
+    const html = renderToString(<App initialSearch="michigan" initialTypeFilter="chapter" initialEntities={[{
+      id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      name: 'New York City DSA',
+      shortName: 'NYC-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'nyc.dsausa.org',
+      did: 'did:plc:nycdsa',
+      jurisdiction: 'New York City, NY',
+      trustLabel: 'mock-official',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
+    }, {
+      id: 'at://did:plc:midsa/org.dsa.profile.chapter/self',
+      name: 'Michigan DSA',
+      shortName: 'MI-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'michigan.socialists.org',
+      did: 'did:plc:midsa',
+      jurisdiction: 'Michigan, MI',
+      trustLabel: 'self-declared',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
+    }]} />);
+    expect(html).toContain('Search');
+    expect(html).toContain('Filter by type');
+    expect(html).toContain('Michigan DSA');
+    expect(html).not.toContain('New York City DSA');
+  });
 });
