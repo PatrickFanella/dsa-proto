@@ -1,15 +1,15 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { chapterSeedRecords, mockRecordEnvelopeSchema, normalizeChapter, type ChapterEntity, type MockRecordEnvelope } from './domain.js';
+import { caucusSeedRecords, chapterSeedRecords, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type MockRecordEnvelope } from './domain.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
   DATABASE_URL: z.string().default('postgres://dsa_proto:change-me@localhost:5432/dsa_proto?sslmode=disable'),
 });
 
-export type ChapterRepository = {
-  listChapters(): Promise<ChapterEntity[]>;
+export type DirectoryRepository = {
+  listEntities(): Promise<DirectoryEntity[]>;
   ingestMockRecords(records: MockRecordEnvelope[]): Promise<void>;
 };
 
@@ -26,14 +26,14 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
   res.end(JSON.stringify(body));
 }
 
-export function createMemoryRepository(seed: MockRecordEnvelope[] = chapterSeedRecords): ChapterRepository {
-  const records = seed.map((record) => normalizeChapter(mockRecordEnvelopeSchema.parse(record)));
+export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords]): DirectoryRepository {
+  const records = seed.map((record) => normalizeDirectoryEntity(mockRecordEnvelopeSchema.parse(record)));
   return {
-    async listChapters() {
+    async listEntities() {
       return records;
     },
     async ingestMockRecords(nextRecords) {
-      for (const record of nextRecords.map((item) => normalizeChapter(item))) {
+      for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
         const existingIndex = records.findIndex((entry) => entry.id === record.id);
         if (existingIndex >= 0) records[existingIndex] = record;
         else records.push(record);
@@ -42,12 +42,12 @@ export function createMemoryRepository(seed: MockRecordEnvelope[] = chapterSeedR
   };
 }
 
-export async function createPostgresRepository(databaseUrl: string): Promise<ChapterRepository> {
+export async function createPostgresRepository(databaseUrl: string): Promise<DirectoryRepository> {
   const pool = new Pool({ connectionString: databaseUrl });
   await pool.query('select 1');
   await ensurePrototypeSchema(pool);
   return {
-    async listChapters() {
+    async listEntities() {
       const result = await pool.query(`
         select
           directory_entities.id,
@@ -67,28 +67,36 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Cha
           atproto_records.record
         from directory_entities
         join atproto_records on atproto_records.uri = directory_entities.record_uri
-        where directory_entities.entity_type = 'chapter'
         order by directory_entities.name asc
       `);
-      return result.rows.map((row) => ({
-        id: row.id,
-        recordUri: row.record_uri,
-        type: row.entity_type,
-        name: row.name,
-        shortName: row.short_name,
-        collection: row.collection,
-        handle: row.handle,
-        did: row.did,
-        jurisdiction: `${row.jurisdiction_name}, ${row.jurisdiction_region}`,
-        trustLabel: row.trust_label,
-        status: row.status,
-        website: row.website,
-        searchText: row.search_text,
-        record: row.record,
-      }));
+      return result.rows.map((row) => {
+        const entityType = row.entity_type as DirectoryEntity['type'];
+        const jurisdiction = entityType === 'chapter' ? `${row.jurisdiction_name}, ${row.jurisdiction_region}` : row.jurisdiction_region;
+        return {
+          id: row.id,
+          recordUri: row.record_uri,
+          type: entityType,
+          name: row.name,
+          shortName: row.short_name,
+          collection: row.collection,
+          handle: row.handle,
+          did: row.did,
+          jurisdiction,
+          focusArea: entityType === 'caucus' ? row.jurisdiction_region : undefined,
+          trustLabel: row.trust_label,
+          status: row.status,
+          website: row.website,
+          searchText: row.search_text,
+          record: row.record,
+        };
+      });
     },
     async ingestMockRecords(nextRecords) {
-      for (const record of nextRecords.map((item) => normalizeChapter(item))) {
+      for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
+        const recordData = record.record.record;
+        const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : 'caucus';
+        const jurisdictionRegion = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.state : recordData.focusArea;
+        const description = recordData.$type === 'org.dsa.profile.chapter' ? null : recordData.focusArea;
         await pool.query(
           `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
            values ($1, $2, $3, $4, $5, $6, $7)
@@ -107,10 +115,10 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Cha
             record.shortName,
             record.handle,
             record.did,
-            record.record.record.jurisdiction.name,
-            record.record.record.jurisdiction.state,
+            jurisdictionName,
+            jurisdictionRegion,
             record.website,
-            null,
+            description,
             record.trustLabel,
             record.status,
             record.searchText,
@@ -156,7 +164,7 @@ async function ensurePrototypeSchema(pool: Pool) {
   await pool.query('create index if not exists directory_entities_search_text_idx on directory_entities(search_text)');
 }
 
-export function createApp(repository: ChapterRepository) {
+export function createApp(repository: DirectoryRepository) {
   return createServer(async (req, res) => {
     res.setHeader('access-control-allow-origin', '*');
     if (req.method === 'OPTIONS') {
@@ -165,7 +173,11 @@ export function createApp(repository: ChapterRepository) {
       return;
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
-    if (req.url === '/api/chapters' && req.method === 'GET') return toJson(res, 200, { prototype: true, data: await repository.listChapters() });
+    if (req.url === '/api/entities' && req.method === 'GET') return toJson(res, 200, { prototype: true, data: await repository.listEntities() });
+    if (req.url === '/api/chapters' && req.method === 'GET') {
+      const chapters = (await repository.listEntities()).filter((entity) => entity.type === 'chapter');
+      return toJson(res, 200, { prototype: true, data: chapters });
+    }
     return toJson(res, 404, { error: 'not_found' });
   });
 }
@@ -173,7 +185,7 @@ export function createApp(repository: ChapterRepository) {
 export async function bootstrapRepository(databaseUrl: string) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await repo.ingestMockRecords(chapterSeedRecords);
+    await repo.ingestMockRecords([...chapterSeedRecords, ...caucusSeedRecords]);
     return repo;
   } catch {
     return createMemoryRepository();
