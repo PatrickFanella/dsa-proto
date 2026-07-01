@@ -30,6 +30,7 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/prototype-plan.md`](docs/dsa-atproto/prototype-plan.md) — first local prototype scope
 - [`docs/dsa-atproto/local-demo.md`](docs/dsa-atproto/local-demo.md) — local run, reseed/reset, and reviewer demo flow
 - [`docs/dsa-atproto/technical-architecture.md`](docs/dsa-atproto/technical-architecture.md) — implementation architecture
+- [`docs/dsa-atproto/atproto-ingestion-spike.md`](docs/dsa-atproto/atproto-ingestion-spike.md) — real ATProto ingestion adapter spike
 - [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
 - [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
 
