@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, matchesDirectoryEntity, mockRecordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type MockRecordEnvelope } from './domain.js';
+import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, matchesDirectoryEntity, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type RecordEnvelope } from './domain.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -11,7 +11,7 @@ const envSchema = z.object({
 export type DirectoryRepository = {
   listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
-  ingestMockRecords(records: MockRecordEnvelope[]): Promise<void>;
+  ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
 };
 
 export function getConfig(env: NodeJS.ProcessEnv = process.env) {
@@ -27,8 +27,8 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
   res.end(JSON.stringify(body));
 }
 
-export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]): DirectoryRepository {
-  const records = seed.map((record) => normalizeDirectoryEntity(mockRecordEnvelopeSchema.parse(record)));
+export function createMemoryRepository(seed: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]): DirectoryRepository {
+  const records = seed.map((record) => normalizeDirectoryEntity(recordEnvelopeSchema.parse(record)));
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
       return records.filter((entity) => matchesDirectoryEntity(entity, filters));
@@ -36,7 +36,7 @@ export function createMemoryRepository(seed: MockRecordEnvelope[] = [...chapterS
     async getEntity(id: string) {
       return records.find((record) => record.id === id);
     },
-    async ingestMockRecords(nextRecords) {
+    async ingestRecordEnvelopes(nextRecords) {
       for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
         const existingIndex = records.findIndex((entry) => entry.id === record.id);
         if (existingIndex >= 0) records[existingIndex] = record;
@@ -157,7 +157,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         record: row.record,
       };
     },
-    async ingestMockRecords(nextRecords) {
+    async ingestRecordEnvelopes(nextRecords) {
       for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
         const recordData = record.record.record;
         const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : recordData.$type === 'org.dsa.affiliation.member' ? recordData.organizationHandle : 'caucus';
@@ -264,7 +264,7 @@ export function createApp(repository: DirectoryRepository) {
 export async function bootstrapRepository(databaseUrl: string) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await repo.ingestMockRecords([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]);
+    await repo.ingestRecordEnvelopes([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]);
     return repo;
   } catch {
     return createMemoryRepository();

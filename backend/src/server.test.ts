@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, mockRecordEnvelopeSchema, normalizeDirectoryEntity } from './domain.js';
+import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity } from './domain.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 
 describe('getConfig', () => {
@@ -10,20 +10,20 @@ describe('getConfig', () => {
 
 describe('directory record validation', () => {
   it('accepts mocked chapter and caucus records', () => {
-    expect(mockRecordEnvelopeSchema.parse(chapterSeedRecords[0]).uri).toContain('at://');
-    expect(mockRecordEnvelopeSchema.parse(caucusSeedRecords[0]).collection).toBe('org.dsa.profile.caucus');
-    expect(mockRecordEnvelopeSchema.parse(memberAffiliationSeedRecords[0]).collection).toBe('org.dsa.affiliation.member');
+    expect(recordEnvelopeSchema.parse(chapterSeedRecords[0]).uri).toContain('at://');
+    expect(recordEnvelopeSchema.parse(caucusSeedRecords[0]).collection).toBe('org.dsa.profile.caucus');
+    expect(recordEnvelopeSchema.parse(memberAffiliationSeedRecords[0]).collection).toBe('org.dsa.affiliation.member');
   });
 
   it('rejects records when collection and payload type disagree', () => {
-    expect(() => mockRecordEnvelopeSchema.parse({ ...caucusSeedRecords[0], collection: 'org.dsa.profile.chapter' })).toThrow();
+    expect(() => recordEnvelopeSchema.parse({ ...caucusSeedRecords[0], collection: 'org.dsa.profile.chapter' })).toThrow();
   });
 });
 
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestMockRecords([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0]]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0]]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });

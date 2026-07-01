@@ -10,7 +10,7 @@ Use a two-adapter boundary:
 
 ```text
 Fixture replay adapter ─┐
-                       ├─ emits MockRecordEnvelope-compatible records
+                       ├─ emits RecordEnvelope-compatible records
 Live ATProto adapter ──┘
                                ↓
                          existing validation
@@ -61,7 +61,7 @@ Reference:
 
 ## Adapter interface
 
-The live adapter should emit the same internal envelope shape that `mockRecordEnvelopeSchema` validates today:
+The live adapter should emit the same internal envelope shape that `recordEnvelopeSchema` validates today:
 
 ```ts
 type IngestibleRecordEnvelope = {
@@ -78,7 +78,7 @@ type IngestibleRecordEnvelope = {
 type RecordEnvelopeSink = (record: IngestibleRecordEnvelope) => Promise<void>;
 ```
 
-The existing backend can then validate the envelope with `mockRecordEnvelopeSchema` and pass it to `ingestMockRecords`. The method name can be renamed later once both mock and live transports share the same path.
+The existing backend can then validate the envelope with `recordEnvelopeSchema` and pass it to `ingestRecordEnvelopes`.
 
 ## `@atproto/sync` pseudocode
 
@@ -134,7 +134,7 @@ The fixture adapter should remain the default local development path:
 ```ts
 export async function replayFixtureRecords(records: unknown[], sink: RecordEnvelopeSink) {
   for (const record of records) {
-    await sink(mockRecordEnvelopeSchema.parse(record));
+    await sink(recordEnvelopeSchema.parse(record));
   }
 }
 ```
@@ -177,8 +177,8 @@ ATPROTO_LIVE_INGESTION=false
 
 A future issue should implement only the fixture/live adapter boundary first:
 
-1. Rename `ingestMockRecords` to a transport-neutral name such as `ingestRecordEnvelopes`.
-2. Add an offline fixture replay adapter and tests.
+1. Add an offline fixture replay adapter and tests.
+2. Add ingestion error reporting for rejected records.
 3. Add a live `@atproto/sync` adapter behind an opt-in script.
 4. Verify the live adapter can emit one valid envelope into the same existing ingestion path.
 5. Keep `make verify` offline and deterministic.

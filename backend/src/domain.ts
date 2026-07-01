@@ -40,7 +40,7 @@ export const memberAffiliationRecordSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
-export const mockRecordEnvelopeSchema = z.object({
+export const recordEnvelopeSchema = z.object({
   uri: z.string().startsWith('at://'),
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
@@ -55,7 +55,7 @@ export const mockRecordEnvelopeSchema = z.object({
   }
 });
 
-export type MockRecordEnvelope = z.infer<typeof mockRecordEnvelopeSchema>;
+export type RecordEnvelope = z.infer<typeof recordEnvelopeSchema>;
 export type ChapterRecord = z.infer<typeof chapterRecordSchema>;
 export type CaucusRecord = z.infer<typeof caucusRecordSchema>;
 export type MemberAffiliationRecord = z.infer<typeof memberAffiliationRecordSchema>;
@@ -78,7 +78,7 @@ export type DirectoryEntity = {
   status: 'active' | 'inactive';
   website: string;
   searchText: string;
-  record: MockRecordEnvelope;
+  record: RecordEnvelope;
 };
 
 export type DirectoryEntityFilters = {
@@ -86,7 +86,7 @@ export type DirectoryEntityFilters = {
   search?: string;
 };
 
-export const chapterSeedRecords: MockRecordEnvelope[] = [
+export const chapterSeedRecords: RecordEnvelope[] = [
   {
     uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
     cid: 'bafy-mock-nyc',
@@ -123,7 +123,7 @@ export const chapterSeedRecords: MockRecordEnvelope[] = [
   },
 ];
 
-export const caucusSeedRecords: MockRecordEnvelope[] = [
+export const caucusSeedRecords: RecordEnvelope[] = [
   {
     uri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
     cid: 'bafy-mock-climate-caucus',
@@ -160,7 +160,7 @@ export const caucusSeedRecords: MockRecordEnvelope[] = [
   },
 ];
 
-export const memberAffiliationSeedRecords: MockRecordEnvelope[] = [
+export const memberAffiliationSeedRecords: RecordEnvelope[] = [
   {
     uri: 'at://did:plc:memberalpha/org.dsa.affiliation.member/self',
     cid: 'bafy-mock-member-alpha',
@@ -232,8 +232,8 @@ export const memberAffiliationSeedRecords: MockRecordEnvelope[] = [
   },
 ];
 
-export function normalizeDirectoryEntity(record: MockRecordEnvelope): DirectoryEntity {
-  const normalized = mockRecordEnvelopeSchema.parse(record);
+export function normalizeDirectoryEntity(record: RecordEnvelope): DirectoryEntity {
+  const normalized = recordEnvelopeSchema.parse(record);
   const recordData = normalized.record;
   if (recordData.$type === 'org.dsa.profile.chapter') {
     const jurisdiction = `${recordData.jurisdiction.name}, ${recordData.jurisdiction.state}`;
