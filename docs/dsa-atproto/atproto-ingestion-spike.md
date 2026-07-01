@@ -60,6 +60,8 @@ Non-goals for the next implementation:
 
 The follow-up implementation issue is #12: add an opt-in live ATProto ingestion script.
 
+Issue #12 implements that script as `pnpm --dir backend run ingest:atproto`. It remains disabled unless `ATPROTO_LIVE_INGESTION=true` is set.
+
 ## TypeScript options
 
 ### 1. `@atproto/sync` `Firehose`
@@ -199,6 +201,16 @@ ATPROTO_RELAY_URL=wss://bsky.network
 ATPROTO_COLLECTIONS=org.dsa.profile.chapter,org.dsa.profile.caucus,org.dsa.affiliation.member
 ATPROTO_LIVE_INGESTION=false
 ```
+
+To run the opt-in script against the configured Postgres database:
+
+```bash
+ATPROTO_LIVE_INGESTION=true \
+ATPROTO_RELAY_URL=wss://bsky.network \
+pnpm --dir backend run ingest:atproto
+```
+
+Live self-published records are assigned `trustLabel: 'unverified'` unless a future verification record changes that trust model.
 
 ## Operational and production-readiness risks
 

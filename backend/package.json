@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "ingest:atproto": "tsx src/ingest-atproto.ts",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
@@ -12,6 +13,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@atproto/identity": "^0.5.3",
+    "@atproto/sync": "^0.3.7",
     "pg": "^8.16.3",
     "zod": "^4.1.13"
   },

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
 import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
@@ -66,6 +67,61 @@ describe('ingestion and read path', () => {
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(2);
     expect(entities.map((entity) => entity.id)).toEqual([chapterSeedRecords[0].uri, caucusSeedRecords[0].uri]);
+  });
+});
+
+describe('live ATProto ingestion adapter', () => {
+  it('is disabled by default and parses supported collection config', () => {
+    expect(getLiveAtprotoIngestionConfig({}).enabled).toBe(false);
+    expect(getLiveAtprotoIngestionConfig({ ATPROTO_LIVE_INGESTION: 'true', ATPROTO_COLLECTIONS: 'org.dsa.profile.chapter,unknown.collection' })).toMatchObject({
+      enabled: true,
+      collections: ['org.dsa.profile.chapter'],
+    });
+  });
+
+  it('maps create events to unverified record envelopes without network access', () => {
+    const envelope = mapLiveAtprotoEventToEnvelope({
+      event: 'create',
+      uri: chapterSeedRecords[0].uri,
+      cid: chapterSeedRecords[0].cid,
+      did: chapterSeedRecords[0].did,
+      handle: chapterSeedRecords[0].handle,
+      collection: chapterSeedRecords[0].collection,
+      record: chapterSeedRecords[0].record,
+    }, () => new Date('2026-07-01T12:00:00.000Z'));
+
+    expect(recordEnvelopeSchema.parse(envelope)).toMatchObject({
+      uri: chapterSeedRecords[0].uri,
+      trustLabel: 'unverified',
+      indexedAt: '2026-07-01T12:00:00.000Z',
+    });
+  });
+
+  it('ingests valid live events and rejects invalid ones without partial writes', async () => {
+    const repo = createMemoryRepository([]);
+    const accepted = await ingestLiveAtprotoEvent({
+      event: 'update',
+      uri: caucusSeedRecords[0].uri,
+      cid: caucusSeedRecords[0].cid,
+      did: caucusSeedRecords[0].did,
+      handle: caucusSeedRecords[0].handle,
+      collection: caucusSeedRecords[0].collection,
+      record: caucusSeedRecords[0].record,
+    }, repo);
+    const rejected = await ingestLiveAtprotoEvent({
+      event: 'create',
+      uri: chapterSeedRecords[0].uri,
+      cid: chapterSeedRecords[0].cid,
+      did: chapterSeedRecords[0].did,
+      collection: chapterSeedRecords[0].collection,
+      record: { ...chapterSeedRecords[0].record, $type: 'org.dsa.profile.caucus' },
+    }, repo);
+    const ignored = await ingestLiveAtprotoEvent({ event: 'delete', did: chapterSeedRecords[0].did, collection: chapterSeedRecords[0].collection }, repo);
+
+    expect(accepted).toBe('accepted');
+    expect(rejected).toBe('rejected');
+    expect(ignored).toBe('ignored');
+    expect(await repo.listEntities()).toHaveLength(1);
   });
 });
 
