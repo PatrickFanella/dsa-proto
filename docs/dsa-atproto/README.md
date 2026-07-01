@@ -80,6 +80,7 @@ Use a hybrid architecture:
 - [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
 - [answers.md](answers.md): answered requirements interview
 - [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
+- [local-demo.md](local-demo.md): local run, reseed/reset, and reviewer demo flow
 - [technical-architecture.md](technical-architecture.md): implementation architecture for the mocked-record prototype
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
