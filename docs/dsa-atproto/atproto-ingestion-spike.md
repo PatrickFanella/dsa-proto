@@ -22,6 +22,44 @@ Live ATProto adapter ──┘
 
 Milestone 1 should keep the fixture replay adapter as the default. A Phase 2 spike can add the live adapter behind an explicit script or worker command.
 
+## Issue #9 decision
+
+For the next live-ingestion implementation, use **`@atproto/sync` `Firehose` in an opt-in script**, not `@atproto/tap` and not a long-running worker service.
+
+Chosen shape:
+
+```text
+pnpm --dir backend run ingest:atproto
+        ↓
+@atproto/sync Firehose subscriber
+        ↓
+record filter for exact supported org.dsa.* collections
+        ↓
+RecordEnvelope construction
+        ↓
+recordEnvelopeSchema validation
+        ↓
+ingestRecordEnvelopes
+```
+
+Rationale:
+
+- `@atproto/sync` is closest to the canonical repository event stream this prototype eventually needs to understand.
+- The current prototype only needs to prove that live repo events can be shaped into `RecordEnvelope` and passed into the existing ingestion path.
+- A script is easier to run, stop, document, and keep out of the default local stack than a worker service.
+- A long-running worker would force premature choices about process supervision, cursors, retries, metrics, deploy topology, and alerting.
+- `@atproto/tap` remains a good later option if the project needs a more complete indexing pipeline with backfill and identity handling.
+- Jetstream remains useful for quick JSON experiments, but it is not the preferred first implementation because this prototype is modeling repository-shaped civic records rather than feed-only app events.
+
+Non-goals for the next implementation:
+
+- Do not add live ingestion to `docker compose up` by default.
+- Do not require live network access for `make verify`.
+- Do not implement a production cursor/checkpoint system yet.
+- Do not treat live self-published `org.dsa.*` records as verified DSA records.
+
+The follow-up implementation issue is #12: add an opt-in live ATProto ingestion script.
+
 ## TypeScript options
 
 ### 1. `@atproto/sync` `Firehose`
@@ -145,7 +183,7 @@ The implemented helper should report rejected records by index and validation re
 
 ## Setup requirements for a future live spike
 
-- Add dependencies only in the spike branch or follow-up implementation issue:
+- Add dependencies only in the follow-up implementation issue:
   - `@atproto/sync`
   - `@atproto/identity`
   - optionally `@atproto/syntax` for AT URI helpers

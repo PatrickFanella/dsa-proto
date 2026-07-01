@@ -200,7 +200,7 @@ same Postgres upsert/read model
 
 Milestone 1 should keep this path open by isolating ingestion from transport.
 
-The issue #7 spike recommends a two-adapter boundary: keep fixture replay as the default local path, and add an opt-in live adapter later using `@atproto/sync` `Firehose` or, for a higher-level indexing path, `@atproto/tap`. See [atproto-ingestion-spike.md](atproto-ingestion-spike.md) for the adapter sketch, setup requirements, and operational risks.
+The issue #9 decision is to keep fixture replay as the default local path and make the first live implementation an opt-in `@atproto/sync` `Firehose` script, not a default Compose service. `@atproto/tap` remains a later option for a fuller indexing pipeline. See [atproto-ingestion-spike.md](atproto-ingestion-spike.md) for the adapter sketch, setup requirements, and operational risks.
 
 ## Deployment posture
 
