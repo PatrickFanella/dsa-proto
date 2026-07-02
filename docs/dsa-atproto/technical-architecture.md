@@ -176,11 +176,13 @@ Avoid complex state management until the app has real interaction needs.
 
 Milestone 1 does not implement real verification.
 
-Use a placeholder field in seed data and normalized views:
+Use placeholder fields in seed data and normalized views:
 
 ```text
 trustLabel: mock-official | self-declared | unverified | experimental
 ```
+
+Prototype verification assertions are stored as public records with `$type` `org.dsa.verification.assertion` and applied at read time to directory entities. They can mark a subject as `verified`, `disputed`, `revoked`, or `self-declared` without creating a directory card of their own.
 
 The UI should display this as prototype metadata, not as a real legitimacy claim.
 

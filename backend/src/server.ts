@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, matchesDirectoryEntity, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type RecordEnvelope } from './domain.js';
+import { allSeedRecords, isDirectoryEntityRecord, matchesDirectoryEntity, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type RecordEnvelope } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 
 const envSchema = z.object({
@@ -28,8 +28,9 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
   res.end(JSON.stringify(body));
 }
 
-export function createMemoryRepository(seed: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords]): DirectoryRepository {
-  const records = seed.map((record) => normalizeDirectoryEntity(recordEnvelopeSchema.parse(record)));
+export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords): DirectoryRepository {
+  const rawRecords = seed.map((record) => recordEnvelopeSchema.parse(record));
+  const records = dedupeEntities(rawRecords);
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
       return records.filter((entity) => matchesDirectoryEntity(entity, filters));
@@ -38,13 +39,21 @@ export function createMemoryRepository(seed: RecordEnvelope[] = [...chapterSeedR
       return records.find((record) => record.id === id);
     },
     async ingestRecordEnvelopes(nextRecords) {
-      for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
-        const existingIndex = records.findIndex((entry) => entry.id === record.id);
-        if (existingIndex >= 0) records[existingIndex] = record;
-        else records.push(record);
-      }
+      const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
+      rawRecords.push(...parsed);
+      const nextDirectoryRecords = dedupeEntities(rawRecords);
+      records.splice(0, records.length, ...nextDirectoryRecords);
     },
   };
+}
+
+function dedupeEntities(rawRecords: RecordEnvelope[]) {
+  return rawRecords.filter(isDirectoryEntityRecord).map((item) => normalizeDirectoryEntity(item, rawRecords)).filter((item): item is DirectoryEntity => Boolean(item)).reduce<DirectoryEntity[]>((acc, entity) => {
+    const existingIndex = acc.findIndex((entry) => entry.id === entity.id);
+    if (existingIndex >= 0) acc[existingIndex] = entity;
+    else acc.push(entity);
+    return acc;
+  }, []);
 }
 
 export async function createPostgresRepository(databaseUrl: string): Promise<DirectoryRepository> {
@@ -53,6 +62,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
   await ensurePrototypeSchema(pool);
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
+      const assertions = await loadVerificationAssertions(pool);
       const result = await pool.query(`
         select
           directory_entities.id,
@@ -67,6 +77,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           directory_entities.jurisdiction_region,
           directory_entities.description,
           directory_entities.trust_label,
+          directory_entities.verification_status,
+          directory_entities.verified_by,
+          directory_entities.verification_reason,
           directory_entities.status,
           directory_entities.website,
           directory_entities.search_text,
@@ -99,6 +112,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
           organizationHandle: entityType === 'member-affiliation' ? row.jurisdiction_name : undefined,
           trustLabel: row.trust_label,
+          verificationStatus: assertions.get(row.record_uri)?.verificationStatus ?? row.verification_status,
+          verifiedBy: assertions.get(row.record_uri)?.verifiedBy ?? row.verified_by ?? undefined,
+          verificationReason: assertions.get(row.record_uri)?.verificationReason ?? row.verification_reason ?? undefined,
           status: row.status,
           website: row.website,
           searchText: row.search_text,
@@ -107,6 +123,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       });
     },
     async getEntity(id: string) {
+      const assertions = await loadVerificationAssertions(pool);
       const result = await pool.query(`
         select
           directory_entities.id,
@@ -121,6 +138,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           directory_entities.jurisdiction_region,
           directory_entities.description,
           directory_entities.trust_label,
+          directory_entities.verification_status,
+          directory_entities.verified_by,
+          directory_entities.verification_reason,
           directory_entities.status,
           directory_entities.website,
           directory_entities.search_text,
@@ -152,6 +172,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
         organizationHandle: entityType === 'member-affiliation' ? row.jurisdiction_name : undefined,
         trustLabel: row.trust_label,
+        verificationStatus: assertions.get(row.record_uri)?.verificationStatus ?? row.verification_status,
+        verifiedBy: assertions.get(row.record_uri)?.verifiedBy ?? row.verified_by ?? undefined,
+        verificationReason: assertions.get(row.record_uri)?.verificationReason ?? row.verification_reason ?? undefined,
         status: row.status,
         website: row.website,
         searchText: row.search_text,
@@ -159,21 +182,25 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       };
     },
     async ingestRecordEnvelopes(nextRecords) {
-      for (const record of nextRecords.map((item) => normalizeDirectoryEntity(item))) {
-        const recordData = record.record.record;
-        const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : recordData.$type === 'org.dsa.affiliation.member' ? recordData.organizationHandle : 'caucus';
-        const jurisdictionRegion = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.state : recordData.$type === 'org.dsa.affiliation.member' ? recordData.memberHandle : recordData.focusArea;
-        const description = recordData.$type === 'org.dsa.profile.chapter' ? null : recordData.$type === 'org.dsa.affiliation.member' ? recordData.publicRole ?? null : recordData.focusArea;
+      const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
+      for (const rawRecord of parsed) {
         await pool.query(
           `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
            values ($1, $2, $3, $4, $5, $6, $7)
            on conflict (uri) do update set cid = excluded.cid, did = excluded.did, handle = excluded.handle, collection = excluded.collection, record = excluded.record, indexed_at = excluded.indexed_at`,
-          [record.recordUri, record.record.cid, record.did, record.handle, record.record.collection, record.record, record.record.indexedAt],
+          [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.indexedAt],
         );
+      }
+      const nextDirectoryRecords = parsed.filter(isDirectoryEntityRecord).map((item) => normalizeDirectoryEntity(item, parsed)).filter((record): record is DirectoryEntity => Boolean(record));
+      for (const record of nextDirectoryRecords) {
+        const recordData = record.record.record as { $type: 'org.dsa.profile.chapter'; jurisdiction: { name: string; state: string }; } | { $type: 'org.dsa.affiliation.member'; organizationHandle: string; memberHandle: string; publicRole?: string | null } | { $type: 'org.dsa.profile.caucus'; focusArea: string };
+        const jurisdictionName = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.name : recordData.$type === 'org.dsa.affiliation.member' ? recordData.organizationHandle : 'caucus';
+        const jurisdictionRegion = recordData.$type === 'org.dsa.profile.chapter' ? recordData.jurisdiction.state : recordData.$type === 'org.dsa.affiliation.member' ? recordData.memberHandle : recordData.focusArea;
+        const description = recordData.$type === 'org.dsa.profile.chapter' ? null : recordData.$type === 'org.dsa.affiliation.member' ? recordData.publicRole ?? null : recordData.focusArea;
         await pool.query(
-          `insert into directory_entities (id, record_uri, entity_type, name, short_name, handle, did, jurisdiction_name, jurisdiction_region, website, description, trust_label, status, search_text, updated_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
-           on conflict (id) do update set record_uri = excluded.record_uri, entity_type = excluded.entity_type, name = excluded.name, short_name = excluded.short_name, handle = excluded.handle, did = excluded.did, jurisdiction_name = excluded.jurisdiction_name, jurisdiction_region = excluded.jurisdiction_region, website = excluded.website, description = excluded.description, trust_label = excluded.trust_label, status = excluded.status, search_text = excluded.search_text, updated_at = now()`,
+          `insert into directory_entities (id, record_uri, entity_type, name, short_name, handle, did, jurisdiction_name, jurisdiction_region, website, description, trust_label, verification_status, verified_by, verification_reason, status, search_text, updated_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, now())
+           on conflict (id) do update set record_uri = excluded.record_uri, entity_type = excluded.entity_type, name = excluded.name, short_name = excluded.short_name, handle = excluded.handle, did = excluded.did, jurisdiction_name = excluded.jurisdiction_name, jurisdiction_region = excluded.jurisdiction_region, website = excluded.website, description = excluded.description, trust_label = excluded.trust_label, verification_status = excluded.verification_status, verified_by = excluded.verified_by, verification_reason = excluded.verification_reason, status = excluded.status, search_text = excluded.search_text, updated_at = now()`,
           [
             record.id,
             record.recordUri,
@@ -187,6 +214,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
             record.website,
             description,
             record.trustLabel,
+            record.verificationStatus,
+            record.verifiedBy ?? null,
+            record.verificationReason ?? null,
             record.status,
             record.searchText,
           ],
@@ -227,6 +257,9 @@ async function ensurePrototypeSchema(pool: Pool) {
       updated_at timestamptz not null default now()
     )
   `);
+  await pool.query(`alter table directory_entities add column if not exists verification_status text not null default 'unverified'`);
+  await pool.query(`alter table directory_entities add column if not exists verified_by text`);
+  await pool.query(`alter table directory_entities add column if not exists verification_reason text`);
   await pool.query('create index if not exists directory_entities_entity_type_idx on directory_entities(entity_type)');
   await pool.query('create index if not exists directory_entities_search_text_idx on directory_entities(search_text)');
 }
@@ -265,9 +298,24 @@ export function createApp(repository: DirectoryRepository) {
 export async function bootstrapRepository(databaseUrl: string) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await replayFixtureRecords([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords], repo);
+    await replayFixtureRecords(allSeedRecords, repo);
     return repo;
   } catch {
     return createMemoryRepository();
   }
+}
+
+async function loadVerificationAssertions(pool: Pool) {
+  const result = await pool.query(`select record from atproto_records where collection = 'org.dsa.verification.assertion' order by indexed_at asc`);
+  const assertions = new Map<string, { verificationStatus: DirectoryEntity['verificationStatus']; verifiedBy?: string; verificationReason?: string }>();
+  for (const row of result.rows) {
+    const record = row.record as { subjectUri?: string; assertion?: string; issuerHandle?: string; reason?: string };
+    if (!record.subjectUri) continue;
+    assertions.set(record.subjectUri, {
+      verificationStatus: record.assertion === 'verified' ? 'mock-verified' : record.assertion === 'disputed' ? 'disputed' : record.assertion === 'revoked' ? 'revoked' : 'self-declared',
+      verifiedBy: record.issuerHandle,
+      verificationReason: record.reason,
+    });
+  }
+  return assertions;
 }

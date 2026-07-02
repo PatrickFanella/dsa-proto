@@ -67,6 +67,8 @@ revoked
 archived
 ```
 
+Prototype note: `org.dsa.verification.assertion` is a safe mock record type used to annotate existing directory entities. It is public-only, additive, and intentionally does not imply real DSA legitimacy.
+
 ## Chapter verification
 
 A chapter identity should be verified by national or by a delegated regional process.

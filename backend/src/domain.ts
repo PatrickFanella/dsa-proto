@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 export const trustLabelSchema = z.enum(['mock-official', 'self-declared', 'unverified', 'experimental']);
+export const verificationAssertionSchema = z.object({
+  $type: z.literal('org.dsa.verification.assertion'),
+  subjectUri: z.string().startsWith('at://'),
+  subjectDid: z.string().startsWith('did:'),
+  issuerDid: z.string().startsWith('did:'),
+  issuerHandle: z.string().min(1),
+  assertion: z.enum(['verified', 'disputed', 'revoked', 'self-declared']),
+  reason: z.string().min(1),
+  createdAt: z.string().datetime(),
+});
 
 export const chapterRecordSchema = z.object({
   $type: z.literal('org.dsa.profile.chapter'),
@@ -45,10 +55,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.affiliation.member')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, memberAffiliationRecordSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -59,6 +69,9 @@ export type RecordEnvelope = z.infer<typeof recordEnvelopeSchema>;
 export type ChapterRecord = z.infer<typeof chapterRecordSchema>;
 export type CaucusRecord = z.infer<typeof caucusRecordSchema>;
 export type MemberAffiliationRecord = z.infer<typeof memberAffiliationRecordSchema>;
+export type VerificationAssertionRecord = z.infer<typeof verificationAssertionSchema>;
+
+export type VerificationStatus = 'mock-verified' | 'self-declared' | 'unverified' | 'disputed' | 'revoked' | 'experimental';
 
 export type DirectoryEntity = {
   id: string;
@@ -75,6 +88,9 @@ export type DirectoryEntity = {
   memberHandle?: string;
   organizationHandle?: string;
   trustLabel: z.infer<typeof trustLabelSchema>;
+  verificationStatus: VerificationStatus;
+  verifiedBy?: string;
+  verificationReason?: string;
   status: 'active' | 'inactive';
   website: string;
   searchText: string;
@@ -232,10 +248,84 @@ export const memberAffiliationSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export function normalizeDirectoryEntity(record: RecordEnvelope): DirectoryEntity {
+export const verificationAssertionSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:nycdsa/org.dsa.verification.assertion/self',
+    cid: 'bafy-mock-verification-nyc',
+    did: 'did:plc:nationaldsa',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.verification.assertion',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.verification.assertion',
+      subjectUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      subjectDid: 'did:plc:nycdsa',
+      issuerDid: 'did:plc:nationaldsa',
+      issuerHandle: 'dsausa.org',
+      assertion: 'verified',
+      reason: 'Prototype national verification assertion for the NYC chapter example.',
+      createdAt: '2026-07-01T00:00:00.000Z',
+    },
+  },
+  {
+    uri: 'at://did:plc:climatecaucus/org.dsa.verification.assertion/self',
+    cid: 'bafy-mock-verification-climate-dispute',
+    did: 'did:plc:nycdsa',
+    handle: 'nyc.dsausa.org',
+    collection: 'org.dsa.verification.assertion',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'experimental',
+    record: {
+      $type: 'org.dsa.verification.assertion',
+      subjectUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
+      subjectDid: 'did:plc:climatecaucus',
+      issuerDid: 'did:plc:nycdsa',
+      issuerHandle: 'nyc.dsausa.org',
+      assertion: 'disputed',
+      reason: 'Experimental caucus status is shown as disputed for prototype trust-state coverage.',
+      createdAt: '2026-07-01T00:00:00.000Z',
+    },
+  },
+];
+
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords];
+
+export type DirectoryRecordEnvelope = Exclude<RecordEnvelope, { collection: 'org.dsa.verification.assertion' }>;
+
+export function isDirectoryEntityRecord(record: RecordEnvelope): record is DirectoryRecordEnvelope {
+  return record.collection !== 'org.dsa.verification.assertion';
+}
+
+export function computeVerificationMetadata(records: RecordEnvelope[], subjectUri: string, currentTrustLabel: z.infer<typeof trustLabelSchema>): Pick<DirectoryEntity, 'verificationStatus' | 'verifiedBy' | 'verificationReason' | 'trustLabel'> {
+  const assertions = records.filter((record): record is RecordEnvelope & { record: VerificationAssertionRecord } => {
+    const parsed = verificationAssertionSchema.safeParse(record.record);
+    return record.collection === 'org.dsa.verification.assertion' && parsed.success && parsed.data.subjectUri === subjectUri;
+  });
+  const latest = assertions.at(-1);
+  if (!latest) {
+    return { trustLabel: currentTrustLabel, verificationStatus: currentTrustLabel === 'experimental' ? 'experimental' : currentTrustLabel === 'mock-official' ? 'mock-verified' : currentTrustLabel };
+  }
+  const statusMap: Record<VerificationAssertionRecord['assertion'], VerificationStatus> = {
+    verified: 'mock-verified',
+    disputed: 'disputed',
+    revoked: 'revoked',
+    'self-declared': 'self-declared',
+  };
+  return {
+    trustLabel: currentTrustLabel,
+    verificationStatus: statusMap[latest.record.assertion],
+    verifiedBy: latest.record.issuerHandle,
+    verificationReason: latest.record.reason,
+  };
+}
+
+export function normalizeDirectoryEntity(record: RecordEnvelope, allRecords: RecordEnvelope[] = [record]): DirectoryEntity | undefined {
   const normalized = recordEnvelopeSchema.parse(record);
-  const recordData = normalized.record;
+  if (!isDirectoryEntityRecord(normalized)) return undefined;
+  const recordData = normalized.record as ChapterRecord | CaucusRecord | MemberAffiliationRecord;
   if (recordData.$type === 'org.dsa.profile.chapter') {
+    const verification = computeVerificationMetadata(allRecords, normalized.uri, normalized.trustLabel);
     const jurisdiction = `${recordData.jurisdiction.name}, ${recordData.jurisdiction.state}`;
     return {
       id: normalized.uri,
@@ -243,11 +333,14 @@ export function normalizeDirectoryEntity(record: RecordEnvelope): DirectoryEntit
       type: 'chapter',
       name: recordData.name,
       shortName: recordData.shortName,
-      collection: normalized.collection,
+      collection: normalized.collection as DirectoryEntity['collection'],
       handle: normalized.handle,
       did: normalized.did,
       jurisdiction,
-      trustLabel: normalized.trustLabel,
+      trustLabel: verification.trustLabel,
+      verificationStatus: verification.verificationStatus,
+      verifiedBy: verification.verifiedBy,
+      verificationReason: verification.verificationReason,
       status: recordData.status,
       website: recordData.website,
       searchText: [recordData.name, recordData.shortName, normalized.handle, normalized.did, jurisdiction].join(' ').toLowerCase(),
@@ -255,6 +348,7 @@ export function normalizeDirectoryEntity(record: RecordEnvelope): DirectoryEntit
     };
   }
   if (recordData.$type === 'org.dsa.affiliation.member') {
+    const verification = computeVerificationMetadata(allRecords, normalized.uri, normalized.trustLabel);
     const jurisdiction = `affiliated with ${recordData.organizationHandle}`;
     return {
       id: normalized.uri,
@@ -262,36 +356,44 @@ export function normalizeDirectoryEntity(record: RecordEnvelope): DirectoryEntit
       type: 'member-affiliation',
       name: recordData.displayName,
       shortName: recordData.publicRole ?? recordData.trustTag,
-      collection: normalized.collection,
+      collection: normalized.collection as DirectoryEntity['collection'],
       handle: normalized.handle,
       did: normalized.did,
       jurisdiction,
       publicRole: recordData.publicRole,
       memberHandle: recordData.memberHandle,
       organizationHandle: recordData.organizationHandle,
-      trustLabel: normalized.trustLabel,
+      trustLabel: verification.trustLabel,
+      verificationStatus: verification.verificationStatus,
+      verifiedBy: verification.verifiedBy,
+      verificationReason: verification.verificationReason,
       status: 'active',
       website: 'https://example.org/public-prototype',
       searchText: [recordData.displayName, recordData.memberHandle, normalized.handle, normalized.did, jurisdiction, recordData.organizationHandle].join(' ').toLowerCase(),
       record: normalized,
     };
   }
-  const jurisdiction = recordData.focusArea;
+  const verification = computeVerificationMetadata(allRecords, normalized.uri, normalized.trustLabel);
+  const caucusRecord = recordData as CaucusRecord;
+  const jurisdiction = caucusRecord.focusArea;
   return {
     id: normalized.uri,
     recordUri: normalized.uri,
     type: 'caucus',
-    name: recordData.name,
-    shortName: recordData.shortName,
-    collection: normalized.collection,
+    name: caucusRecord.name,
+    shortName: caucusRecord.shortName,
+    collection: normalized.collection as DirectoryEntity['collection'],
     handle: normalized.handle,
     did: normalized.did,
     jurisdiction,
-    focusArea: recordData.focusArea,
-    trustLabel: normalized.trustLabel,
-    status: recordData.status,
-    website: recordData.website,
-    searchText: [recordData.name, recordData.shortName, normalized.handle, normalized.did, jurisdiction].join(' ').toLowerCase(),
+    focusArea: caucusRecord.focusArea,
+    trustLabel: verification.trustLabel,
+    verificationStatus: verification.verificationStatus,
+    verifiedBy: verification.verifiedBy,
+    verificationReason: verification.verificationReason,
+    status: caucusRecord.status,
+    website: caucusRecord.website,
+    searchText: [caucusRecord.name, caucusRecord.shortName, normalized.handle, normalized.did, jurisdiction].join(' ').toLowerCase(),
     record: normalized,
   };
 }

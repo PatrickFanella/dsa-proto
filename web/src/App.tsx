@@ -10,6 +10,9 @@ export type DirectoryCard = {
   did: string;
   jurisdiction: string;
   trustLabel: string;
+  verificationStatus: string;
+  verifiedBy?: string;
+  verificationReason?: string;
   status: string;
   focusArea?: string;
   publicRole?: string;
@@ -29,6 +32,9 @@ const fallbackEntities: DirectoryCard[] = [
     did: 'did:plc:nycdsa',
     jurisdiction: 'New York City, NY',
     trustLabel: 'mock-official',
+    verificationStatus: 'mock-verified',
+    verifiedBy: 'dsausa.org',
+    verificationReason: 'Prototype national verification assertion for the NYC chapter example.',
     status: 'active',
     record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA', shortName: 'NYC-DSA' } },
   },
@@ -42,6 +48,9 @@ const fallbackEntities: DirectoryCard[] = [
     did: 'did:plc:climatecaucus',
     jurisdiction: 'climate justice organizing',
     trustLabel: 'experimental',
+    verificationStatus: 'disputed',
+    verifiedBy: 'nyc.dsausa.org',
+    verificationReason: 'Experimental caucus status is shown as disputed for prototype trust-state coverage.',
     status: 'active',
     focusArea: 'climate justice organizing',
     record: { record: { $type: 'org.dsa.profile.caucus', name: 'DSA Climate Caucus', shortName: 'Climate Caucus' } },
@@ -56,6 +65,7 @@ const fallbackEntities: DirectoryCard[] = [
     did: 'did:plc:memberalpha',
     jurisdiction: 'affiliated with nyc.dsausa.org',
     trustLabel: 'self-declared',
+    verificationStatus: 'self-declared',
     status: 'active',
     publicRole: 'neighborhood canvass volunteer',
     memberHandle: 'member.alpha.example',
@@ -97,8 +107,8 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
       <section className="mx-auto max-w-6xl rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
         <p className="text-sm uppercase tracking-[0.3em] text-fuchsia-300">DSA ATProto prototype</p>
         <h1 className="mt-4 text-4xl font-bold">Directory entities</h1>
-        <p className="mt-4 text-zinc-300">Mocked public chapter, caucus, and member-affiliation records are shown below as prototype data.</p>
-        <p className="mt-2 text-sm text-amber-300">Member examples are public prototype records, not verified membership records, and exclude private roster data.</p>
+        <p className="mt-4 text-zinc-300">Mocked public chapter, caucus, member-affiliation, and verification assertion records are shown below as prototype data.</p>
+        <p className="mt-2 text-sm text-amber-300">Verification labels are prototype trust metadata only, not real DSA legitimacy or membership proof.</p>
         <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
           <label className="grid gap-2 text-sm text-zinc-300">
             Search
@@ -127,7 +137,7 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
                   <h2 className="text-xl font-semibold">{entity.name}</h2>
                   <div className="flex gap-2 text-xs uppercase tracking-[0.2em]">
                     <span className="rounded-full border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">{entity.type}</span>
-                    <span className="rounded-full border border-cyan-400/40 px-3 py-1 text-cyan-200">{entity.trustLabel}</span>
+                    <span className="rounded-full border border-cyan-400/40 px-3 py-1 text-cyan-200">{entity.verificationStatus}</span>
                   </div>
                 </div>
                 <p className="mt-2 text-sm text-zinc-400">{entity.shortName} · {entity.jurisdiction} · {entity.status}</p>
@@ -140,6 +150,8 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
                   <div><dt className="inline text-zinc-500">DID:</dt> <dd className="inline">{entity.did}</dd></div>
                   <div><dt className="inline text-zinc-500">AT URI:</dt> <dd className="inline">{entity.id}</dd></div>
                   {entity.type === 'member-affiliation' ? <div><dt className="inline text-zinc-500">Public role:</dt> <dd className="inline">{entity.publicRole ?? 'self-declared'}</dd></div> : null}
+                  <div><dt className="inline text-zinc-500">Verification:</dt> <dd className="inline">{entity.verificationStatus}</dd></div>
+                  {entity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{entity.verifiedBy}</dd></div> : null}
                 </dl>
               </button>
             ))}
@@ -157,8 +169,10 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
                   <div><dt className="inline text-zinc-500">Collection:</dt> <dd className="inline">{selectedEntity.collection}</dd></div>
                   <div><dt className="inline text-zinc-500">AT URI:</dt> <dd className="inline">{selectedEntity.id}</dd></div>
                   <div><dt className="inline text-zinc-500">Trust label:</dt> <dd className="inline">{selectedEntity.trustLabel}</dd></div>
+                  <div><dt className="inline text-zinc-500">Verification status:</dt> <dd className="inline">{selectedEntity.verificationStatus}</dd></div>
+                  {selectedEntity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{selectedEntity.verifiedBy}</dd></div> : null}
                 </dl>
-                <p className="mt-4 text-sm text-amber-300">{selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.'}</p>
+                <p className="mt-4 text-sm text-amber-300">{selectedEntity.verificationReason ?? (selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.')}</p>
                 <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(selectedEntity.record.record, null, 2)}</pre>
               </>
             ) : null}

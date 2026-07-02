@@ -14,6 +14,9 @@ describe('App', () => {
       did: 'did:plc:nycdsa',
       jurisdiction: 'New York City, NY',
       trustLabel: 'mock-official',
+      verificationStatus: 'mock-verified',
+      verifiedBy: 'dsausa.org',
+      verificationReason: 'Prototype national verification assertion for the NYC chapter example.',
       status: 'active',
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
     }, {
@@ -26,6 +29,9 @@ describe('App', () => {
       did: 'did:plc:climatecaucus',
       jurisdiction: 'climate justice organizing',
       trustLabel: 'experimental',
+      verificationStatus: 'disputed',
+      verifiedBy: 'nyc.dsausa.org',
+      verificationReason: 'Experimental caucus status is shown as disputed for prototype trust-state coverage.',
       status: 'active',
       focusArea: 'climate justice organizing',
       record: { record: { $type: 'org.dsa.profile.caucus', name: 'DSA Climate Caucus' } },
@@ -39,14 +45,16 @@ describe('App', () => {
       did: 'did:plc:memberalpha',
       jurisdiction: 'affiliated with nyc.dsausa.org',
       trustLabel: 'self-declared',
+      verificationStatus: 'self-declared',
       status: 'active',
       publicRole: 'neighborhood canvass volunteer',
       record: { record: { $type: 'org.dsa.affiliation.member', displayName: 'Alex Rivera' } },
     }]} />);
     expect(html).toContain('Directory entities');
-    expect(html).toContain('Mocked public chapter, caucus, and member-affiliation records');
-    expect(html).toContain('public prototype records, not verified membership records');
+    expect(html).toContain('Mocked public chapter, caucus, member-affiliation, and verification assertion records');
+    expect(html).toContain('prototype trust metadata only');
     expect(html).toContain('org.dsa.profile.caucus');
+    expect(html).toContain('Verification status:');
     expect(html).toContain('Public prototype member affiliation record; not verified membership.');
     expect(html).toContain('Protocol provenance');
     expect(html).toContain('Collection:');
@@ -66,6 +74,7 @@ describe('App', () => {
       did: 'did:plc:nycdsa',
       jurisdiction: 'New York City, NY',
       trustLabel: 'mock-official',
+      verificationStatus: 'mock-verified',
       status: 'active',
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
     }, {
@@ -78,6 +87,7 @@ describe('App', () => {
       did: 'did:plc:midsa',
       jurisdiction: 'Michigan, MI',
       trustLabel: 'self-declared',
+      verificationStatus: 'self-declared',
       status: 'active',
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
     }]} />);

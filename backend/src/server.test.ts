@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 
@@ -17,6 +17,10 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(memberAffiliationSeedRecords[0]).collection).toBe('org.dsa.affiliation.member');
   });
 
+  it('accepts verification assertion records', () => {
+    expect(recordEnvelopeSchema.parse(verificationAssertionSeedRecords[0]).collection).toBe('org.dsa.verification.assertion');
+  });
+
   it('rejects records when collection and payload type disagree', () => {
     expect(() => recordEnvelopeSchema.parse({ ...caucusSeedRecords[0], collection: 'org.dsa.profile.chapter' })).toThrow();
   });
@@ -25,22 +29,23 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0]]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
-    expect(entities[1]).toMatchObject({ name: 'DSA Climate Caucus', type: 'caucus' });
+    expect(entities[0].verificationStatus).toBe('mock-verified');
+    expect(entities[1]).toMatchObject({ name: 'DSA Climate Caucus', type: 'caucus', verificationStatus: 'disputed' });
     expect(entities[2]).toMatchObject({ type: 'member-affiliation', trustLabel: 'self-declared' });
     expect(entities[2].record.record.$type).toBe('org.dsa.affiliation.member');
-    expect(normalizeDirectoryEntity(caucusSeedRecords[0]).searchText).toContain('climate caucus');
-    expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0]).searchText).toContain('member.alpha.example');
+    expect(normalizeDirectoryEntity(caucusSeedRecords[0], allSeedRecords)?.searchText).toContain('climate caucus');
+    expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0], allSeedRecords)?.searchText).toContain('member.alpha.example');
   });
 
   it('replays fixtures through validation before ingestion', async () => {
     const repo = createMemoryRepository([]);
-    const report = await replayFixtureRecords([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0]], repo);
+    const report = await replayFixtureRecords([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords], repo);
 
-    expect(report).toMatchObject({ acceptedCount: 3, ingestedCount: 3, rejected: [] });
+    expect(report).toMatchObject({ acceptedCount: 5, ingestedCount: 5, rejected: [] });
     expect(await repo.listEntities()).toHaveLength(3);
   });
 
@@ -140,6 +145,7 @@ describe('API response', () => {
     expect(json.prototype).toBe(true);
     expect(json.data.some((item) => item.type === 'caucus')).toBe(true);
     expect(json.data.some((item) => item.type === 'member-affiliation')).toBe(true);
+    expect(json.data.every((item) => item.type !== 'verification-assertion')).toBe(true);
   });
 
   it('filters entities by type and search text', async () => {
@@ -151,6 +157,18 @@ describe('API response', () => {
     const json = (await response.json()) as { data: Array<{ type: string; name: string }> };
     expect(json.data).toHaveLength(1);
     expect(json.data[0]).toMatchObject({ type: 'member-affiliation', name: 'Alex Rivera' });
+  });
+
+  it('serves verification metadata on entity detail payloads', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/entities/at%3A%2F%2Fdid%3Aplc%3Anycdsa%2Forg.dsa.profile.chapter%2Fself`);
+    const json = await response.json() as { data: { verificationStatus: string; verifiedBy?: string; verificationReason?: string } };
+    expect(json.data.verificationStatus).toBe('mock-verified');
+    expect(json.data.verifiedBy).toBe('dsausa.org');
+    expect(json.data.verificationReason).toContain('NYC chapter');
   });
 
   it('filters postgres-shaped repository memory results consistently', async () => {
