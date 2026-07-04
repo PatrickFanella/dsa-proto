@@ -250,4 +250,55 @@ describe('API response', () => {
     const json = (await response.json()) as { data: Array<{ type: string }> };
     expect(json.data.every((item) => item.type === 'chapter')).toBe(true);
   });
+
+  it('ingests chapter fixtures through the admin endpoint', async () => {
+    const repo = createMemoryRepository([]);
+    server = createApp(repo);
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const record = chapterSeedRecords[0];
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ records: [record] }),
+    });
+    const json = await response.json() as { acceptedCount: number; ingestedCount: number; rejected: Array<unknown> };
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({ acceptedCount: 1, ingestedCount: 1, rejected: [] });
+    expect((await repo.listEntities()).map((entity) => entity.id)).toContain(record.uri);
+  });
+
+  it('rejects invalid admin fixture bodies', async () => {
+    server = createApp(createMemoryRepository([]));
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{not-json',
+    });
+    expect(response.status).toBe(400);
+    const json = await response.json() as { error: string };
+    expect(json.error).toBe('invalid_json');
+  });
+
+  it('returns structured rejections for invalid fixture records', async () => {
+    server = createApp(createMemoryRepository([]));
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const invalidRecord = { ...chapterSeedRecords[0], uri: 'not-at-uri' };
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ records: [chapterSeedRecords[0], invalidRecord] }),
+    });
+    const json = await response.json() as { acceptedCount: number; rejected: Array<{ index: number; reason: string }> };
+    expect(json.acceptedCount).toBe(1);
+    expect(json.rejected).toHaveLength(1);
+    expect(json.rejected[0]).toMatchObject({ index: 1 });
+    expect(json.rejected[0].reason).toContain('uri');
+  });
 });

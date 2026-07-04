@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import App from './App';
+import { buildChapterFixtureEnvelope, createDefaultChapterDraft } from './publisher';
 
 describe('App', () => {
   it('renders mixed directory entities and labels member prototype data', () => {
@@ -95,5 +96,16 @@ describe('App', () => {
     expect(html).toContain('Filter by type');
     expect(html).toContain('Michigan DSA');
     expect(html).not.toContain('New York City DSA');
+  });
+
+  it('renders the local prototype publisher and chapter preview', () => {
+    const preview = buildChapterFixtureEnvelope(createDefaultChapterDraft());
+    const html = renderToString(<App initialEntities={[]} />);
+    expect(html).toContain('Local prototype publisher');
+    expect(html).toContain('Local prototype publishing only');
+    expect(html).toContain('/api/admin/fixtures/ingest');
+    expect(html).toContain(preview.uri);
+    expect(html).toContain(preview.record.jurisdiction.name);
+    expect(html).toContain(preview.record.jurisdiction.state);
   });
 });

@@ -28,6 +28,18 @@ function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: 
   res.end(JSON.stringify(body));
 }
 
+async function readJsonBody(req: IncomingMessage) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  const text = Buffer.concat(chunks).toString('utf8').trim();
+  if (!text) return undefined;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return Symbol.for('invalid-json');
+  }
+}
+
 export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords): DirectoryRepository {
   const rawRecords = seed.map((record) => recordEnvelopeSchema.parse(record));
   const records = dedupeEntities(rawRecords);
@@ -273,6 +285,14 @@ export function createApp(repository: DirectoryRepository) {
       return;
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
+    if (req.method === 'POST' && req.url === '/api/admin/fixtures/ingest') {
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
+      const records = Array.isArray(body) ? body : body && typeof body === 'object' && 'records' in body ? (body as { records?: unknown }).records : undefined;
+      if (!Array.isArray(records)) return toJson(res, 400, { error: 'invalid_request_body', expected: '{ records: unknown[] }' });
+      const report = await replayFixtureRecords(records, repository);
+      return toJson(res, 200, { prototype: true, acceptedCount: report.acceptedCount, ingestedCount: report.ingestedCount, rejected: report.rejected });
+    }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities')) {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/api/entities') {
