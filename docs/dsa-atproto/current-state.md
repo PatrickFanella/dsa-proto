@@ -36,6 +36,7 @@ Implemented ingestion paths:
 - `backend/fixtures/records.json`
 - `make chapters-import`
 - `make caucuses-import`
+- `make registry-health`
 - `make fixture-replay`
 - browser `POST /api/admin/fixtures/ingest`
 - opt-in `pnpm --dir backend run ingest:atproto`
@@ -91,6 +92,7 @@ These forms post to `POST /api/admin/fixtures/ingest`. They are unauthenticated 
 - `docs/dsa-chapters.csv`: public chapter list used by `make chapters-import`.
 - `docs/dsa-caucuses.csv`: neutral curated caucus fixture list used by `make caucuses-import`.
 - `backend/fixtures/records.json`: generated fixture storage replayed into Postgres.
+- `make registry-health`: offline validation for canonical fixture records and duplicate registry identifiers.
 - Built-in seed arrays in backend domain code.
 - DSA organization chart source documented in `org-chart-alignment.md`.
 

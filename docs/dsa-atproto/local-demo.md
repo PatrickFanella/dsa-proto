@@ -122,13 +122,25 @@ This prototype also supports an opt-in local publishing loop that does not use a
 
 This is local prototype fixture authoring and replay, not live ATProto publishing or a real PDS write path.
 
+## Canonical registry health workflow
+
+The repo treats its curated CSV/list fixtures as the current canonical registry source. Before replaying or demoing, validate the generated fixture set for invalid envelopes and duplicate registry identifiers:
+
+```bash
+make chapters-import
+make caucuses-import
+make registry-health
+make fixture-replay
+```
+
+`make registry-health` checks `fixtures/records.json` by default and fails on invalid records or duplicate directory identifiers (`uri`, `did`, `handle`, normalized name within type).
+
 ## Import chapter fixtures from CSV
 
 The repository includes `docs/dsa-chapters.csv` as the source list of public chapter records. Importing it creates ATProto-shaped `org.dsa.profile.chapter` fixture envelopes only; it ignores contact, social, and other private-ish columns.
 
 ```bash
 make chapters-import
-make fixture-replay
 ```
 
 The import writes to `fixtures/records.json` by default and preserves non-import fixtures when merging.
@@ -139,7 +151,6 @@ The repository includes `docs/dsa-caucuses.csv` as a neutral curated source for 
 
 ```bash
 make caucuses-import
-make fixture-replay
 ```
 
 Then browse the directory and use the type filter to view caucuses.

@@ -7,7 +7,7 @@ CSV_FILE ?= ../docs/dsa-chapters.csv
 CAUCUS_CSV_FILE ?= ../docs/dsa-caucuses.csv
 ATPROTO_LIVE_INGESTION ?= false
 
-.PHONY: help deps verify fmt lint test test-backend test-web build build-backend build-web dev-backend dev-web compose-config compose-up compose-db compose-down compose-logs compose-reset db-shell fixture-author fixture-replay chapters-import caucuses-import ingest-atproto open-pilot-check
+.PHONY: help deps verify fmt lint test test-backend test-web build build-backend build-web dev-backend dev-web compose-config compose-up compose-db compose-down compose-logs compose-reset db-shell fixture-author fixture-replay chapters-import caucuses-import registry-health ingest-atproto open-pilot-check
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -81,6 +81,9 @@ chapters-import: ## Import docs/dsa-chapters.csv into fixture storage; override 
 
 caucuses-import: ## Import docs/dsa-caucuses.csv into fixture storage; override CAUCUS_CSV_FILE=../docs/dsa-caucuses.csv
 	pnpm --dir backend exec tsx src/caucuses-csv-import.ts $(CAUCUS_CSV_FILE) --out $(FIXTURE_FILE)
+
+registry-health: ## Validate canonical fixture records for invalid or duplicate directory entries; override FIXTURE_FILE=fixtures/records.json
+	pnpm --dir backend run registry:health -- $(FIXTURE_FILE)
 
 ingest-atproto: ## Run opt-in live ATProto ingestion; set ATPROTO_LIVE_INGESTION=true to connect
 	ATPROTO_LIVE_INGESTION=$(ATPROTO_LIVE_INGESTION) pnpm --dir backend run ingest:atproto

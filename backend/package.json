@@ -8,6 +8,7 @@
     "ingest:atproto": "tsx src/ingest-atproto.ts",
     "fixtures:replay": "tsx src/fixtures-replay.ts",
     "fixtures:author": "tsx src/fixtures-author.ts",
+    "registry:health": "tsx src/registry-health.ts",
     "chapters:import": "tsx src/chapters-csv-import.ts",
     "caucuses:import": "tsx src/caucuses-csv-import.ts",
     "build": "tsc -p tsconfig.json",

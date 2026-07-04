@@ -77,6 +77,13 @@ function normalizeWebsite(value: string) {
   }
 }
 
+function deriveChapterHandle(website: string, slug: string) {
+  const host = new URL(website).hostname.replace(/^www\./, '');
+  const sharedHosts = new Set(['dsausa.org', 'linktr.ee', 'linktree.com']);
+  if (!host || sharedHosts.has(host)) return `${slug}.chapters.dsa.example`;
+  return host;
+}
+
 function buildChapterEnvelope(row: CsvRow): RecordEnvelope {
   const state = row.State.trim().toUpperCase();
   const name = row.Name.trim();
@@ -84,7 +91,7 @@ function buildChapterEnvelope(row: CsvRow): RecordEnvelope {
   const slug = slugify(`${state}-${name}`);
   const did = `${IMPORT_DID_PREFIX}${slug}`;
   const website = normalizeWebsite(row.Website ?? '');
-  const host = new URL(website).hostname.replace(/^www\./, '') || `${slug}.${state.toLowerCase()}.dsa.example`;
+  const handle = deriveChapterHandle(website, slug);
   const record = {
     $type: 'org.dsa.profile.chapter' as const,
     name,
@@ -102,7 +109,7 @@ function buildChapterEnvelope(row: CsvRow): RecordEnvelope {
     uri: `at://${did}/org.dsa.profile.chapter/self`,
     cid: `${IMPORT_CID_PREFIX}${slug}`,
     did,
-    handle: host,
+    handle,
     collection: record.$type,
     indexedAt: DEFAULT_INDEXED_AT,
     trustLabel: 'self-declared',

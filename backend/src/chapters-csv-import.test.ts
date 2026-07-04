@@ -26,6 +26,7 @@ describe('chapter CSV import', () => {
       },
     });
     expect('website' in records[1].record ? records[1].record.website : undefined).toBe('https://dsausa.org/chapters/');
+    expect(records[1].handle).toBe('ny-east-harlem.chapters.dsa.example');
     expect(JSON.stringify(records)).not.toContain('hello@example.org');
     expect(JSON.stringify(records)).not.toContain('linktr.ee');
   });
