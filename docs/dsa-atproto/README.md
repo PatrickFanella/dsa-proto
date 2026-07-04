@@ -79,6 +79,7 @@ Use a hybrid architecture:
 - [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
 - [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
 - [answers.md](answers.md): answered requirements interview
+- [current-state.md](current-state.md): current implementation baseline and recommended next lanes
 - [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
 - [local-demo.md](local-demo.md): local run, reseed/reset, and reviewer demo flow
 - [technical-architecture.md](technical-architecture.md): implementation architecture for the mocked-record prototype

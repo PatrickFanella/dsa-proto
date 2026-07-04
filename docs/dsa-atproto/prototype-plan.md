@@ -1,139 +1,140 @@
 # Prototype Plan
 
-## Purpose
+## Current purpose
 
-Build a working local prototype that demonstrates how AT Protocol-shaped public records can become a DSA-facing chapter and organization directory.
+`dsa-proto` is now a local civic data workbench for exploring how AT Protocol-shaped public records could support DSA-adjacent directories, provenance, trust labels, fixture publishing, and public governance structure browsing.
 
-The prototype should be useful to DSA members first. It should make the idea concrete without pretending to solve production trust, governance, moderation, or firehose indexing yet.
+The original Milestone 1 was a small chapter/caucus/member directory. That core is complete, and the prototype has intentionally expanded into nearby experimental lanes:
 
-## Milestone 1 outcome
+- deterministic fixture ingestion
+- chapter and caucus CSV imports
+- local browser publishing for safe fixture records
+- prototype verification/dispute assertions
+- opt-in live ATProto ingestion script
+- public org-chart unit and relationship explorer
+
+The prototype still should not imply production readiness, real DSA verification, or a real PDS publishing path.
+
+## Current local outcome
 
 A local Docker Compose app where a user can:
 
-1. Open a public microsite/directory UI.
-2. Browse chapter, caucus/working group, and opt-in member profile records.
-3. Search or filter those records.
-4. View the ATProto identity mapping behind a record: DID, handle, record type, and mock AT URI.
-5. See records served through a simple REST API backed by Postgres.
-6. Re-seed the database from mocked ATProto-shaped records.
+1. Open a public prototype UI.
+2. Browse chapter, caucus/working group, and opt-in member-affiliation records.
+3. Search and filter records by type, state, chapter kind, and text.
+4. View protocol provenance: DID, handle, collection, record type, AT URI, trust label, verification status, and raw record JSON.
+5. Import chapter and caucus fixture records from CSV files.
+6. Author local chapter and verification assertion fixtures from the browser or CLI.
+7. Replay fixture records into Postgres with accepted/rejected reporting.
+8. Browse a public DSA org-chart alignment model built from `org.dsa.profile.orgUnit` and `org.dsa.relationship.governance` records.
+9. Keep all local work deterministic and verifiable with `make verify`.
 
 ## Audience
 
-Primary audience: DSA members evaluating whether this shared public data layer is understandable and useful.
+Primary audience: DSA members and organizers evaluating whether a shared public civic data layer is understandable and useful.
 
-Secondary audience: developers evaluating whether the architecture can later grow into real ATProto ingestion.
+Secondary audience: developers evaluating whether the transport-neutral record envelope architecture can later accept real ATProto records.
 
 ## Product shape
 
-Milestone 1 should feel like a small public microsite with directory/search behavior, not an admin-heavy internal tool.
+The prototype currently has three user-facing areas:
 
-Recommended first screens:
+- Directory: searchable chapter/caucus/member-affiliation cards with provenance detail.
+- Local publisher: browser forms for chapter fixtures and mock verification/dispute assertions.
+- Org chart explorer: source-linked public governance units and relationships from the DSA org chart.
 
-- Home/overview page explaining the prototype.
-- Directory page listing public entities.
-- Entity detail page showing human-readable information plus protocol metadata.
-- Developer/debug panel or section showing the source mocked record.
+This is more than a static microsite, but it is still a local prototype. Browser publishing is local-only and unauthenticated; it must not be treated as production admin tooling.
 
-## Data types for the first pass
+## Supported record envelopes
 
-Prioritize these records:
+Directory records:
 
 1. `org.dsa.profile.chapter`
 2. `org.dsa.profile.caucus`
 3. `org.dsa.affiliation.member`
 
-Events, endorsements, statements, publications, and source-linked voter guides are important, but should wait until the core identity/profile loop works.
+Trust and governance records:
+
+4. `org.dsa.verification.assertion`
+5. `org.dsa.profile.orgUnit`
+6. `org.dsa.relationship.governance`
+
+Verification assertions and org-chart records are stored as public record envelopes, but they do not become ordinary directory cards.
 
 ## Source of truth model
 
-The long-term model is hybrid:
+The long-term model remains hybrid:
 
 ```text
-ATProto records = public write/publication layer
+ATProto-shaped public records = publication/source layer
 Postgres = indexed read model for app queries
 REST API = local app/developer convenience layer
-React UI = public directory/microsite
+React UI = public prototype workbench
 ```
 
-Milestone 1 should simulate the ATProto layer with versioned seed files containing mocked records that match the proposed Lexicon shapes.
+Current local sources include:
 
-## Deliberate simplification
+- built-in deterministic seed arrays
+- `backend/fixtures/records.json`
+- `docs/dsa-chapters.csv`
+- `docs/dsa-caucuses.csv`
+- browser-published local fixture records
+- optional live ATProto firehose events when explicitly enabled
 
-Treat real firehose/relay consumption as Phase 2.
+## Deliberate simplifications
 
-For Milestone 1, build an ingestion boundary that accepts mocked records so the code shape can later support real records without committing to live network integration early.
+- Fixture replay remains the default local path.
+- Live ATProto ingestion is opt-in and disabled by default.
+- Browser publishing creates local fixture records, not real PDS records.
+- Verification assertions are prototype records, not real DSA legitimacy decisions.
+- The org-chart explorer models public chart structure, not full bylaws or internal governance practice.
 
 ## Verification and trust
 
-Identity verification is deferred for now.
+The app distinguishes prototype trust/verification states such as:
 
-Milestone 1 may include a simple display field such as `trustLabel` or `verificationStatus`, but it must not imply a real DSA verification process exists.
-
-Use labels like:
-
-- `mock-official`
+- `mock-verified`
 - `self-declared`
 - `unverified`
+- `disputed`
+- `revoked`
 - `experimental`
 
-The UI should make clear that the data is sample prototype data.
+These states are display metadata for the prototype. They do not establish real official status, verified membership, or DSA endorsement.
 
 ## Explicit safety boundary
 
 Do not model or seed:
 
-- Internal votes
-- Private deliberation
-- Dues/payment status
-- Casework or disciplinary records
-- High-risk organizing logistics
-- Private member rosters
-- Personal contact information not explicitly published
+- internal votes
+- private deliberation
+- dues/payment status
+- casework or disciplinary records
+- high-risk organizing logistics
+- private member rosters
+- personal contact information not explicitly published for the demo
 
-Opt-in member profiles should be public profile examples only. They should not imply verified membership or expose private contact data.
+Opt-in member-affiliation examples should remain public self-declarations only. They should not imply verified membership or expose private contact data.
 
-## Backend priorities
+## Current success criteria
 
-Milestone 1 backend work should prioritize:
+The prototype is healthy when:
 
-1. Postgres schema and seed data.
-2. Mock ATProto record ingestion.
-3. Lexicon-shaped validation with Zod.
-4. REST endpoints for list/detail/search.
-5. Light admin CRUD only if needed to demonstrate writing records locally.
-
-Recommended API endpoints:
-
-```http
-GET /health
-GET /api/entities
-GET /api/entities/:id
-GET /api/chapters
-GET /api/caucuses
-GET /api/members
-POST /api/admin/ingest/mock-records
-```
-
-The admin endpoint can remain development-only and should not require real auth in Milestone 1 if it is not exposed beyond local development.
-
-## Success criteria
-
-The milestone works when:
-
-- `docker compose up` starts Postgres, backend, and web.
-- Seed data can be loaded into Postgres deterministically.
-- The UI shows a browsable chapter directory from structured records.
-- Entity detail pages show DID/handle/record type/AT URI mapping.
-- The REST API returns normalized records from Postgres.
-- The README explains how to run and demo the prototype.
 - `make verify` passes.
+- `docker compose up --build` starts Postgres, backend, and web.
+- `make chapters-import`, `make caucuses-import`, and `make fixture-replay` work locally.
+- The UI can browse imported chapters/caucuses and built-in member-affiliation examples.
+- Entity detail pages show protocol provenance and verification metadata.
+- The browser publisher can create local chapter fixtures and verification assertions.
+- `/api/org-chart` and the UI org-chart explorer show source-linked governance units and relationships.
+- Docs clearly distinguish local prototype behavior from production ATProto/PDS behavior.
 
-## Non-goals for Milestone 1
+## Current non-goals
 
-- Real PDS login or publishing.
-- Live ATProto firehose consumption.
+- Real PDS login or record publishing.
+- Live ingestion enabled by default.
 - Production verification/labeling service.
-- Authentication and authorization.
+- Authenticated production admin dashboard.
 - Complete formal Lexicon JSON definitions.
-- A complete admin dashboard.
 - Modeling sensitive internal organizing data.
+- Deploying a public demo with local admin endpoints exposed.

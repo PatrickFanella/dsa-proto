@@ -2,25 +2,25 @@
 
 ## Architecture summary
 
-Milestone 1 should implement the hybrid model locally with mocked ATProto records.
+The current prototype implements a local civic data workbench around ATProto-shaped public record envelopes.
 
 ```text
-Mock ATProto seed records
+CSV files / fixture JSON / browser publisher / optional live firehose
         ↓
-Ingestion + validation layer
+RecordEnvelope validation + replay/reporting
         ↓
-Postgres indexed read model
+Postgres raw record store (`atproto_records`)
+        ↓
+Directory read model (`directory_entities`) + org-chart projection
         ↓
 Node REST API
         ↓
-Vite React directory/microsite
+Vite React local workbench
 ```
 
-This preserves the long-term shape from `architecture.md` while avoiding live PDS, relay, or firehose dependencies in the first build.
+Fixture replay remains the default local path. The live ATProto adapter exists as an opt-in script and is disabled by default.
 
 ## Existing stack
-
-Use the current repository stack:
 
 - TypeScript workspace managed by pnpm
 - Node backend in `backend/`
@@ -29,17 +29,9 @@ Use the current repository stack:
 - SQL migrations in `migrations/`
 - `make verify` as the canonical check
 
-## Data flow
+## Record envelope model
 
-### 1. Mock records
-
-Store mock records as JSON fixtures in the repository, for example:
-
-```text
-backend/src/fixtures/mock-records.json
-```
-
-Each fixture should include ATProto metadata plus a Lexicon-shaped payload:
+All records pass through a shared `RecordEnvelope` shape:
 
 ```json
 {
@@ -48,180 +40,175 @@ Each fixture should include ATProto metadata plus a Lexicon-shaped payload:
   "did": "did:plc:nycdsa",
   "handle": "nyc.dsausa.org",
   "collection": "org.dsa.profile.chapter",
-  "indexedAt": "2026-07-01T00:00:00Z",
+  "indexedAt": "2026-07-01T00:00:00.000Z",
+  "trustLabel": "self-declared",
   "record": {
-    "$type": "org.dsa.profile.chapter",
-    "name": "New York City DSA",
-    "shortName": "NYC-DSA",
-    "jurisdiction": {
-      "type": "city",
-      "name": "New York City",
-      "state": "NY",
-      "country": "US"
-    },
-    "website": "https://socialists.nyc/",
-    "status": "active"
+    "$type": "org.dsa.profile.chapter"
   }
 }
 ```
 
-### 2. Validation
-
-Use Zod schemas to validate the mocked record envelope and the supported `$type` payloads.
-
-Minimum supported payload schemas:
+Supported payload collections:
 
 - `org.dsa.profile.chapter`
 - `org.dsa.profile.caucus`
 - `org.dsa.affiliation.member`
+- `org.dsa.verification.assertion`
+- `org.dsa.profile.orgUnit`
+- `org.dsa.relationship.governance`
 
-Validation should reject unknown required shapes while allowing future extension fields where appropriate.
+Validation rejects mismatched envelope collection and record `$type` values.
 
-### 3. Ingestion
+## Ingestion paths
 
-The ingestion layer should:
+### Fixture replay
 
-- Accept an array of mocked records.
-- Validate each record.
-- Upsert the raw record envelope.
-- Upsert a normalized entity row for directory queries.
-- Preserve original record JSON for debug/developer inspection.
+`replayFixtureRecords` validates an array of unknown records, ingests accepted records, and returns rejected-record reports by index and reason.
 
-This boundary should be named generically enough to later accept real ATProto records.
+Fixture sources include:
 
-### 4. Postgres read model
+- built-in backend seed arrays
+- `backend/fixtures/records.json`
+- browser `POST /api/admin/fixtures/ingest`
+- generated fixture files from CLI authoring/import commands
 
-Start with a compact schema:
+### CSV imports
 
-```sql
-atproto_records
-- uri primary key
-- cid
-- did
-- handle
-- collection
-- record jsonb
-- indexed_at timestamptz
+CSV imports generate deterministic fixture records, then fixture replay ingests them:
 
-directory_entities
-- id primary key
-- record_uri references atproto_records(uri)
-- entity_type
-- name
-- short_name
-- handle
-- did
-- jurisdiction_name
-- jurisdiction_region
-- website
-- description
-- trust_label
-- status
-- search_text
-- updated_at timestamptz
+- `make chapters-import` reads `docs/dsa-chapters.csv` and generates `org.dsa.profile.chapter` envelopes.
+- `make caucuses-import` reads `docs/dsa-caucuses.csv` and generates `org.dsa.profile.caucus` envelopes.
+- `make fixture-replay` starts/checks local Postgres and replays `backend/fixtures/records.json`.
+
+### Browser publisher
+
+The local UI posts generated record envelopes to:
+
+```http
+POST /api/admin/fixtures/ingest
 ```
 
-The `directory_entities` table is intentionally denormalized. It is an indexed app view, not the canonical public record.
+Supported browser-published records today:
 
-### 5. REST API
+- chapter fixture envelopes
+- verification assertion envelopes
 
-Recommended first endpoints:
+This endpoint is local prototype tooling. It is not safe production admin functionality.
+
+### Live ATProto adapter
+
+The opt-in live script uses `@atproto/sync` `Firehose` and maps create/update events into `RecordEnvelope` values.
+
+```bash
+ATPROTO_LIVE_INGESTION=true pnpm --dir backend run ingest:atproto
+```
+
+Live ingestion is not part of `make verify`, is not started by Compose, and defaults to disabled.
+
+## Postgres model
+
+### Raw records
+
+`atproto_records` is the canonical local store for all accepted envelopes:
+
+- `uri` primary key
+- `cid`
+- `did`
+- `handle`
+- `collection`
+- `record jsonb`
+- `indexed_at timestamptz`
+
+It stores directory records, verification assertions, org units, and governance relationships.
+
+### Directory read model
+
+`directory_entities` is an indexed, denormalized read model for public cards:
+
+- chapter records
+- caucus records
+- opt-in member-affiliation records
+
+It includes normalized fields such as name, handle, DID, jurisdiction fields, status, search text, trust label, and verification metadata.
+
+Verification assertion records are applied at read time and stored in raw records; they do not become directory cards.
+
+Org-chart records also stay out of `directory_entities` and are projected separately through `/api/org-chart`.
+
+## REST API
+
+Current endpoints:
 
 ```http
 GET /health
-GET /api/entities?type=&q=&region=
+GET /api/entities?type=&q=&state=&jurisdictionType=&limit=
 GET /api/entities/:id
-GET /api/records/:encodedUri
-POST /api/admin/ingest/mock-records
+GET /api/chapters
+GET /api/org-chart?kind=&unit=
+POST /api/admin/fixtures/ingest
 ```
 
-Response shape for entity list items:
+`GET /api/entities` returns normalized directory entities with provenance metadata. Detail responses include the raw record payload.
 
-```json
-{
-  "id": "...",
-  "type": "chapter",
-  "name": "New York City DSA",
-  "shortName": "NYC-DSA",
-  "handle": "nyc.dsausa.org",
-  "did": "did:plc:nycdsa",
-  "jurisdiction": "New York City, NY",
-  "trustLabel": "mock-official",
-  "status": "active"
-}
-```
+`GET /api/org-chart` returns source-linked org units and governance relationships. Optional filters can narrow by unit kind or focus around a single unit AT URI.
 
-Detail responses should include:
+## Frontend
 
-- normalized entity fields
-- source record URI
-- DID and handle
-- collection / `$type`
-- raw record JSON
+The React app currently includes:
 
-### 6. Frontend
+- directory search and filters
+- large chapter-list browsing controls
+- entity cards and protocol provenance detail panel
+- verification/trust display
+- local chapter publisher
+- local verification assertion publisher
+- DSA org-chart explorer grouped by unit kind
 
-The frontend should remain simple:
-
-- Fetch entities from the REST API.
-- Provide search/filter controls.
-- Render entity cards.
-- Render detail views or expanded panels.
-- Show protocol metadata clearly.
-- Label prototype data as mocked/experimental.
-
-Avoid complex state management until the app has real interaction needs.
+The UI should continue to state clearly that records are mock, curated, imported, or local prototype data unless/until a production source and verification model exists.
 
 ## Trust and verification handling
 
-Milestone 1 does not implement real verification.
+Trust fields are prototype metadata.
 
-Use placeholder fields in seed data and normalized views:
+Directory responses can expose:
 
-```text
-trustLabel: mock-official | self-declared | unverified | experimental
-```
+- `trustLabel`
+- `verificationStatus`
+- `verifiedBy`
+- `verificationReason`
 
-Prototype verification assertions are stored as public records with `$type` `org.dsa.verification.assertion` and applied at read time to directory entities. They can mark a subject as `verified`, `disputed`, `revoked`, or `self-declared` without creating a directory card of their own.
+`org.dsa.verification.assertion` records can mark a subject as verified, disputed, revoked, or self-declared. This is useful for modeling behavior, but it is not a production legitimacy process.
 
-The UI should display this as prototype metadata, not as a real legitimacy claim.
+## Source/provenance gap
 
-## Firehose/relay future path
+The next architectural gap is source/citation metadata.
 
-Phase 2 can replace or supplement fixture ingestion with a real subscriber:
+Current imports and org-chart records are source-informed, but the record model does not yet make source provenance first-class for every imported record.
 
-```text
-ATProto relay/firehose
-        ↓
-record filter for org.dsa.* collections
-        ↓
-same validation layer
-        ↓
-same Postgres upsert/read model
-```
+Recommended next architecture slice:
 
-Milestone 1 should keep this path open by isolating ingestion from transport.
-
-The issue #9 decision is to keep fixture replay as the default local path and make the first live implementation an opt-in `@atproto/sync` `Firehose` script, not a default Compose service. `@atproto/tap` remains a later option for a fuller indexing pipeline. See [atproto-ingestion-spike.md](atproto-ingestion-spike.md) for the adapter sketch, setup requirements, and operational risks.
+- Add source/citation metadata to imported records or a separate source record type.
+- Surface source/caveat data in directory and org-chart details.
+- Preserve source metadata through fixture replay, CSV import, browser publishing, and future live ingestion.
 
 ## Deployment posture
 
-The prototype should be deployable later, but local correctness comes first.
-
-For now:
+Local correctness comes first. Before any public deployment:
 
 - Keep secrets out of git.
 - Use `.env.example` placeholders.
 - Keep `docker compose` working.
-- Avoid external service dependencies.
-- Do not expose admin ingestion endpoints in a production deployment without auth.
+- Disable or protect local admin/publisher endpoints.
+- Keep live ingestion opt-in.
+- Make prototype/mock/curated labels visible.
+- Do not expose private or sensitive organizing data.
 
 ## Verification
 
-Every implementation issue should include a deterministic test command. Default:
+Run:
 
 ```bash
 make verify
 ```
 
-Smaller issue-level checks can use package-specific tests only when they fully prove the change.
+Use narrower checks only when they fully prove a targeted change.

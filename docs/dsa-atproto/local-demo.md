@@ -1,6 +1,6 @@
 # Local Demo and Reseed Workflow
 
-This demo shows the current Milestone 1 prototype: mocked ATProto-shaped public records are validated, loaded into a local Postgres read model, exposed through a REST API, and displayed in the directory UI.
+This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory and org-chart UI.
 
 The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
 
@@ -38,11 +38,16 @@ On backend startup, `bootstrapRepository` connects to Postgres, ensures the prot
 - `org.dsa.profile.chapter`
 - `org.dsa.profile.caucus`
 - `org.dsa.affiliation.member`
+- `org.dsa.verification.assertion`
+- `org.dsa.profile.orgUnit`
+- `org.dsa.relationship.governance`
 
 The backend upserts both:
 
 - raw ATProto-shaped envelopes into `atproto_records`
 - normalized searchable directory rows into `directory_entities`
+
+Verification, org-unit, and governance-relationship records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
 
 If Postgres is unavailable, the backend falls back to an in-memory repository so local tests and development can still run.
 
@@ -83,12 +88,14 @@ Use the destructive reset only when you intentionally want to discard local Post
    - raw record JSON
 7. For member-affiliation examples, call out that they are public prototype self-declarations. They do not imply verified membership.
 8. Open <http://localhost:8080/api/entities> to show the normalized API response that powers the UI.
-9. Optionally try query filters:
+9. Open the org-chart section to show public organizational units and governance relationships from the source-linked DSA chart.
+10. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter
    http://localhost:8080/api/entities?type=member-affiliation&q=alex
    http://localhost:8080/api/entities?q=climate
+   http://localhost:8080/api/org-chart?kind=publication
    ```
 
 ## Local fixture author -> replay -> browse loop
@@ -166,7 +173,8 @@ This browser flow is intentionally limited to safe local fixture records. It is 
 - ATProto-shaped public records can be normalized into a simple civic directory.
 - The app can preserve protocol provenance alongside user-readable fields.
 - Search and type filters work over a Postgres-backed read model.
-- The mocked ingestion boundary can later be replaced by real ATProto transport without changing the UI concept.
+- Trust assertions and org-chart relationship records can be modeled without becoming ordinary directory cards.
+- The fixture ingestion boundary can be supplemented by real ATProto transport without changing the UI concept.
 
 ## Safety boundary
 

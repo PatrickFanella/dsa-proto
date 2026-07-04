@@ -1,87 +1,125 @@
 # Roadmap
 
+This roadmap has been regrouped after several productive off-plan slices. The prototype should now be understood as a **local civic data workbench** rather than only a chapter directory.
+
 ## Phase 0: Repository specialization
 
-Status: in progress / mostly complete.
+Status: complete.
 
-Goals:
+Delivered:
 
-- Convert inherited template language to `dsa-proto`.
-- Preserve Open Pilot issue and PR templates.
-- Add requirements interview answers.
-- Add prototype planning docs.
+- Converted inherited template language to `dsa-proto`.
+- Preserved Open Pilot issue and PR templates.
+- Added DSA ATProto concept docs and requirements answers.
+- Added project-specific Makefile shortcuts.
+
+## Phase 1: Local directory workbench
+
+Status: substantially complete.
+
+Delivered:
+
+- Transport-neutral `RecordEnvelope` validation.
+- Raw `atproto_records` storage.
+- Denormalized `directory_entities` read model.
+- Chapter, caucus, and opt-in member-affiliation records.
+- Search, type filters, state filters, and chapter-kind filters.
+- Entity detail/provenance panel.
+- Local fixture replay with rejected-record reporting.
+- Chapter CSV import from `docs/dsa-chapters.csv`.
+- Caucus CSV import from `docs/dsa-caucuses.csv`.
+- Browser and CLI local fixture authoring.
+
+Remaining hardening:
+
+- Better source/provenance metadata for imported records.
+- Demo reset and seed-state clarity.
+- UI polish for large directories.
+
+## Phase 2: ATProto ingestion spike
+
+Status: prototype spike complete.
+
+Delivered:
+
+- Researched current ATProto TypeScript ingestion options.
+- Chose `@atproto/sync` `Firehose` for first live adapter.
+- Added opt-in `pnpm --dir backend run ingest:atproto` script.
+- Kept live network access disabled by default.
+- Kept `make verify` offline and deterministic.
+
+Remaining hardening before production use:
+
+- Cursor/checkpoint handling.
+- Backfill strategy.
+- Delete/tombstone behavior.
+- Observability, retry, and alerting.
+- Identity/handle resolution cache.
+
+## Phase 3: Prototype trust and verification
+
+Status: prototype complete, production model not complete.
+
+Delivered:
+
+- `org.dsa.verification.assertion` record shape.
+- Mock verification/dispute/revocation/self-declared states.
+- Read-time trust metadata applied to directory entities.
+- Browser publisher for local verification assertions.
+- UI copy that avoids implying real DSA legitimacy.
+
+Remaining hardening:
+
+- Formal issuer/subject policy.
+- Source/citation model for assertions.
+- Conflict handling when multiple issuers disagree.
+- Production governance review.
+
+## Phase 3.5: Public organization structure explorer
+
+Status: experimental slice complete.
+
+This was off the original plan but useful for grounding the model in public DSA structure.
+
+Delivered:
+
+- `org.dsa.profile.orgUnit` records for public organizational units.
+- `org.dsa.relationship.governance` records for public chart relationships.
+- `/api/org-chart` endpoint with `kind` and `unit` filters.
+- React org-chart explorer grouped by unit kind.
+- Source-linked notes for the June 2020 DSA organization chart.
+
+Remaining hardening:
+
+- Updated/official source review.
+- Better relationship vocabulary.
+- Clear distinction between chart summaries and bylaws-level governance.
+
+## Phase 4: Source and provenance model
+
+Status: recommended next lane.
+
+Goal: make imported and derived records explain where they came from.
+
+Candidate work:
+
+- Add source/citation fields or a separate source record type.
+- Attach source metadata to CSV-imported chapter/caucus records.
+- Attach source metadata to org-chart units and relationships.
+- Display source/caveat metadata in the directory and org-chart UI.
+- Document what is official, curated, user-authored, mock, or opinion-derived.
 
 Exit criteria:
 
-- Project README describes `dsa-proto`.
-- DSA ATProto docs are linked.
-- `make verify` passes.
+- Every non-hand-authored dataset has a visible source and caveat.
+- UI can distinguish imported public data from mock/demo data.
+- Replaying fixtures preserves provenance.
 
-## Phase 1: Local mocked-record prototype
+## Phase 5: Expanded civic records
 
-Goal: prove the core loop locally with mocked ATProto-shaped records and a Postgres read model.
+Status: future.
 
-Scope:
-
-- SQL schema for raw records and normalized directory entities.
-- Zod schemas for chapter, caucus, and opt-in member affiliation records.
-- Mock record fixtures.
-- Ingestion/upsert service.
-- REST endpoints for list/detail/search.
-- Basic public directory UI.
-- Docker Compose run path.
-
-Out of scope:
-
-- Live firehose ingestion.
-- Real PDS publishing.
-- Production verification service.
-- Authenticated admin dashboard.
-
-Exit criteria:
-
-- A user can run the app locally with Docker Compose.
-- Seeded records appear in the UI.
-- Entity detail view shows ATProto metadata.
-- `make verify` passes.
-
-## Phase 2: Real ATProto ingestion spike
-
-Goal: test whether real ATProto transport can feed the same validation and read-model path.
-
-Scope:
-
-- Investigate current ATProto TypeScript libraries and firehose/relay APIs.
-- Build a small subscriber or importer for `org.dsa.*`-shaped records.
-- Keep mocked ingestion as a deterministic local fallback.
-- Document operational and moderation implications.
-
-Exit criteria:
-
-- One spike can ingest or simulate real transport through the same ingestion boundary.
-- Architecture doc identifies what must change for production ingestion.
-- Risks and dependencies are documented.
-
-## Phase 3: Trust and verification model
-
-Goal: make legitimacy explicit without hardcoding political assumptions into app logic.
-
-Scope:
-
-- Model `org.dsa.verification.assertion` records.
-- Add trust labels to the read model.
-- Display verification/dispute status in the UI.
-- Document governance assumptions.
-
-Exit criteria:
-
-- The app can distinguish self-declared, mock-official, disputed, revoked, and archived states.
-- Verification claims point to issuer identities.
-- UI copy avoids implying unearned official status.
-
-## Phase 4: Expanded civic records
-
-Goal: move beyond profiles into higher-value civic information.
+Goal: move beyond profiles and org structure into higher-value civic information.
 
 Candidate record types:
 
@@ -89,15 +127,17 @@ Candidate record types:
 - Endorsements
 - Public statements
 - Publications/articles
-- Source citations
+- Source-linked voter guides
 
 Exit criteria:
 
-- At least one non-profile record type is ingested and shown in context.
+- At least one non-profile civic record type is ingested and shown in context.
 - Records can link back to organizations and sources.
 - Safety review confirms no private organizing data is modeled.
 
-## Phase 5: Deployable demo
+## Phase 6: Deployable demo
+
+Status: future.
 
 Goal: make the prototype accessible to reviewers without local setup.
 
@@ -106,11 +146,13 @@ Scope:
 - Deployment target selection.
 - Environment variable documentation.
 - Production-safe Docker config.
-- Admin endpoints disabled or protected.
-- Seed/demo data reset path.
+- Admin endpoints disabled, removed, or protected.
+- Demo data reset path.
+- Public-facing disclaimers.
 
 Exit criteria:
 
 - Public demo URL exists.
 - README contains deployment and demo instructions.
-- Demo data is clearly labeled as prototype/mock data.
+- Demo data is clearly labeled as prototype/mock/curated data.
+- Local-only publisher/admin paths are not exposed unsafely.

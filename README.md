@@ -27,6 +27,7 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/app-ideas.md`](docs/dsa-atproto/app-ideas.md) — possible applications
 - [`docs/dsa-atproto/requirements-interview.md`](docs/dsa-atproto/requirements-interview.md) — first milestone interview
 - [`docs/dsa-atproto/answers.md`](docs/dsa-atproto/answers.md) — answered requirements interview
+- [`docs/dsa-atproto/current-state.md`](docs/dsa-atproto/current-state.md) — current implementation baseline and next lanes
 - [`docs/dsa-atproto/prototype-plan.md`](docs/dsa-atproto/prototype-plan.md) — first local prototype scope
 - [`docs/dsa-atproto/local-demo.md`](docs/dsa-atproto/local-demo.md) — local run, reseed/reset, and reviewer demo flow
 - [`docs/dsa-atproto/technical-architecture.md`](docs/dsa-atproto/technical-architecture.md) — implementation architecture
