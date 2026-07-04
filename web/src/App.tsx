@@ -24,6 +24,10 @@ export type DirectoryCard = {
   record: { record: Record<string, unknown> };
 };
 
+export type OrgChartUnit = { uri: string; name: string; shortName: string; kind: string; description: string; status: string; website?: string };
+export type OrgChartRelationship = { uri: string; subjectUri: string; relationship: string; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string };
+export type OrgChartPayload = { prototype: boolean; sourceUrl: string; updatedLabel: string; units: OrgChartUnit[]; relationships: OrgChartRelationship[] };
+
 const fallbackEntities: DirectoryCard[] = [
   {
     id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
@@ -77,8 +81,17 @@ const fallbackEntities: DirectoryCard[] = [
   },
 ];
 
-export default function App({ initialEntities = fallbackEntities, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
+const fallbackOrgChart: OrgChartPayload = {
+  prototype: true,
+  sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg',
+  updatedLabel: 'Last updated June 2020',
+  units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active' }],
+  relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }],
+};
+
+export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
+  const [orgChart, setOrgChart] = useState(initialOrgChart);
   const [search, setSearch] = useState(initialSearch);
   const [typeFilter, setTypeFilter] = useState<'all' | DirectoryCard['type']>(initialTypeFilter);
   const [stateFilter, setStateFilter] = useState('all');
@@ -106,6 +119,10 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
       })
       .catch(() => setEntities(initialEntities));
   }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`).then((response) => response.json()).then((payload) => setOrgChart(payload)).catch(() => setOrgChart(initialOrgChart));
+  }, [initialOrgChart]);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
@@ -170,6 +187,21 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
         <p className="mt-4 text-zinc-300">Mocked public chapter, caucus, member-affiliation, and verification assertion records are shown below as prototype data.</p>
         <p className="mt-2 text-sm text-amber-300">Verification labels are prototype trust metadata only, not real DSA legitimacy or membership proof.</p>
         <p className="mt-2 text-sm text-cyan-300">Local prototype publishing only: these forms create safe fixture records for the mock backend, not real ATProto/PDS publishing or real DSA legitimacy.</p>
+        <section className="mt-8 rounded-xl border border-emerald-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">How DSA operates</h2>
+          <p className="mt-2 text-sm text-zinc-300">Source-linked public organization chart slice.</p>
+          <p className="mt-1 text-sm text-emerald-200"><a href={orgChart.sourceUrl} className="underline">Organization chart source</a> · {orgChart.updatedLabel}</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div>
+              <h3 className="text-lg font-semibold">Units</h3>
+              <ul className="mt-2 space-y-2 text-sm">{orgChart.units.map((unit) => <li key={unit.uri} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3"><strong>{unit.shortName}</strong> — {unit.name} ({unit.kind})<div className="text-zinc-400">{unit.description}</div></li>)}</ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Relationships</h3>
+              <ul className="mt-2 space-y-2 text-sm">{orgChart.relationships.map((rel) => <li key={rel.uri} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3"><strong>{rel.relationship}</strong> · {rel.description}</li>)}</ul>
+            </div>
+          </div>
+        </section>
         <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
           <label className="grid gap-2 text-sm text-zinc-300">
             Search

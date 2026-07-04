@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -24,6 +24,11 @@ describe('directory record validation', () => {
 
   it('accepts verification assertion records', () => {
     expect(recordEnvelopeSchema.parse(verificationAssertionSeedRecords[0]).collection).toBe('org.dsa.verification.assertion');
+  });
+
+  it('accepts org unit and governance relationship records', () => {
+    expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
+    expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
   });
 
   it('rejects records when collection and payload type disagree', () => {
@@ -187,6 +192,20 @@ describe('API response', () => {
     expect(json.data.some((item) => item.type === 'caucus')).toBe(true);
     expect(json.data.some((item) => item.type === 'member-affiliation')).toBe(true);
     expect(json.data.every((item) => item.type !== 'verification-assertion')).toBe(true);
+  });
+
+  it('serves the org chart slice', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/org-chart`);
+    const json = await response.json() as { prototype: boolean; sourceUrl: string; updatedLabel: string; units: Array<{ name: string }>; relationships: Array<{ relationship: string }> };
+    expect(json.prototype).toBe(true);
+    expect(json.sourceUrl).toContain('National-DSA-Organization-Chart.jpg');
+    expect(json.updatedLabel).toContain('June 2020');
+    expect(json.units.some((unit) => unit.name === 'National Political Committee')).toBe(true);
+    expect(json.relationships.some((rel) => rel.relationship === 'elects')).toBe(true);
   });
 
   it('filters entities by type and search text', async () => {

@@ -35,6 +35,27 @@ export const caucusRecordSchema = z.object({
   status: z.enum(['active', 'inactive']),
 });
 
+export const orgUnitRecordSchema = z.object({
+  $type: z.literal('org.dsa.profile.orgUnit'),
+  name: z.string().min(1),
+  shortName: z.string().min(1),
+  kind: z.enum(['national-committee', 'steering-committee', 'staff', 'staff-role', 'publication', 'priority-committee', 'working-group', 'commission', 'chapter-network', 'membership-body', 'delegate-body', 'youth-committee']),
+  description: z.string().min(1),
+  website: z.string().url().optional(),
+  status: z.enum(['active', 'inactive']),
+});
+
+export const governanceRelationshipRecordSchema = z.object({
+  $type: z.literal('org.dsa.relationship.governance'),
+  subjectUri: z.string().startsWith('at://'),
+  relationship: z.enum(['elects', 'sits-on', 'appoints', 'creates-priorities-for', 'approves-charter-for', 'hires-and-directs', 'hires-with-approval', 'supports', 'can-join', 'can-volunteer', 'can-submit']),
+  objectUri: z.string().startsWith('at://'),
+  description: z.string().min(1),
+  sourceUrl: z.string().url(),
+  status: z.enum(['active', 'inactive']),
+  createdAt: z.string().datetime(),
+});
+
 export const memberAffiliationRecordSchema = z.object({
   $type: z.literal('org.dsa.affiliation.member'),
   displayName: z.string().min(1),
@@ -55,10 +76,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -68,6 +89,8 @@ export const recordEnvelopeSchema = z.object({
 export type RecordEnvelope = z.infer<typeof recordEnvelopeSchema>;
 export type ChapterRecord = z.infer<typeof chapterRecordSchema>;
 export type CaucusRecord = z.infer<typeof caucusRecordSchema>;
+export type OrgUnitRecord = z.infer<typeof orgUnitRecordSchema>;
+export type GovernanceRelationshipRecord = z.infer<typeof governanceRelationshipRecordSchema>;
 export type MemberAffiliationRecord = z.infer<typeof memberAffiliationRecordSchema>;
 export type VerificationAssertionRecord = z.infer<typeof verificationAssertionSchema>;
 
@@ -179,6 +202,263 @@ export const caucusSeedRecords: RecordEnvelope[] = [
       status: 'active',
     },
   },
+];
+
+export const orgChartSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-npc',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'National Political Committee',
+      shortName: 'NPC',
+      kind: 'national-committee',
+      description: 'National governing committee elected by chapter delegates at convention.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:npcsc/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-npc-sc',
+    did: 'did:plc:npcsc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'NPC Steering Committee',
+      shortName: 'NPC SC',
+      kind: 'steering-committee',
+      description: 'Steering committee elected from and by the National Political Committee.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:ydsa-ncc/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-ydsa-ncc',
+    did: 'did:plc:ydsa-ncc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'YDSA National Coordinating Committee',
+      shortName: 'YDSA NCC',
+      kind: 'youth-committee',
+      description: 'Youth-led national coordinating body with shared vote on NPC and NPC SC.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-national-dsa',
+    did: 'did:plc:nationaldsa',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Democratic Socialists of America',
+      shortName: 'DSA',
+      kind: 'national-committee',
+      description: 'National organization that members join through the public join flow.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-demleft',
+    did: 'did:plc:demleft',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Democratic Left',
+      shortName: 'Dem Left',
+      kind: 'publication',
+      description: 'National publication that accepts pitches and submissions from members.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:socialistforum/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-sf',
+    did: 'did:plc:socialistforum',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Socialist Forum',
+      shortName: 'Socialist Forum',
+      kind: 'publication',
+      description: 'National publication for public member contributions.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:prioritycommittees/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-priority-committees',
+    did: 'did:plc:prioritycommittees',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Priority Committees',
+      shortName: 'Priority Committees',
+      kind: 'priority-committee',
+      description: 'National priority committees whose priorities and steering committees are created or appointed by the NPC.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:workinggroupscommissions/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-working-groups-commissions',
+    did: 'did:plc:workinggroupscommissions',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Working Groups and Commissions',
+      shortName: 'WGs & Commissions',
+      kind: 'working-group',
+      description: 'Working groups and commissions chartered by the NPC for member volunteer participation.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:localchapters/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-local-chapters',
+    did: 'did:plc:localchapters',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Local Chapters',
+      shortName: 'Local Chapters',
+      kind: 'chapter-network',
+      description: 'Local chapters chartered by the NPC where members elect local leaders.',
+      website: 'https://www.dsausa.org/chapters/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:nationalstaff/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-national-staff',
+    did: 'did:plc:nationalstaff',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'National Staff',
+      shortName: 'National Staff',
+      kind: 'staff',
+      description: 'National staff support DSA bodies and membership according to the public chart.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:nationaldirector/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-national-director',
+    did: 'did:plc:nationaldirector',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'National Director',
+      shortName: 'National Director',
+      kind: 'staff-role',
+      description: 'Staff leadership role hired and directed by the NPC according to the public chart.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-chapter-delegates',
+    did: 'did:plc:chapterdelegates',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Chapter Delegates',
+      shortName: 'Chapter Delegates',
+      kind: 'delegate-body',
+      description: 'Delegates elected by membership to convention who elect the NPC.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-membership',
+    did: 'did:plc:membership',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'DSA Membership',
+      shortName: 'Membership',
+      kind: 'membership-body',
+      description: 'Public membership body that can join DSA and participate in chapter life.',
+      website: 'https://www.dsausa.org/',
+      status: 'active',
+    },
+  },
+];
+
+export const governanceRelationshipSeedRecords: RecordEnvelope[] = [
+  { uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', cid: 'bafy-mock-rel-elects', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/sc-elects', cid: 'bafy-mock-rel-npc-elects-sc', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npcsc/org.dsa.profile.orgUnit/self', description: 'NPC elects the NPC Steering Committee.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/ydsa-vote', cid: 'bafy-mock-rel-ydsa', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:ydsa-ncc/org.dsa.profile.orgUnit/self', relationship: 'sits-on', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'YDSA national co-chairs share one vote on NPC and NPC SC.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/elects-local-leaders', cid: 'bafy-mock-rel-members-elect-local', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:localchapters/org.dsa.profile.orgUnit/self', description: 'Members elect local chapter leaders.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/elects-chapter-delegates', cid: 'bafy-mock-rel-members-elect-delegates', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', description: 'Members elect chapter delegates to convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/membership-can-join', cid: 'bafy-mock-rel-can-join', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'can-join', objectUri: 'at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self', description: 'People can join DSA through the membership body.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/publications-can-submit', cid: 'bafy-mock-rel-submit', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'can-submit', objectUri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self', description: 'Members can pitch and submit pieces to publications.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/can-volunteer-priority-committees', cid: 'bafy-mock-rel-volunteer-priority', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'can-volunteer', objectUri: 'at://did:plc:prioritycommittees/org.dsa.profile.orgUnit/self', description: 'Members can join or volunteer with priority committees.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:membership/org.dsa.relationship.governance/can-volunteer-working-groups', cid: 'bafy-mock-rel-volunteer-wg', did: 'did:plc:membership', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', relationship: 'can-volunteer', objectUri: 'at://did:plc:workinggroupscommissions/org.dsa.profile.orgUnit/self', description: 'Members can join or volunteer with working groups and commissions.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/appoints-publications', cid: 'bafy-mock-rel-appoints-publications', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'appoints', objectUri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self', description: 'NPC appoints the editorial board for publications.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/creates-priorities', cid: 'bafy-mock-rel-priorities', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'creates-priorities-for', objectUri: 'at://did:plc:prioritycommittees/org.dsa.profile.orgUnit/self', description: 'NPC creates priorities and appoints steering committees for priority committees.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/charters-working-groups', cid: 'bafy-mock-rel-charters-wg', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'approves-charter-for', objectUri: 'at://did:plc:workinggroupscommissions/org.dsa.profile.orgUnit/self', description: 'NPC approves charters for working groups and commissions.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/charters-local-chapters', cid: 'bafy-mock-rel-charters-chapters', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'approves-charter-for', objectUri: 'at://did:plc:localchapters/org.dsa.profile.orgUnit/self', description: 'NPC approves charters for local chapters.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:npc/org.dsa.relationship.governance/hires-national-director', cid: 'bafy-mock-rel-hires-director', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'hires-and-directs', objectUri: 'at://did:plc:nationaldirector/org.dsa.profile.orgUnit/self', description: 'NPC hires and directs the National Director.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:nationaldirector/org.dsa.relationship.governance/hires-staff', cid: 'bafy-mock-rel-director-hires-staff', did: 'did:plc:nationaldirector', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:nationaldirector/org.dsa.profile.orgUnit/self', relationship: 'hires-with-approval', objectUri: 'at://did:plc:nationalstaff/org.dsa.profile.orgUnit/self', description: 'National Director hires national staff with NPC approval.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:nationalstaff/org.dsa.relationship.governance/supports-membership', cid: 'bafy-mock-rel-staff-supports-members', did: 'did:plc:nationalstaff', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:nationalstaff/org.dsa.profile.orgUnit/self', relationship: 'supports', objectUri: 'at://did:plc:membership/org.dsa.profile.orgUnit/self', description: 'National staff supports membership.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
+  { uri: 'at://did:plc:nationalstaff/org.dsa.relationship.governance/supports-public-bodies', cid: 'bafy-mock-rel-staff-supports-bodies', did: 'did:plc:nationalstaff', handle: 'dsausa.org', collection: 'org.dsa.relationship.governance', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', record: { $type: 'org.dsa.relationship.governance', subjectUri: 'at://did:plc:nationalstaff/org.dsa.profile.orgUnit/self', relationship: 'supports', objectUri: 'at://did:plc:prioritycommittees/org.dsa.profile.orgUnit/self', description: 'National staff supports public-facing DSA bodies including publications, committees, working groups, commissions, and local chapters.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' } },
 ];
 
 export const memberAffiliationSeedRecords: RecordEnvelope[] = [
@@ -294,12 +574,12 @@ export const verificationAssertionSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords];
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords];
 
-export type DirectoryRecordEnvelope = Exclude<RecordEnvelope, { collection: 'org.dsa.verification.assertion' }>;
+export type DirectoryRecordEnvelope = RecordEnvelope & { collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member' };
 
 export function isDirectoryEntityRecord(record: RecordEnvelope): record is DirectoryRecordEnvelope {
-  return record.collection !== 'org.dsa.verification.assertion';
+  return record.collection === 'org.dsa.profile.chapter' || record.collection === 'org.dsa.profile.caucus' || record.collection === 'org.dsa.affiliation.member';
 }
 
 export function computeVerificationMetadata(records: RecordEnvelope[], subjectUri: string, currentTrustLabel: z.infer<typeof trustLabelSchema>): Pick<DirectoryEntity, 'verificationStatus' | 'verifiedBy' | 'verificationReason' | 'trustLabel'> {

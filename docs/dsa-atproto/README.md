@@ -82,6 +82,7 @@ Use a hybrid architecture:
 - [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
 - [local-demo.md](local-demo.md): local run, reseed/reset, and reviewer demo flow
 - [technical-architecture.md](technical-architecture.md): implementation architecture for the mocked-record prototype
+- [org-chart-alignment.md](org-chart-alignment.md): public org-chart mapping notes and caveats
 - [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
