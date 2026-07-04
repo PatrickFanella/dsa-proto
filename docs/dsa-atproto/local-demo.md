@@ -126,6 +126,17 @@ make fixture-replay
 
 The import writes to `fixtures/records.json` by default and preserves non-import fixtures when merging.
 
+## Import caucus fixtures from CSV
+
+The repository includes `docs/dsa-caucuses.csv` as a neutral curated source for public caucus fixture records. Importing it creates ATProto-shaped `org.dsa.profile.caucus` envelopes only.
+
+```bash
+make caucuses-import
+make fixture-replay
+```
+
+Then browse the directory and use the type filter to view caucuses.
+
 ## Browser prototype publisher
 
 The web UI also includes a local-only prototype publisher panel for quick chapter fixture creation.

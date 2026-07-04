@@ -5124,5 +5124,243 @@
       "website": "https://dsausa.org/chapters/",
       "status": "active"
     }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-socialist-majority/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-socialist-majority-caucus",
+    "did": "did:plc:dsa-caucus-socialist-majority",
+    "handle": "socialistmajority.com",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Socialist Majority Caucus",
+      "shortName": "SMC",
+      "focusArea": "Member education and electoral strategy",
+      "website": "https://www.socialistmajority.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-groundwork/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-groundwork",
+    "did": "did:plc:dsa-caucus-groundwork",
+    "handle": "groundworkdsa.com",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Groundwork",
+      "shortName": "Groundwork",
+      "focusArea": "National organizing and coalition coordination",
+      "website": "https://www.groundworkdsa.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-uniting-to-win/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-uniting-to-win",
+    "did": "did:plc:dsa-caucus-uniting-to-win",
+    "handle": "unitingtowin.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Uniting To Win",
+      "shortName": "UTW",
+      "focusArea": "Chapter strategy and party-building discussion",
+      "website": "https://unitingtowin.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-mass/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-mass",
+    "did": "did:plc:dsa-caucus-mass",
+    "handle": "dsamass.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "experimental",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Mass",
+      "shortName": "Mass",
+      "focusArea": "Political education and internal discussion",
+      "website": "https://dsamass.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-north-star/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-north-star",
+    "did": "did:plc:dsa-caucus-north-star",
+    "handle": "dsanorthstar.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "North Star",
+      "shortName": "North Star",
+      "focusArea": "Organizational strategy and internal discussion",
+      "website": "https://www.dsanorthstar.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-reform-and-revolution/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-reform-revolution",
+    "did": "did:plc:dsa-caucus-reform-and-revolution",
+    "handle": "reformandrevolution.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Reform & Revolution",
+      "shortName": "R&R",
+      "focusArea": "Marxist political education and organizing",
+      "website": "https://reformandrevolution.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-bread-and-roses/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-bread-roses",
+    "did": "did:plc:dsa-caucus-bread-and-roses",
+    "handle": "breadandrosesdsa.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Bread & Roses",
+      "shortName": "B&R",
+      "focusArea": "Chapter organizing and labor strategy",
+      "website": "https://breadandrosesdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-marxist-unity-group/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-marxist-unity-group",
+    "did": "did:plc:dsa-caucus-marxist-unity-group",
+    "handle": "marxistunity.com",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Marxist Unity Group",
+      "shortName": "MUG",
+      "focusArea": "Marxist analysis and organizing coordination",
+      "website": "https://www.marxistunity.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-red-star/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-red-star",
+    "did": "did:plc:dsa-caucus-red-star",
+    "handle": "redstarcaucus.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Red Star",
+      "shortName": "Red Star",
+      "focusArea": "Marxist education and anti-imperialist organizing",
+      "website": "https://redstarcaucus.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-emerge/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-emerge",
+    "did": "did:plc:dsa-caucus-emerge",
+    "handle": "dsaemerge.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Emerge",
+      "shortName": "Emerge",
+      "focusArea": "Base-building and class politics",
+      "website": "https://dsaemerge.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-communist-caucus/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-communist-caucus",
+    "did": "did:plc:dsa-caucus-communist-caucus",
+    "handle": "communistcaucus.com",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Communist Caucus",
+      "shortName": "CC",
+      "focusArea": "Communist organizing and tenant union support",
+      "website": "https://communistcaucus.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-winter-caucus/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-winter-caucus",
+    "did": "did:plc:dsa-caucus-winter-caucus",
+    "handle": "wintercaucus.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Winter Caucus",
+      "shortName": "Winter",
+      "focusArea": "Class independence and rank-and-file labor strategy",
+      "website": "https://wintercaucus.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-libertarian-socialist-caucus/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-libertarian-socialist-caucus",
+    "did": "did:plc:dsa-caucus-libertarian-socialist-caucus",
+    "handle": "dsa-lsc.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Libertarian Socialist Caucus",
+      "shortName": "LSC",
+      "focusArea": "Abolition and democratic socialist organizing",
+      "website": "https://www.dsa-lsc.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-caucus-red-labor/org.dsa.profile.caucus/self",
+    "cid": "bafy-dsa-caucus-red-labor",
+    "did": "did:plc:dsa-caucus-red-labor",
+    "handle": "redlaborcaucus.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "unverified",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "Red Labor",
+      "shortName": "Red Labor",
+      "focusArea": "Marxist program development and worker organizing",
+      "website": "https://redlaborcaucus.org/",
+      "status": "active"
+    }
   }
 ]
