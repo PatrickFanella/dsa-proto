@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "ingest:atproto": "tsx src/ingest-atproto.ts",
+    "fixtures:replay": "tsx src/fixtures-replay.ts",
+    "fixtures:author": "tsx src/fixtures-author.ts",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",

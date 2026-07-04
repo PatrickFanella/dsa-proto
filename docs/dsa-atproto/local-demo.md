@@ -91,6 +91,30 @@ Use the destructive reset only when you intentionally want to discard local Post
    http://localhost:8080/api/entities?q=climate
    ```
 
+## Local fixture author -> replay -> browse loop
+
+This prototype also supports an opt-in local publishing loop that does not use a real PDS.
+
+1. Author a deterministic record into fixture storage:
+
+   ```bash
+   pnpm --dir backend run fixtures:author -- --type chapter --name "West Side DSA" --shortName "WSDSA"
+   pnpm --dir backend run fixtures:author -- --type verification --subjectUri at://did:plc:westside/org.dsa.profile.chapter/self --subjectDid did:plc:westside --issuerDid did:plc:nationaldsa --issuerHandle dsausa.org --assertion verified
+   ```
+
+2. Replay fixture file(s) into Postgres:
+
+   ```bash
+   pnpm --dir backend run fixtures:replay -- fixtures/records.json
+   ```
+
+3. Browse the UI or API as usual:
+
+   - <http://localhost:5173>
+   - <http://localhost:8080/api/entities>
+
+This is local prototype fixture authoring and replay, not live ATProto publishing or a real PDS write path.
+
 ## What the prototype proves
 
 - ATProto-shaped public records can be normalized into a simple civic directory.

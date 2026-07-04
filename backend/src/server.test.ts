@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
 import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords } from './domain.js';
+import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
+import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 describe('getConfig', () => {
   it('parses a port from env', () => {
@@ -39,6 +44,42 @@ describe('ingestion and read path', () => {
     expect(entities[2].record.record.$type).toBe('org.dsa.affiliation.member');
     expect(normalizeDirectoryEntity(caucusSeedRecords[0], allSeedRecords)?.searchText).toContain('climate caucus');
     expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0], allSeedRecords)?.searchText).toContain('member.alpha.example');
+  });
+
+  it('loads and replays fixture files from disk', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsa-fixtures-'));
+    const file = join(dir, 'records.json');
+    await writeFixtureRecordsToFile(file, [chapterSeedRecords[0], verificationAssertionSeedRecords[0]]);
+    const loaded = await loadFixtureRecordsFromFile(file);
+
+    const repo = createMemoryRepository([]);
+    const report = await replayFixtureRecords(loaded, repo);
+
+    expect(report).toMatchObject({ acceptedCount: 2, rejected: [], ingestedCount: 2 });
+    expect(await repo.listEntities()).toHaveLength(1);
+  });
+
+  it('can replay invalid fixture files with a rejection report', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsa-fixtures-'));
+    const file = join(dir, 'records.json');
+    await writeFixtureRecordsToFile(file, [chapterSeedRecords[0]]);
+    const rawRecords = await loadRawFixtureRecordsFromFile(file);
+    rawRecords.push({ ...chapterSeedRecords[0], uri: 'not-at-uri' });
+
+    const repo = createMemoryRepository([]);
+    const report = await replayFixtureRecords(rawRecords, repo);
+
+    expect(report.acceptedCount).toBe(1);
+    expect(report.rejected).toHaveLength(1);
+    expect(await repo.listEntities()).toHaveLength(1);
+  });
+
+  it('author helper generates valid deterministic records', async () => {
+    const record = buildAuthorFixtureRecord({ type: 'chapter', name: 'West Side DSA', file: 'fixtures/records.json' });
+    expect(recordEnvelopeSchema.parse(record)).toMatchObject({
+      collection: 'org.dsa.profile.chapter',
+      record: { name: 'West Side DSA' },
+    });
   });
 
   it('replays fixtures through validation before ingestion', async () => {
