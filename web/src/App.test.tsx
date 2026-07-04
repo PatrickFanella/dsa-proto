@@ -94,8 +94,18 @@ describe('App', () => {
     }]} />);
     expect(html).toContain('Search');
     expect(html).toContain('Filter by type');
+    expect(html).toContain('Filter by state');
+    expect(html).toContain('Filter by chapter kind');
+    expect(html).toContain('Showing');
     expect(html).toContain('Michigan DSA');
     expect(html).not.toContain('New York City DSA');
+  });
+
+  it('renders chapter counts and empty-state guidance', () => {
+    const html = renderToString(<App initialEntities={[]} initialSearch="zzz" />);
+    expect(html).toContain('Showing');
+    expect(html).toContain('0');
+    expect(html).toContain('No records match these filters');
   });
 
   it('renders the local prototype publisher and chapter preview', () => {

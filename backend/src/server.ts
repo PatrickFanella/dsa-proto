@@ -45,7 +45,8 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
   const records = dedupeEntities(rawRecords);
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
-      return records.filter((entity) => matchesDirectoryEntity(entity, filters));
+      const limited = records.filter((entity) => matchesDirectoryEntity(entity, filters));
+      return typeof filters.limit === 'number' ? limited.slice(0, Math.max(0, filters.limit)) : limited;
     },
     async getEntity(id: string) {
       return records.find((record) => record.id === id);
@@ -75,6 +76,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
       const assertions = await loadVerificationAssertions(pool);
+      const limit = normalizeLimit(filters.limit);
       const result = await pool.query(`
         select
           directory_entities.id,
@@ -100,9 +102,13 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         join atproto_records on atproto_records.uri = directory_entities.record_uri
         where ($1 = 'all' or directory_entities.entity_type = $1)
           and ($2 = '' or directory_entities.search_text like '%' || $2 || '%')
+          and ($3 = '' or upper(directory_entities.jurisdiction_region) = $3)
+          and ($4 = '' or lower(coalesce((atproto_records.record->'jurisdiction'->>'type'), '')) = $4)
         order by directory_entities.name asc
-      `, [filters.type ?? 'all', filters.search?.trim().toLowerCase() ?? '']);
+        limit $5
+      `, [filters.type ?? 'all', filters.search?.trim().toLowerCase() ?? '', filters.state?.trim().toUpperCase() ?? '', filters.jurisdictionType?.trim().toLowerCase() ?? '', limit]);
       return result.rows.map((row) => {
+        const record = row.record as { jurisdiction?: { type?: string } };
         const entityType = row.entity_type as DirectoryEntity['type'];
         const jurisdiction = entityType === 'chapter'
           ? `${row.jurisdiction_name}, ${row.jurisdiction_region}`
@@ -119,6 +125,8 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
           handle: row.handle,
           did: row.did,
           jurisdiction,
+          jurisdictionState: entityType === 'chapter' ? row.jurisdiction_region : undefined,
+          jurisdictionType: entityType === 'chapter' ? record.jurisdiction?.type ?? undefined : undefined,
           focusArea: entityType === 'caucus' ? row.jurisdiction_region : undefined,
           publicRole: entityType === 'member-affiliation' ? row.description ?? undefined : undefined,
           memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
@@ -163,6 +171,7 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       `, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
+      const record = row.record as { jurisdiction?: { type?: string } };
       const entityType = row.entity_type as DirectoryEntity['type'];
       const jurisdiction = entityType === 'chapter'
         ? `${row.jurisdiction_name}, ${row.jurisdiction_region}`
@@ -179,6 +188,8 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         handle: row.handle,
         did: row.did,
         jurisdiction,
+        jurisdictionState: entityType === 'chapter' ? row.jurisdiction_region : undefined,
+        jurisdictionType: entityType === 'chapter' ? record.jurisdiction?.type ?? undefined : undefined,
         focusArea: entityType === 'caucus' ? row.jurisdiction_region : undefined,
         publicRole: entityType === 'member-affiliation' ? row.description ?? undefined : undefined,
         memberHandle: entityType === 'member-affiliation' ? row.handle : undefined,
@@ -298,7 +309,11 @@ export function createApp(repository: DirectoryRepository) {
       if (url.pathname === '/api/entities') {
         const type = url.searchParams.get('type') ?? 'all';
         const search = url.searchParams.get('q') ?? url.searchParams.get('search') ?? '';
-        return toJson(res, 200, { prototype: true, data: await repository.listEntities({ type: type as DirectoryEntityFilters['type'], search }) });
+        const state = url.searchParams.get('state') ?? undefined;
+        const jurisdictionType = url.searchParams.get('jurisdictionType') ?? undefined;
+        const limitParam = url.searchParams.get('limit');
+        const limit = limitParam ? Number(limitParam) : undefined;
+        return toJson(res, 200, { prototype: true, data: await repository.listEntities({ type: type as DirectoryEntityFilters['type'], search, state: state ?? undefined, jurisdictionType: jurisdictionType ?? undefined, limit: Number.isFinite(limit) ? limit : undefined }) });
       }
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities/')) {
@@ -323,6 +338,11 @@ export async function bootstrapRepository(databaseUrl: string) {
   } catch {
     return createMemoryRepository();
   }
+}
+
+function normalizeLimit(limit?: number) {
+  if (typeof limit !== 'number' || !Number.isFinite(limit)) return 1000;
+  return Math.min(Math.max(0, Math.floor(limit)), 1000);
 }
 
 async function loadVerificationAssertions(pool: Pool) {

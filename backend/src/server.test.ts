@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, memberAffiliationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -198,6 +198,39 @@ describe('API response', () => {
     const json = (await response.json()) as { data: Array<{ type: string; name: string }> };
     expect(json.data).toHaveLength(1);
     expect(json.data[0]).toMatchObject({ type: 'member-affiliation', name: 'Alex Rivera' });
+  });
+
+  it('filters entities by state and jurisdiction type', async () => {
+    const repo = createMemoryRepository([
+      {
+        ...chapterSeedRecords[0],
+        record: {
+          ...(chapterSeedRecords[0].record as ChapterRecord),
+          jurisdiction: { name: 'New York City', state: 'NY', country: 'US', type: 'chapter' },
+        },
+      },
+    ]);
+    server = createApp(repo);
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/entities?state=NY&jurisdictionType=chapter`);
+    const json = (await response.json()) as { data: Array<{ jurisdictionState?: string; jurisdictionType?: string }> };
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0]).toMatchObject({ jurisdictionState: 'NY', jurisdictionType: 'chapter' });
+  });
+
+  it('filters organizing committees by jurisdiction type', async () => {
+    const chapterRecord = chapterSeedRecords[0].record as ChapterRecord;
+    const repo = createMemoryRepository([{
+      ...chapterSeedRecords[0],
+      uri: 'at://did:plc:ca-committee/org.dsa.profile.chapter/self',
+      did: 'did:plc:ca-committee',
+      record: { ...chapterRecord, jurisdiction: { ...chapterRecord.jurisdiction, type: 'organizing-committee', state: 'CA', name: 'California Organizing Committee' } },
+    }]);
+    const entities = await repo.listEntities({ jurisdictionType: 'organizing-committee' });
+    expect(entities).toHaveLength(1);
+    expect(entities[0]).toMatchObject({ jurisdictionState: 'CA', jurisdictionType: 'organizing-committee' });
   });
 
   it('serves verification metadata on entity detail payloads', async () => {

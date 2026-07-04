@@ -10,6 +10,8 @@ export type DirectoryCard = {
   handle: string;
   did: string;
   jurisdiction: string;
+  jurisdictionState?: string;
+  jurisdictionType?: string;
   trustLabel: string;
   verificationStatus: string;
   verifiedBy?: string;
@@ -79,6 +81,8 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
   const [entities, setEntities] = useState(initialEntities);
   const [search, setSearch] = useState(initialSearch);
   const [typeFilter, setTypeFilter] = useState<'all' | DirectoryCard['type']>(initialTypeFilter);
+  const [stateFilter, setStateFilter] = useState('all');
+  const [jurisdictionTypeFilter, setJurisdictionTypeFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
@@ -90,6 +94,9 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
     if (typeFilter !== 'all') url.searchParams.set('type', typeFilter);
     if (search.trim()) url.searchParams.set('q', search.trim());
+    if (stateFilter !== 'all') url.searchParams.set('state', stateFilter);
+    if (jurisdictionTypeFilter !== 'all') url.searchParams.set('jurisdictionType', jurisdictionTypeFilter);
+    url.searchParams.set('limit', '1000');
     fetch(url.toString())
       .then((response) => response.json())
       .then((payload) => {
@@ -98,13 +105,18 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
         setSelectedId((current) => (nextEntities.some((entity: DirectoryCard) => entity.id === current) ? current : nextEntities[0]?.id ?? ''));
       })
       .catch(() => setEntities(initialEntities));
-  }, [initialEntities, search, typeFilter]);
+  }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
+  const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
+  const totalCount = entities.length;
+  const chapterCount = entities.filter((entity) => entity.type === 'chapter').length;
   const visibleEntities = useMemo(() => entities.filter((entity) => {
     const matchesType = typeFilter === 'all' || entity.type === typeFilter;
     const matchesSearch = !search.trim() || `${entity.name} ${entity.shortName} ${entity.handle} ${entity.did} ${entity.jurisdiction} ${entity.organizationHandle ?? ''} ${entity.memberHandle ?? ''} ${entity.focusArea ?? ''}`.toLowerCase().includes(search.trim().toLowerCase());
-    return matchesType && matchesSearch;
-  }), [entities, search, typeFilter]);
+    const matchesState = stateFilter === 'all' || entity.jurisdictionState === stateFilter;
+    const matchesJurisdictionType = jurisdictionTypeFilter === 'all' || entity.jurisdictionType === jurisdictionTypeFilter;
+    return matchesType && matchesSearch && matchesState && matchesJurisdictionType;
+  }), [entities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
 
@@ -172,7 +184,23 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
               <option value="member-affiliation">Member affiliation</option>
             </select>
           </label>
+          <label className="grid gap-2 text-sm text-zinc-300">
+            State
+            <select aria-label="Filter by state" value={stateFilter} onChange={(event) => setStateFilter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
+              <option value="all">All states</option>
+              {chapterStates.map((state) => <option key={state} value={state}>{state}</option>)}
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm text-zinc-300">
+            Chapter kind
+            <select aria-label="Filter by chapter kind" value={jurisdictionTypeFilter} onChange={(event) => setJurisdictionTypeFilter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
+              <option value="all">All kinds</option>
+              <option value="chapter">Chapter</option>
+              <option value="organizing-committee">Organizing committee</option>
+            </select>
+          </label>
         </div>
+        <p className="mt-4 text-sm text-zinc-300">Showing {visibleEntities.length} of {totalCount} records{typeFilter === 'chapter' ? ` · ${chapterCount} chapters total` : ''}</p>
         <section className="mt-8 rounded-xl border border-fuchsia-400/30 bg-zinc-950 p-5">
           <h2 className="text-2xl font-semibold">Local prototype publisher</h2>
           <p className="mt-2 text-sm text-zinc-300">Create a chapter fixture and send it to <code>/api/admin/fixtures/ingest</code>.</p>
@@ -245,7 +273,7 @@ export default function App({ initialEntities = fallbackEntities, initialSearch 
                 </dl>
               </button>
             ))}
-            {!visibleEntities.length ? <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">No directory records match the current search and type filters.</p> : null}
+            {!visibleEntities.length ? <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">No records match these filters. Try clearing state, kind, search, or type.</p> : null}
           </div>
           <aside className="rounded-xl border border-cyan-400/40 bg-zinc-950 p-5">
             {selectedEntity ? (

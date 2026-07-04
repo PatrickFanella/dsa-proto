@@ -83,6 +83,8 @@ export type DirectoryEntity = {
   handle: string;
   did: string;
   jurisdiction: string;
+  jurisdictionState?: string;
+  jurisdictionType?: string;
   focusArea?: string;
   publicRole?: string;
   memberHandle?: string;
@@ -100,6 +102,9 @@ export type DirectoryEntity = {
 export type DirectoryEntityFilters = {
   type?: DirectoryEntity['type'] | 'all';
   search?: string;
+  state?: string;
+  jurisdictionType?: string;
+  limit?: number;
 };
 
 export const chapterSeedRecords: RecordEnvelope[] = [
@@ -337,6 +342,8 @@ export function normalizeDirectoryEntity(record: RecordEnvelope, allRecords: Rec
       handle: normalized.handle,
       did: normalized.did,
       jurisdiction,
+      jurisdictionState: recordData.jurisdiction.state,
+      jurisdictionType: recordData.jurisdiction.type,
       trustLabel: verification.trustLabel,
       verificationStatus: verification.verificationStatus,
       verifiedBy: verification.verifiedBy,
@@ -360,6 +367,8 @@ export function normalizeDirectoryEntity(record: RecordEnvelope, allRecords: Rec
       handle: normalized.handle,
       did: normalized.did,
       jurisdiction,
+      jurisdictionState: undefined,
+      jurisdictionType: undefined,
       publicRole: recordData.publicRole,
       memberHandle: recordData.memberHandle,
       organizationHandle: recordData.organizationHandle,
@@ -386,6 +395,8 @@ export function normalizeDirectoryEntity(record: RecordEnvelope, allRecords: Rec
     handle: normalized.handle,
     did: normalized.did,
     jurisdiction,
+    jurisdictionState: undefined,
+    jurisdictionType: undefined,
     focusArea: caucusRecord.focusArea,
     trustLabel: verification.trustLabel,
     verificationStatus: verification.verificationStatus,
@@ -401,7 +412,11 @@ export function normalizeDirectoryEntity(record: RecordEnvelope, allRecords: Rec
 export function matchesDirectoryEntity(entity: DirectoryEntity, filters: DirectoryEntityFilters = {}) {
   const normalizedSearch = filters.search?.trim().toLowerCase() ?? '';
   const typeFilter = filters.type ?? 'all';
+  const stateFilter = filters.state?.trim().toUpperCase() ?? '';
+  const jurisdictionTypeFilter = filters.jurisdictionType?.trim().toLowerCase() ?? '';
   if (typeFilter !== 'all' && entity.type !== typeFilter) return false;
+  if (stateFilter && entity.jurisdictionState?.toUpperCase() !== stateFilter) return false;
+  if (jurisdictionTypeFilter && entity.jurisdictionType?.toLowerCase() !== jurisdictionTypeFilter) return false;
   if (!normalizedSearch) return true;
   return entity.searchText.includes(normalizedSearch);
 }
