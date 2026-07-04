@@ -3,9 +3,10 @@ SHELL := /usr/bin/env bash
 
 ARGS ?=
 FIXTURE_FILE ?= fixtures/records.json
+CSV_FILE ?= ../docs/dsa-chapters.csv
 ATPROTO_LIVE_INGESTION ?= false
 
-.PHONY: help deps verify fmt lint test test-backend test-web build build-backend build-web dev-backend dev-web compose-config compose-up compose-down compose-logs compose-reset db-shell fixture-author fixture-replay ingest-atproto open-pilot-check
+.PHONY: help deps verify fmt lint test test-backend test-web build build-backend build-web dev-backend dev-web compose-config compose-up compose-down compose-logs compose-reset db-shell fixture-author fixture-replay chapters-import ingest-atproto open-pilot-check
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -69,6 +70,9 @@ fixture-author: ## Append a local fixture record; pass ARGS='--type chapter --na
 
 fixture-replay: ## Replay local fixture file(s) into Postgres; override FIXTURE_FILE=fixtures/records.json
 	pnpm --dir backend run fixtures:replay -- $(FIXTURE_FILE)
+
+chapters-import: ## Import docs/dsa-chapters.csv into fixture storage; override CSV_FILE=../docs/dsa-chapters.csv
+	pnpm --dir backend exec tsx src/chapters-csv-import.ts $(CSV_FILE) --out $(FIXTURE_FILE)
 
 ingest-atproto: ## Run opt-in live ATProto ingestion; set ATPROTO_LIVE_INGESTION=true to connect
 	ATPROTO_LIVE_INGESTION=$(ATPROTO_LIVE_INGESTION) pnpm --dir backend run ingest:atproto

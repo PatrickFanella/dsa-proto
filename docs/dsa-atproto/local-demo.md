@@ -115,6 +115,17 @@ This prototype also supports an opt-in local publishing loop that does not use a
 
 This is local prototype fixture authoring and replay, not live ATProto publishing or a real PDS write path.
 
+## Import chapter fixtures from CSV
+
+The repository includes `docs/dsa-chapters.csv` as the source list of public chapter records. Importing it creates ATProto-shaped `org.dsa.profile.chapter` fixture envelopes only; it ignores contact, social, and other private-ish columns.
+
+```bash
+make chapters-import
+make fixture-replay
+```
+
+The import writes to `fixtures/records.json` by default and preserves non-import fixtures when merging.
+
 ## Browser prototype publisher
 
 The web UI also includes a local-only prototype publisher panel for quick chapter fixture creation.

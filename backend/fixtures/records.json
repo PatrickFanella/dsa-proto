@@ -1,1 +1,5128 @@
-[]
+[
+  {
+    "uri": "at://did:plc:dsa-al-birmingham/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-al-birmingham",
+    "did": "did:plc:dsa-al-birmingham",
+    "handle": "bhamdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Birmingham",
+      "shortName": "Birmingham",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Birmingham",
+        "state": "AL",
+        "country": "US"
+      },
+      "website": "https://bhamdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-al-mobile-bay/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-al-mobile-bay",
+    "did": "did:plc:dsa-al-mobile-bay",
+    "handle": "mobilebaydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Mobile Bay",
+      "shortName": "Mobile Bay",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Mobile Bay",
+        "state": "AL",
+        "country": "US"
+      },
+      "website": "https://mobilebaydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-al-north-alabama/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-al-north-alabama",
+    "did": "did:plc:dsa-al-north-alabama",
+    "handle": "northal-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North Alabama",
+      "shortName": "North Alabama",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North Alabama",
+        "state": "AL",
+        "country": "US"
+      },
+      "website": "https://www.northal-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-al-river-region/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-al-river-region",
+    "did": "did:plc:dsa-al-river-region",
+    "handle": "theriverregiondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "River Region",
+      "shortName": "River Region",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "River Region",
+        "state": "AL",
+        "country": "US"
+      },
+      "website": "https://www.theriverregiondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-al-the-shoals/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-al-the-shoals",
+    "did": "did:plc:dsa-al-the-shoals",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "The Shoals",
+      "shortName": "The Shoals",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "The Shoals",
+        "state": "AL",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ar-arkansas-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ar-arkansas-valley",
+    "did": "did:plc:dsa-ar-arkansas-valley",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Arkansas Valley",
+      "shortName": "Arkansas Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Arkansas Valley",
+        "state": "AR",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ar-central-arkansas/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ar-central-arkansas",
+    "did": "did:plc:dsa-ar-central-arkansas",
+    "handle": "centralarkansasdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Arkansas",
+      "shortName": "Central Arkansas",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Arkansas",
+        "state": "AR",
+        "country": "US"
+      },
+      "website": "https://centralarkansasdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ar-northwest-arkansas/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ar-northwest-arkansas",
+    "did": "did:plc:dsa-ar-northwest-arkansas",
+    "handle": "dsanwa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northwest Arkansas",
+      "shortName": "Northwest Arkansas",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northwest Arkansas",
+        "state": "AR",
+        "country": "US"
+      },
+      "website": "https://dsanwa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-az-flagstaff/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-az-flagstaff",
+    "did": "did:plc:dsa-az-flagstaff",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Flagstaff",
+      "shortName": "Flagstaff",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Flagstaff",
+        "state": "AZ",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-az-phoenix/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-az-phoenix",
+    "did": "did:plc:dsa-az-phoenix",
+    "handle": "phxdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Phoenix",
+      "shortName": "Phoenix",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Phoenix",
+        "state": "AZ",
+        "country": "US"
+      },
+      "website": "http://phxdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-az-pinal-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-az-pinal-county",
+    "did": "did:plc:dsa-az-pinal-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Pinal County",
+      "shortName": "Pinal County",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Pinal County",
+        "state": "AZ",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-az-tucson/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-az-tucson",
+    "did": "did:plc:dsa-az-tucson",
+    "handle": "tucsondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Tucson",
+      "shortName": "Tucson",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Tucson",
+        "state": "AZ",
+        "country": "US"
+      },
+      "website": "https://www.tucsondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-central-coast-california/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-central-coast-california",
+    "did": "did:plc:dsa-ca-central-coast-california",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Coast California",
+      "shortName": "Central Coast California",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Coast California",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-central-sierra-foothills/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-central-sierra-foothills",
+    "did": "did:plc:dsa-ca-central-sierra-foothills",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Sierra Foothills",
+      "shortName": "Central Sierra Foothills",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Sierra Foothills",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-east-bay/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-east-bay",
+    "did": "did:plc:dsa-ca-east-bay",
+    "handle": "eastbaydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "East Bay",
+      "shortName": "East Bay",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "East Bay",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://eastbaydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-humboldt/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-humboldt",
+    "did": "did:plc:dsa-ca-humboldt",
+    "handle": "humboldtdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Humboldt",
+      "shortName": "Humboldt",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Humboldt",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://humboldtdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-inland-empire/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-inland-empire",
+    "did": "did:plc:dsa-ca-inland-empire",
+    "handle": "iedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Inland Empire",
+      "shortName": "Inland Empire",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Inland Empire",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://iedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-kern-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-kern-county",
+    "did": "did:plc:dsa-ca-kern-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Kern County",
+      "shortName": "Kern County",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Kern County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-long-beach/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-long-beach",
+    "did": "did:plc:dsa-ca-long-beach",
+    "handle": "dsalb.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Long Beach",
+      "shortName": "Long Beach",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Long Beach",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsalb.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-los-angeles/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-los-angeles",
+    "did": "did:plc:dsa-ca-los-angeles",
+    "handle": "dsa-la.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Los Angeles",
+      "shortName": "Los Angeles",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Los Angeles",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "http://www.dsa-la.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-marin/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-marin",
+    "did": "did:plc:dsa-ca-marin",
+    "handle": "marin.dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Marin",
+      "shortName": "Marin",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Marin",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://marin.dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-north-central-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-north-central-valley",
+    "did": "did:plc:dsa-ca-north-central-valley",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North Central Valley",
+      "shortName": "North Central Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North Central Valley",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-orange-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-orange-county",
+    "did": "did:plc:dsa-ca-orange-county",
+    "handle": "ocdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Orange County",
+      "shortName": "Orange County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Orange County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://www.ocdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-peninsula-california/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-peninsula-california",
+    "did": "did:plc:dsa-ca-peninsula-california",
+    "handle": "peninsuladsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Peninsula California",
+      "shortName": "Peninsula California",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Peninsula California",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://peninsuladsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-sacramento/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-sacramento",
+    "did": "did:plc:dsa-ca-sacramento",
+    "handle": "sacdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Sacramento",
+      "shortName": "Sacramento",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Sacramento",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "http://www.sacdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-san-diego/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-san-diego",
+    "did": "did:plc:dsa-ca-san-diego",
+    "handle": "dsasandiego.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "San Diego",
+      "shortName": "San Diego",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "San Diego",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsasandiego.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-san-francisco/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-san-francisco",
+    "did": "did:plc:dsa-ca-san-francisco",
+    "handle": "dsasf.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "San Francisco",
+      "shortName": "San Francisco",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "San Francisco",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsasf.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-san-luis-obispo/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-san-luis-obispo",
+    "did": "did:plc:dsa-ca-san-luis-obispo",
+    "handle": "dsaslo.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "San Luis Obispo",
+      "shortName": "San Luis Obispo",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "San Luis Obispo",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "http://www.dsaslo.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-santa-barbara/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-santa-barbara",
+    "did": "did:plc:dsa-ca-santa-barbara",
+    "handle": "dsasb.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Santa Barbara",
+      "shortName": "Santa Barbara",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Santa Barbara",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsasb.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-santa-cruz/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-santa-cruz",
+    "did": "did:plc:dsa-ca-santa-cruz",
+    "handle": "dsasantacruz.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Santa Cruz",
+      "shortName": "Santa Cruz",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Santa Cruz",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "http://www.dsasantacruz.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-shasta-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-shasta-county",
+    "did": "did:plc:dsa-ca-shasta-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Shasta County",
+      "shortName": "Shasta County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Shasta County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-silicon-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-silicon-valley",
+    "did": "did:plc:dsa-ca-silicon-valley",
+    "handle": "siliconvalleydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Silicon Valley",
+      "shortName": "Silicon Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Silicon Valley",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://siliconvalleydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-sonoma-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-sonoma-county",
+    "did": "did:plc:dsa-ca-sonoma-county",
+    "handle": "socodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Sonoma County",
+      "shortName": "Sonoma County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Sonoma County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://www.socodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-ventura-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-ventura-county",
+    "did": "did:plc:dsa-ca-ventura-county",
+    "handle": "dsaventuracounty.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Ventura County",
+      "shortName": "Ventura County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Ventura County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsaventuracounty.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ca-yolo-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ca-yolo-county",
+    "did": "did:plc:dsa-ca-yolo-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Yolo County",
+      "shortName": "Yolo County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Yolo County",
+        "state": "CA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-co-boulder/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-co-boulder",
+    "did": "did:plc:dsa-co-boulder",
+    "handle": "boulderdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Boulder",
+      "shortName": "Boulder",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Boulder",
+        "state": "CO",
+        "country": "US"
+      },
+      "website": "http://www.boulderdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-co-colorado-springs/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-co-colorado-springs",
+    "did": "did:plc:dsa-co-colorado-springs",
+    "handle": "cosdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Colorado Springs",
+      "shortName": "Colorado Springs",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Colorado Springs",
+        "state": "CO",
+        "country": "US"
+      },
+      "website": "https://www.cosdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-co-denver/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-co-denver",
+    "did": "did:plc:dsa-co-denver",
+    "handle": "denverdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Denver",
+      "shortName": "Denver",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Denver",
+        "state": "CO",
+        "country": "US"
+      },
+      "website": "https://denverdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-co-mesa-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-co-mesa-county",
+    "did": "did:plc:dsa-co-mesa-county",
+    "handle": "mesadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Mesa County",
+      "shortName": "Mesa County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Mesa County",
+        "state": "CO",
+        "country": "US"
+      },
+      "website": "https://mesadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-co-northern-colorado/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-co-northern-colorado",
+    "did": "did:plc:dsa-co-northern-colorado",
+    "handle": "dsafc.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northern Colorado",
+      "shortName": "Northern Colorado",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northern Colorado",
+        "state": "CO",
+        "country": "US"
+      },
+      "website": "https://dsafc.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ct-connecticut/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ct-connecticut",
+    "did": "did:plc:dsa-ct-connecticut",
+    "handle": "ctdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Connecticut",
+      "shortName": "Connecticut",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Connecticut",
+        "state": "CT",
+        "country": "US"
+      },
+      "website": "https://ctdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-dc-va-md-metro-dc/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-dc-va-md-metro-dc",
+    "did": "did:plc:dsa-dc-va-md-metro-dc",
+    "handle": "mdcdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Metro DC",
+      "shortName": "Metro DC",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Metro DC",
+        "state": "DC, VA, MD",
+        "country": "US"
+      },
+      "website": "https://mdcdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-de-delaware/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-de-delaware",
+    "did": "did:plc:dsa-de-delaware",
+    "handle": "dedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Delaware",
+      "shortName": "Delaware",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Delaware",
+        "state": "DE",
+        "country": "US"
+      },
+      "website": "https://dedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-alachua-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-alachua-county",
+    "did": "did:plc:dsa-fl-alachua-county",
+    "handle": "alachuadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Alachua County",
+      "shortName": "Alachua County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Alachua County",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "http://alachuadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-broward-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-broward-county",
+    "did": "did:plc:dsa-fl-broward-county",
+    "handle": "browardcountydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Broward County",
+      "shortName": "Broward County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Broward County",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://browardcountydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-jacksonville/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-jacksonville",
+    "did": "did:plc:dsa-fl-jacksonville",
+    "handle": "linktr.ee",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Jacksonville",
+      "shortName": "Jacksonville",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Jacksonville",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://linktr.ee/jaxdsa",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-miami/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-miami",
+    "did": "did:plc:dsa-fl-miami",
+    "handle": "miamidsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Miami",
+      "shortName": "Miami",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Miami",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "http://miamidsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-orlando/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-orlando",
+    "did": "did:plc:dsa-fl-orlando",
+    "handle": "orlando.chapters.dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Orlando",
+      "shortName": "Orlando",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Orlando",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://orlando.chapters.dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-palm-beach-treasure-coast/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-palm-beach-treasure-coast",
+    "did": "did:plc:dsa-fl-palm-beach-treasure-coast",
+    "handle": "palmbeachdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Palm Beach & Treasure Coast",
+      "shortName": "Palm Beach & Treasure Coast",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Palm Beach & Treasure Coast",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://palmbeachdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-pasco-hernando/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-pasco-hernando",
+    "did": "did:plc:dsa-fl-pasco-hernando",
+    "handle": "pascohernando.dsachapters.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Pasco-Hernando",
+      "shortName": "Pasco-Hernando",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Pasco-Hernando",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://pascohernando.dsachapters.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-pensacola/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-pensacola",
+    "did": "did:plc:dsa-fl-pensacola",
+    "handle": "pensacoladsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Pensacola",
+      "shortName": "Pensacola",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Pensacola",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://www.pensacoladsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-pinellas-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-pinellas-county",
+    "did": "did:plc:dsa-fl-pinellas-county",
+    "handle": "pinellasdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Pinellas County",
+      "shortName": "Pinellas County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Pinellas County",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://www.pinellasdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-polk-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-polk-county",
+    "did": "did:plc:dsa-fl-polk-county",
+    "handle": "linktr.ee",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Polk County",
+      "shortName": "Polk County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Polk County",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://linktr.ee/PolkDSA",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-space-coast/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-space-coast",
+    "did": "did:plc:dsa-fl-space-coast",
+    "handle": "socialists.space",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Space Coast",
+      "shortName": "Space Coast",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Space Coast",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "http://socialists.space/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-tampa/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-tampa",
+    "did": "did:plc:dsa-fl-tampa",
+    "handle": "tampadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Tampa",
+      "shortName": "Tampa",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Tampa",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://www.tampadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-fl-volusia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-fl-volusia",
+    "did": "did:plc:dsa-fl-volusia",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Volusia",
+      "shortName": "Volusia",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Volusia",
+        "state": "FL",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-athens-area/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-athens-area",
+    "did": "did:plc:dsa-ga-athens-area",
+    "handle": "athensareadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Athens Area",
+      "shortName": "Athens Area",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Athens Area",
+        "state": "GA",
+        "country": "US"
+      },
+      "website": "https://athensareadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-atlanta/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-atlanta",
+    "did": "did:plc:dsa-ga-atlanta",
+    "handle": "atldsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Atlanta",
+      "shortName": "Atlanta",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Atlanta",
+        "state": "GA",
+        "country": "US"
+      },
+      "website": "https://atldsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-middle-georgia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-middle-georgia",
+    "did": "did:plc:dsa-ga-middle-georgia",
+    "handle": "mgdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Middle Georgia",
+      "shortName": "Middle Georgia",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Middle Georgia",
+        "state": "GA",
+        "country": "US"
+      },
+      "website": "https://www.mgdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-savannah/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-savannah",
+    "did": "did:plc:dsa-ga-savannah",
+    "handle": "savgadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Savannah",
+      "shortName": "Savannah",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Savannah",
+        "state": "GA",
+        "country": "US"
+      },
+      "website": "https://www.savgadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-west-georgia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-west-georgia",
+    "did": "did:plc:dsa-ga-west-georgia",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "West Georgia",
+      "shortName": "West Georgia",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "West Georgia",
+        "state": "GA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ga-sc-augusta-csra/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ga-sc-augusta-csra",
+    "did": "did:plc:dsa-ga-sc-augusta-csra",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Augusta CSRA",
+      "shortName": "Augusta CSRA",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Augusta CSRA",
+        "state": "GA SC",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-hi-big-island/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-hi-big-island",
+    "did": "did:plc:dsa-hi-big-island",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Big Island",
+      "shortName": "Big Island",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Big Island",
+        "state": "HI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-hi-maui/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-hi-maui",
+    "did": "did:plc:dsa-hi-maui",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Maui",
+      "shortName": "Maui",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Maui",
+        "state": "HI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-hi-o-ahu/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-hi-o-ahu",
+    "did": "did:plc:dsa-hi-o-ahu",
+    "handle": "dsoahu.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "O'ahu",
+      "shortName": "O'ahu",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "O'ahu",
+        "state": "HI",
+        "country": "US"
+      },
+      "website": "https://dsoahu.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ia-cedar-rapids/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ia-cedar-rapids",
+    "did": "did:plc:dsa-ia-cedar-rapids",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Cedar Rapids",
+      "shortName": "Cedar Rapids",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Cedar Rapids",
+        "state": "IA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ia-central-iowa/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ia-central-iowa",
+    "did": "did:plc:dsa-ia-central-iowa",
+    "handle": "centraliowadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Iowa",
+      "shortName": "Central Iowa",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Iowa",
+        "state": "IA",
+        "country": "US"
+      },
+      "website": "https://centraliowadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ia-heart-of-iowa/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ia-heart-of-iowa",
+    "did": "did:plc:dsa-ia-heart-of-iowa",
+    "handle": "heartofiowadsa.weebly.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Heart of Iowa",
+      "shortName": "Heart of Iowa",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Heart of Iowa",
+        "state": "IA",
+        "country": "US"
+      },
+      "website": "https://heartofiowadsa.weebly.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ia-iowa-city/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ia-iowa-city",
+    "did": "did:plc:dsa-ia-iowa-city",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Iowa City",
+      "shortName": "Iowa City",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Iowa City",
+        "state": "IA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ia-il-quad-cities/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ia-il-quad-cities",
+    "did": "did:plc:dsa-ia-il-quad-cities",
+    "handle": "quadcitiesdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Quad Cities",
+      "shortName": "Quad Cities",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Quad Cities",
+        "state": "IA\nIL",
+        "country": "US"
+      },
+      "website": "https://quadcitiesdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-id-boise/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-id-boise",
+    "did": "did:plc:dsa-id-boise",
+    "handle": "boisedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Boise",
+      "shortName": "Boise",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Boise",
+        "state": "ID",
+        "country": "US"
+      },
+      "website": "https://www.boisedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-id-southeast-idaho/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-id-southeast-idaho",
+    "did": "did:plc:dsa-id-southeast-idaho",
+    "handle": "seidahodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southeast Idaho",
+      "shortName": "Southeast Idaho",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southeast Idaho",
+        "state": "ID",
+        "country": "US"
+      },
+      "website": "https://seidahodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-id-southern-idaho/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-id-southern-idaho",
+    "did": "did:plc:dsa-id-southern-idaho",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern Idaho",
+      "shortName": "Southern Idaho",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southern Idaho",
+        "state": "ID",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-id-sun-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-id-sun-valley",
+    "did": "did:plc:dsa-id-sun-valley",
+    "handle": "sunvalleydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Sun Valley",
+      "shortName": "Sun Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Sun Valley",
+        "state": "ID",
+        "country": "US"
+      },
+      "website": "https://sunvalleydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-champaign-urbana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-champaign-urbana",
+    "did": "did:plc:dsa-il-champaign-urbana",
+    "handle": "cudsa.red",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Champaign-Urbana",
+      "shortName": "Champaign-Urbana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Champaign-Urbana",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://cudsa.red/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-chicago/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-chicago",
+    "did": "did:plc:dsa-il-chicago",
+    "handle": "chicagodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Chicago",
+      "shortName": "Chicago",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Chicago",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "http://www.chicagodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-east-central-illinois/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-east-central-illinois",
+    "did": "did:plc:dsa-il-east-central-illinois",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "East Central Illinois",
+      "shortName": "East Central Illinois",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "East Central Illinois",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-lakefront/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-lakefront",
+    "did": "did:plc:dsa-il-lakefront",
+    "handle": "lakefront-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lakefront",
+      "shortName": "Lakefront",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lakefront",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://lakefront-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-land-of-lincoln/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-land-of-lincoln",
+    "did": "did:plc:dsa-il-land-of-lincoln",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Land of Lincoln",
+      "shortName": "Land of Lincoln",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Land of Lincoln",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-northern-illinois/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-northern-illinois",
+    "did": "did:plc:dsa-il-northern-illinois",
+    "handle": "northernillinoisdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northern Illinois",
+      "shortName": "Northern Illinois",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northern Illinois",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://www.northernillinoisdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-southern-illinois/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-southern-illinois",
+    "did": "did:plc:dsa-il-southern-illinois",
+    "handle": "soillsocialists.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern Illinois",
+      "shortName": "Southern Illinois",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southern Illinois",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://www.soillsocialists.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-il-west-suburban-illinois/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-il-west-suburban-illinois",
+    "did": "did:plc:dsa-il-west-suburban-illinois",
+    "handle": "wsil.dsachapters.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "West Suburban Illinois",
+      "shortName": "West Suburban Illinois",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "West Suburban Illinois",
+        "state": "IL",
+        "country": "US"
+      },
+      "website": "https://wsil.dsachapters.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-bloomington-indiana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-bloomington-indiana",
+    "did": "did:plc:dsa-in-bloomington-indiana",
+    "handle": "bloomingtondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Bloomington Indiana",
+      "shortName": "Bloomington Indiana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Bloomington Indiana",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://bloomingtondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-central-indiana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-central-indiana",
+    "did": "did:plc:dsa-in-central-indiana",
+    "handle": "centralindsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Indiana",
+      "shortName": "Central Indiana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Indiana",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://www.centralindsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-evansville-riverbend/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-evansville-riverbend",
+    "did": "did:plc:dsa-in-evansville-riverbend",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Evansville Riverbend",
+      "shortName": "Evansville Riverbend",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Evansville Riverbend",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-fort-wayne/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-fort-wayne",
+    "did": "did:plc:dsa-in-fort-wayne",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Fort Wayne",
+      "shortName": "Fort Wayne",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Fort Wayne",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-greater-lafayette/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-greater-lafayette",
+    "did": "did:plc:dsa-in-greater-lafayette",
+    "handle": "gldsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Greater Lafayette",
+      "shortName": "Greater Lafayette",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Greater Lafayette",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://gldsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-northern-indiana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-northern-indiana",
+    "did": "did:plc:dsa-in-northern-indiana",
+    "handle": "northernindianadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northern Indiana",
+      "shortName": "Northern Indiana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northern Indiana",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://northernindianadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-in-northwest-indiana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-in-northwest-indiana",
+    "did": "did:plc:dsa-in-northwest-indiana",
+    "handle": "nwi-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northwest Indiana",
+      "shortName": "Northwest Indiana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northwest Indiana",
+        "state": "IN",
+        "country": "US"
+      },
+      "website": "https://nwi-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-flint-hills/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-flint-hills",
+    "did": "did:plc:dsa-ks-flint-hills",
+    "handle": "fhdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Flint Hills",
+      "shortName": "Flint Hills",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Flint Hills",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://www.fhdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-lawrence/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-lawrence",
+    "did": "did:plc:dsa-ks-lawrence",
+    "handle": "lfkdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lawrence",
+      "shortName": "Lawrence",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lawrence",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://www.lfkdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-salina/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-salina",
+    "did": "did:plc:dsa-ks-salina",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Salina",
+      "shortName": "Salina",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Salina",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-southeast-kansas/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-southeast-kansas",
+    "did": "did:plc:dsa-ks-southeast-kansas",
+    "handle": "sekdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southeast Kansas",
+      "shortName": "Southeast Kansas",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southeast Kansas",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://sekdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-topeka/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-topeka",
+    "did": "did:plc:dsa-ks-topeka",
+    "handle": "tpdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Topeka",
+      "shortName": "Topeka",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Topeka",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://tpdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ks-wichita/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ks-wichita",
+    "did": "did:plc:dsa-ks-wichita",
+    "handle": "ictdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Wichita",
+      "shortName": "Wichita",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Wichita",
+        "state": "KS",
+        "country": "US"
+      },
+      "website": "https://ictdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ky-bluegrass/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ky-bluegrass",
+    "did": "did:plc:dsa-ky-bluegrass",
+    "handle": "dsabluegrass.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Bluegrass",
+      "shortName": "Bluegrass",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Bluegrass",
+        "state": "KY",
+        "country": "US"
+      },
+      "website": "https://dsabluegrass.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ky-owensboro/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ky-owensboro",
+    "did": "did:plc:dsa-ky-owensboro",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Owensboro",
+      "shortName": "Owensboro",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Owensboro",
+        "state": "KY",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ky-in-louisville/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ky-in-louisville",
+    "did": "did:plc:dsa-ky-in-louisville",
+    "handle": "dsalouisville.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Louisville",
+      "shortName": "Louisville",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Louisville",
+        "state": "KY\nIN",
+        "country": "US"
+      },
+      "website": "https://www.dsalouisville.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-la-baton-rouge/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-la-baton-rouge",
+    "did": "did:plc:dsa-la-baton-rouge",
+    "handle": "brdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Baton Rouge",
+      "shortName": "Baton Rouge",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Baton Rouge",
+        "state": "LA",
+        "country": "US"
+      },
+      "website": "https://brdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-la-new-orleans/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-la-new-orleans",
+    "did": "did:plc:dsa-la-new-orleans",
+    "handle": "dsaneworleans.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "New Orleans",
+      "shortName": "New Orleans",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "New Orleans",
+        "state": "LA",
+        "country": "US"
+      },
+      "website": "http://dsaneworleans.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-la-shreveport-bossier/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-la-shreveport-bossier",
+    "did": "did:plc:dsa-la-shreveport-bossier",
+    "handle": "sites.google.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Shreveport-Bossier",
+      "shortName": "Shreveport-Bossier",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Shreveport-Bossier",
+        "state": "LA",
+        "country": "US"
+      },
+      "website": "https://sites.google.com/view/dsashreveport/home",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-la-southwest-louisiana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-la-southwest-louisiana",
+    "did": "did:plc:dsa-la-southwest-louisiana",
+    "handle": "dsaswla.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southwest Louisiana",
+      "shortName": "Southwest Louisiana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southwest Louisiana",
+        "state": "LA",
+        "country": "US"
+      },
+      "website": "http://dsaswla.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ma-berkshires/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ma-berkshires",
+    "did": "did:plc:dsa-ma-berkshires",
+    "handle": "berkshires-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Berkshires",
+      "shortName": "Berkshires",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Berkshires",
+        "state": "MA",
+        "country": "US"
+      },
+      "website": "https://berkshires-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ma-boston/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ma-boston",
+    "did": "did:plc:dsa-ma-boston",
+    "handle": "bostondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Boston",
+      "shortName": "Boston",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Boston",
+        "state": "MA",
+        "country": "US"
+      },
+      "website": "http://www.bostondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ma-cape-cod/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ma-cape-cod",
+    "did": "did:plc:dsa-ma-cape-cod",
+    "handle": "capecoddsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Cape Cod",
+      "shortName": "Cape Cod",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Cape Cod",
+        "state": "MA",
+        "country": "US"
+      },
+      "website": "http://www.capecoddsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ma-river-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ma-river-valley",
+    "did": "did:plc:dsa-ma-river-valley",
+    "handle": "rvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "River Valley",
+      "shortName": "River Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "River Valley",
+        "state": "MA",
+        "country": "US"
+      },
+      "website": "https://rvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ma-worcester/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ma-worcester",
+    "did": "did:plc:dsa-ma-worcester",
+    "handle": "worcesterdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Worcester",
+      "shortName": "Worcester",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Worcester",
+        "state": "MA",
+        "country": "US"
+      },
+      "website": "https://www.worcesterdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-md-frederick/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-md-frederick",
+    "did": "did:plc:dsa-md-frederick",
+    "handle": "dsafrederick.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Frederick",
+      "shortName": "Frederick",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Frederick",
+        "state": "MD",
+        "country": "US"
+      },
+      "website": "https://dsafrederick.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-md-greater-baltimore/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-md-greater-baltimore",
+    "did": "did:plc:dsa-md-greater-baltimore",
+    "handle": "gbdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Greater Baltimore",
+      "shortName": "Greater Baltimore",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Greater Baltimore",
+        "state": "MD",
+        "country": "US"
+      },
+      "website": "https://www.gbdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-md-southern-maryland/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-md-southern-maryland",
+    "did": "did:plc:dsa-md-southern-maryland",
+    "handle": "somddsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern Maryland",
+      "shortName": "Southern Maryland",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southern Maryland",
+        "state": "MD",
+        "country": "US"
+      },
+      "website": "https://somddsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-me-maine/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-me-maine",
+    "did": "did:plc:dsa-me-maine",
+    "handle": "mainedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Maine",
+      "shortName": "Maine",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Maine",
+        "state": "ME",
+        "country": "US"
+      },
+      "website": "https://www.mainedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-cadillac/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-cadillac",
+    "did": "did:plc:dsa-mi-cadillac",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Cadillac",
+      "shortName": "Cadillac",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Cadillac",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-grand-rapids/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-grand-rapids",
+    "did": "did:plc:dsa-mi-grand-rapids",
+    "handle": "grdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Grand Rapids",
+      "shortName": "Grand Rapids",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Grand Rapids",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://www.grdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-greater-lansing/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-greater-lansing",
+    "did": "did:plc:dsa-mi-greater-lansing",
+    "handle": "greaterlansingdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Greater Lansing",
+      "shortName": "Greater Lansing",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Greater Lansing",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://www.greaterlansingdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-huron-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-huron-valley",
+    "did": "did:plc:dsa-mi-huron-valley",
+    "handle": "hvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Huron Valley",
+      "shortName": "Huron Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Huron Valley",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://www.hvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-isabella-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-isabella-county",
+    "did": "did:plc:dsa-mi-isabella-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Isabella County",
+      "shortName": "Isabella County",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Isabella County",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-metro-detroit/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-metro-detroit",
+    "did": "did:plc:dsa-mi-metro-detroit",
+    "handle": "detroitdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Metro Detroit",
+      "shortName": "Metro Detroit",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Metro Detroit",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://detroitdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-northwest-michigan/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-northwest-michigan",
+    "did": "did:plc:dsa-mi-northwest-michigan",
+    "handle": "nwmidsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northwest Michigan",
+      "shortName": "Northwest Michigan",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northwest Michigan",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://nwmidsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-saginaw-bay/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-saginaw-bay",
+    "did": "did:plc:dsa-mi-saginaw-bay",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Saginaw Bay",
+      "shortName": "Saginaw Bay",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Saginaw Bay",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mi-southwest-michigan/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mi-southwest-michigan",
+    "did": "did:plc:dsa-mi-southwest-michigan",
+    "handle": "swmidsa.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southwest Michigan",
+      "shortName": "Southwest Michigan",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southwest Michigan",
+        "state": "MI",
+        "country": "US"
+      },
+      "website": "https://swmidsa.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mn-brainerd-lakes-area/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mn-brainerd-lakes-area",
+    "did": "did:plc:dsa-mn-brainerd-lakes-area",
+    "handle": "linktr.ee",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Brainerd Lakes Area",
+      "shortName": "Brainerd Lakes Area",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Brainerd Lakes Area",
+        "state": "MN",
+        "country": "US"
+      },
+      "website": "https://linktr.ee/BLA.DSA",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mn-med-city/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mn-med-city",
+    "did": "did:plc:dsa-mn-med-city",
+    "handle": "linktr.ee",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Med City",
+      "shortName": "Med City",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Med City",
+        "state": "MN",
+        "country": "US"
+      },
+      "website": "https://linktr.ee/semndsa",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mn-st-cloud/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mn-st-cloud",
+    "did": "did:plc:dsa-mn-st-cloud",
+    "handle": "stclouddsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "St. Cloud",
+      "shortName": "St. Cloud",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "St. Cloud",
+        "state": "MN",
+        "country": "US"
+      },
+      "website": "https://stclouddsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mn-twin-cities/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mn-twin-cities",
+    "did": "did:plc:dsa-mn-twin-cities",
+    "handle": "twincitiesdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Twin Cities",
+      "shortName": "Twin Cities",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Twin Cities",
+        "state": "MN",
+        "country": "US"
+      },
+      "website": "https://twincitiesdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mn-twin-ports/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mn-twin-ports",
+    "did": "did:plc:dsa-mn-twin-ports",
+    "handle": "twinportsdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Twin Ports",
+      "shortName": "Twin Ports",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Twin Ports",
+        "state": "MN",
+        "country": "US"
+      },
+      "website": "https://twinportsdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mo-mid-missouri/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mo-mid-missouri",
+    "did": "did:plc:dsa-mo-mid-missouri",
+    "handle": "midmissouridsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Mid-Missouri",
+      "shortName": "Mid-Missouri",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Mid-Missouri",
+        "state": "MO",
+        "country": "US"
+      },
+      "website": "https://www.midmissouridsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mo-ozarks/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mo-ozarks",
+    "did": "did:plc:dsa-mo-ozarks",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Ozarks",
+      "shortName": "Ozarks",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Ozarks",
+        "state": "MO",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mo-southeast-missouri/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mo-southeast-missouri",
+    "did": "did:plc:dsa-mo-southeast-missouri",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southeast Missouri",
+      "shortName": "Southeast Missouri",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Southeast Missouri",
+        "state": "MO",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mo-st-louis/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mo-st-louis",
+    "did": "did:plc:dsa-mo-st-louis",
+    "handle": "stldsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "St. Louis",
+      "shortName": "St. Louis",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "St. Louis",
+        "state": "MO",
+        "country": "US"
+      },
+      "website": "https://stldsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mo-ks-kansas-city/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mo-ks-kansas-city",
+    "did": "did:plc:dsa-mo-ks-kansas-city",
+    "handle": "kcdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Kansas City",
+      "shortName": "Kansas City",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Kansas City",
+        "state": "MO KS",
+        "country": "US"
+      },
+      "website": "https://kcdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ms-central-mississippi/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ms-central-mississippi",
+    "did": "did:plc:dsa-ms-central-mississippi",
+    "handle": "centralmsdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Mississippi",
+      "shortName": "Central Mississippi",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central Mississippi",
+        "state": "MS",
+        "country": "US"
+      },
+      "website": "https://centralmsdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ms-north-mississippi/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ms-north-mississippi",
+    "did": "did:plc:dsa-ms-north-mississippi",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North Mississippi",
+      "shortName": "North Mississippi",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "North Mississippi",
+        "state": "MS",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ms-southern-mississippi/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ms-southern-mississippi",
+    "did": "did:plc:dsa-ms-southern-mississippi",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern Mississippi",
+      "shortName": "Southern Mississippi",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Southern Mississippi",
+        "state": "MS",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mt-bozeman/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mt-bozeman",
+    "did": "did:plc:dsa-mt-bozeman",
+    "handle": "bozemandsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Bozeman",
+      "shortName": "Bozeman",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Bozeman",
+        "state": "MT",
+        "country": "US"
+      },
+      "website": "https://bozemandsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mt-northwest-montana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mt-northwest-montana",
+    "did": "did:plc:dsa-mt-northwest-montana",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northwest Montana",
+      "shortName": "Northwest Montana",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Northwest Montana",
+        "state": "MT",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-mt-western-montana/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-mt-western-montana",
+    "did": "did:plc:dsa-mt-western-montana",
+    "handle": "westernmtdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Western Montana",
+      "shortName": "Western Montana",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Western Montana",
+        "state": "MT",
+        "country": "US"
+      },
+      "website": "https://westernmtdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nc-asheville/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nc-asheville",
+    "did": "did:plc:dsa-nc-asheville",
+    "handle": "avldsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Asheville",
+      "shortName": "Asheville",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Asheville",
+        "state": "NC",
+        "country": "US"
+      },
+      "website": "https://avldsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nc-piedmont-triad/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nc-piedmont-triad",
+    "did": "did:plc:dsa-nc-piedmont-triad",
+    "handle": "ptncdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Piedmont Triad",
+      "shortName": "Piedmont Triad",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Piedmont Triad",
+        "state": "NC",
+        "country": "US"
+      },
+      "website": "https://www.ptncdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nc-triangle/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nc-triangle",
+    "did": "did:plc:dsa-nc-triangle",
+    "handle": "dsanc.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Triangle",
+      "shortName": "Triangle",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Triangle",
+        "state": "NC",
+        "country": "US"
+      },
+      "website": "https://www.dsanc.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nc-wilmington/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nc-wilmington",
+    "did": "did:plc:dsa-nc-wilmington",
+    "handle": "wilmingtondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Wilmington",
+      "shortName": "Wilmington",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Wilmington",
+        "state": "NC",
+        "country": "US"
+      },
+      "website": "https://www.wilmingtondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nc-sc-charlotte-metro/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nc-sc-charlotte-metro",
+    "did": "did:plc:dsa-nc-sc-charlotte-metro",
+    "handle": "charlottedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Charlotte Metro",
+      "shortName": "Charlotte Metro",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Charlotte Metro",
+        "state": "NC\nSC",
+        "country": "US"
+      },
+      "website": "http://www.charlottedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nd-mn-red-river-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nd-mn-red-river-valley",
+    "did": "did:plc:dsa-nd-mn-red-river-valley",
+    "handle": "rrvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Red River Valley",
+      "shortName": "Red River Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Red River Valley",
+        "state": "ND\nMN",
+        "country": "US"
+      },
+      "website": "https://www.rrvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ne-lincoln/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ne-lincoln",
+    "did": "did:plc:dsa-ne-lincoln",
+    "handle": "dsanebraska.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lincoln",
+      "shortName": "Lincoln",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lincoln",
+        "state": "NE",
+        "country": "US"
+      },
+      "website": "http://www.dsanebraska.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ne-ia-omaha/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ne-ia-omaha",
+    "did": "did:plc:dsa-ne-ia-omaha",
+    "handle": "omahadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Omaha",
+      "shortName": "Omaha",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Omaha",
+        "state": "NE IA",
+        "country": "US"
+      },
+      "website": "https://omahadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nh-southern-new-hampshire/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nh-southern-new-hampshire",
+    "did": "did:plc:dsa-nh-southern-new-hampshire",
+    "handle": "snh.dsachapters.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern New Hampshire",
+      "shortName": "Southern New Hampshire",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Southern New Hampshire",
+        "state": "NH",
+        "country": "US"
+      },
+      "website": "https://snh.dsachapters.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nh-vt-upper-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nh-vt-upper-valley",
+    "did": "did:plc:dsa-nh-vt-upper-valley",
+    "handle": "uppervalleydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Upper Valley",
+      "shortName": "Upper Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Upper Valley",
+        "state": "NH\nVT",
+        "country": "US"
+      },
+      "website": "http://uppervalleydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nj-central-new-jersey/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nj-central-new-jersey",
+    "did": "did:plc:dsa-nj-central-new-jersey",
+    "handle": "central.dsanj.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central New Jersey",
+      "shortName": "Central New Jersey",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Central New Jersey",
+        "state": "NJ",
+        "country": "US"
+      },
+      "website": "https://central.dsanj.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nj-north-new-jersey/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nj-north-new-jersey",
+    "did": "did:plc:dsa-nj-north-new-jersey",
+    "handle": "north.dsanj.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North New Jersey",
+      "shortName": "North New Jersey",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North New Jersey",
+        "state": "NJ",
+        "country": "US"
+      },
+      "website": "https://north.dsanj.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nj-south-new-jersey/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nj-south-new-jersey",
+    "did": "did:plc:dsa-nj-south-new-jersey",
+    "handle": "south.dsanj.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "South New Jersey",
+      "shortName": "South New Jersey",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "South New Jersey",
+        "state": "NJ",
+        "country": "US"
+      },
+      "website": "https://south.dsanj.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nm-albuquerque/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nm-albuquerque",
+    "did": "did:plc:dsa-nm-albuquerque",
+    "handle": "abqdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Albuquerque",
+      "shortName": "Albuquerque",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Albuquerque",
+        "state": "NM",
+        "country": "US"
+      },
+      "website": "https://abqdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nm-santa-fe/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nm-santa-fe",
+    "did": "did:plc:dsa-nm-santa-fe",
+    "handle": "dsasantafe.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Santa Fe",
+      "shortName": "Santa Fe",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Santa Fe",
+        "state": "NM",
+        "country": "US"
+      },
+      "website": "https://www.dsasantafe.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nv-las-vegas/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nv-las-vegas",
+    "did": "did:plc:dsa-nv-las-vegas",
+    "handle": "lvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Las Vegas",
+      "shortName": "Las Vegas",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Las Vegas",
+        "state": "NV",
+        "country": "US"
+      },
+      "website": "https://lvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-nv-northern-nevada/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-nv-northern-nevada",
+    "did": "did:plc:dsa-nv-northern-nevada",
+    "handle": "nndsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northern Nevada",
+      "shortName": "Northern Nevada",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northern Nevada",
+        "state": "NV",
+        "country": "US"
+      },
+      "website": "https://www.nndsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-broome/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-broome",
+    "did": "did:plc:dsa-ny-broome",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Broome",
+      "shortName": "Broome",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Broome",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-buffalo/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-buffalo",
+    "did": "did:plc:dsa-ny-buffalo",
+    "handle": "buffalo-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Buffalo",
+      "shortName": "Buffalo",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Buffalo",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "http://buffalo-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-capital-district/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-capital-district",
+    "did": "did:plc:dsa-ny-capital-district",
+    "handle": "capitaldistrictdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Capital District",
+      "shortName": "Capital District",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Capital District",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://capitaldistrictdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-high-peaks/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-high-peaks",
+    "did": "did:plc:dsa-ny-high-peaks",
+    "handle": "highpeaksdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "High Peaks",
+      "shortName": "High Peaks",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "High Peaks",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://www.highpeaksdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-ithaca/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-ithaca",
+    "did": "did:plc:dsa-ny-ithaca",
+    "handle": "ithacadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Ithaca",
+      "shortName": "Ithaca",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Ithaca",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://ithacadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-long-island/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-long-island",
+    "did": "did:plc:dsa-ny-long-island",
+    "handle": "lidsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Long Island",
+      "shortName": "Long Island",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Long Island",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://www.lidsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-lower-hudson-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-lower-hudson-valley",
+    "did": "did:plc:dsa-ny-lower-hudson-valley",
+    "handle": "lhvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lower Hudson Valley",
+      "shortName": "Lower Hudson Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lower Hudson Valley",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "http://lhvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-mid-hudson-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-mid-hudson-valley",
+    "did": "did:plc:dsa-ny-mid-hudson-valley",
+    "handle": "mhvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Mid-Hudson Valley",
+      "shortName": "Mid-Hudson Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Mid-Hudson Valley",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://mhvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-new-york-city/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-new-york-city",
+    "did": "did:plc:dsa-ny-new-york-city",
+    "handle": "socialists.nyc",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "New York City",
+      "shortName": "New York City",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "New York City",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "http://www.socialists.nyc/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-rochester/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-rochester",
+    "did": "did:plc:dsa-ny-rochester",
+    "handle": "rocdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Rochester",
+      "shortName": "Rochester",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Rochester",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://rocdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-syracuse/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-syracuse",
+    "did": "did:plc:dsa-ny-syracuse",
+    "handle": "syracusedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Syracuse",
+      "shortName": "Syracuse",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Syracuse",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://syracusedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ny-troy/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ny-troy",
+    "did": "did:plc:dsa-ny-troy",
+    "handle": "troydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Troy",
+      "shortName": "Troy",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Troy",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://troydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-akron/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-akron",
+    "did": "did:plc:dsa-oh-akron",
+    "handle": "akrondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Akron",
+      "shortName": "Akron",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Akron",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://www.akrondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-bowling-green/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-bowling-green",
+    "did": "did:plc:dsa-oh-bowling-green",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Bowling Green",
+      "shortName": "Bowling Green",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Bowling Green",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-cleveland/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-cleveland",
+    "did": "did:plc:dsa-oh-cleveland",
+    "handle": "dsacleveland.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Cleveland",
+      "shortName": "Cleveland",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Cleveland",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://dsacleveland.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-columbus/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-columbus",
+    "did": "did:plc:dsa-oh-columbus",
+    "handle": "columbusdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Columbus",
+      "shortName": "Columbus",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Columbus",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://www.columbusdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-dayton-miami-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-dayton-miami-valley",
+    "did": "did:plc:dsa-oh-dayton-miami-valley",
+    "handle": "gemcitydsa.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Dayton-Miami Valley",
+      "shortName": "Dayton-Miami Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Dayton-Miami Valley",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://www.gemcitydsa.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-mahoning-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-mahoning-valley",
+    "did": "did:plc:dsa-oh-mahoning-valley",
+    "handle": "mahoningvalleydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Mahoning Valley",
+      "shortName": "Mahoning Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Mahoning Valley",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "http://www.mahoningvalleydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-northwest-ohio/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-northwest-ohio",
+    "did": "did:plc:dsa-oh-northwest-ohio",
+    "handle": "nwohiodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northwest Ohio",
+      "shortName": "Northwest Ohio",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northwest Ohio",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "http://nwohiodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-wooster/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-wooster",
+    "did": "did:plc:dsa-oh-wooster",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Wooster",
+      "shortName": "Wooster",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Wooster",
+        "state": "OH",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-oh-ky-metro-cincinnati-northern-kentucky/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-oh-ky-metro-cincinnati-northern-kentucky",
+    "did": "did:plc:dsa-oh-ky-metro-cincinnati-northern-kentucky",
+    "handle": "dsacincy.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Metro Cincinnati & Northern Kentucky",
+      "shortName": "Metro Cincinnati & Northern Kentucky",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Metro Cincinnati & Northern Kentucky",
+        "state": "OH\nKY",
+        "country": "US"
+      },
+      "website": "https://dsacincy.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ok-oklahoma-city/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ok-oklahoma-city",
+    "did": "did:plc:dsa-ok-oklahoma-city",
+    "handle": "okcdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Oklahoma City",
+      "shortName": "Oklahoma City",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Oklahoma City",
+        "state": "OK",
+        "country": "US"
+      },
+      "website": "https://okcdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ok-tulsa/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ok-tulsa",
+    "did": "did:plc:dsa-ok-tulsa",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Tulsa",
+      "shortName": "Tulsa",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Tulsa",
+        "state": "OK",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-or-central-oregon/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-or-central-oregon",
+    "did": "did:plc:dsa-or-central-oregon",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Central Oregon",
+      "shortName": "Central Oregon",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Central Oregon",
+        "state": "OR",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-or-eugene-springfield/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-or-eugene-springfield",
+    "did": "did:plc:dsa-or-eugene-springfield",
+    "handle": "dsaeugene.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Eugene-Springfield",
+      "shortName": "Eugene-Springfield",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Eugene-Springfield",
+        "state": "OR",
+        "country": "US"
+      },
+      "website": "https://dsaeugene.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-or-portland/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-or-portland",
+    "did": "did:plc:dsa-or-portland",
+    "handle": "portlanddsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Portland",
+      "shortName": "Portland",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Portland",
+        "state": "OR",
+        "country": "US"
+      },
+      "website": "https://portlanddsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-or-salem/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-or-salem",
+    "did": "did:plc:dsa-or-salem",
+    "handle": "salemdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Salem",
+      "shortName": "Salem",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Salem",
+        "state": "OR",
+        "country": "US"
+      },
+      "website": "https://www.salemdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-or-southern-oregon/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-or-southern-oregon",
+    "did": "did:plc:dsa-or-southern-oregon",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Southern Oregon",
+      "shortName": "Southern Oregon",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Southern Oregon",
+        "state": "OR",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-centre-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-centre-county",
+    "did": "did:plc:dsa-pa-centre-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Centre County",
+      "shortName": "Centre County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Centre County",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-erie/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-erie",
+    "did": "did:plc:dsa-pa-erie",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Erie",
+      "shortName": "Erie",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Erie",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-lehigh-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-lehigh-valley",
+    "did": "did:plc:dsa-pa-lehigh-valley",
+    "handle": "lehighvalleydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lehigh Valley",
+      "shortName": "Lehigh Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lehigh Valley",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://www.lehighvalleydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-northeast-pennsylvania/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-northeast-pennsylvania",
+    "did": "did:plc:dsa-pa-northeast-pennsylvania",
+    "handle": "nepadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northeast Pennsylvania",
+      "shortName": "Northeast Pennsylvania",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northeast Pennsylvania",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://www.nepadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-philadelphia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-philadelphia",
+    "did": "did:plc:dsa-pa-philadelphia",
+    "handle": "phillydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Philadelphia",
+      "shortName": "Philadelphia",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Philadelphia",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://www.phillydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-pittsburgh/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-pittsburgh",
+    "did": "did:plc:dsa-pa-pittsburgh",
+    "handle": "pghdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Pittsburgh",
+      "shortName": "Pittsburgh",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Pittsburgh",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "http://www.pghdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-pa-south-central-pa/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-pa-south-central-pa",
+    "did": "did:plc:dsa-pa-south-central-pa",
+    "handle": "lancdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "South Central PA",
+      "shortName": "South Central PA",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "South Central PA",
+        "state": "PA",
+        "country": "US"
+      },
+      "website": "https://lancdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ri-rhode-island/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ri-rhode-island",
+    "did": "did:plc:dsa-ri-rhode-island",
+    "handle": "ridsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Rhode Island",
+      "shortName": "Rhode Island",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Rhode Island",
+        "state": "RI",
+        "country": "US"
+      },
+      "website": "https://ridsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-sc-charleston/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-sc-charleston",
+    "did": "did:plc:dsa-sc-charleston",
+    "handle": "charlestondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Charleston",
+      "shortName": "Charleston",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Charleston",
+        "state": "SC",
+        "country": "US"
+      },
+      "website": "https://charlestondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-sc-columbia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-sc-columbia",
+    "did": "did:plc:dsa-sc-columbia",
+    "handle": "dsaofcolumbia.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Columbia",
+      "shortName": "Columbia",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Columbia",
+        "state": "SC",
+        "country": "US"
+      },
+      "website": "https://dsaofcolumbia.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-sc-upstate-south-carolina/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-sc-upstate-south-carolina",
+    "did": "did:plc:dsa-sc-upstate-south-carolina",
+    "handle": "dsaupstatesc.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Upstate South Carolina",
+      "shortName": "Upstate South Carolina",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Upstate South Carolina",
+        "state": "SC",
+        "country": "US"
+      },
+      "website": "https://www.dsaupstatesc.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-sd-sioux-empire/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-sd-sioux-empire",
+    "did": "did:plc:dsa-sd-sioux-empire",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Sioux Empire",
+      "shortName": "Sioux Empire",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Sioux Empire",
+        "state": "SD",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tn-chattanooga/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tn-chattanooga",
+    "did": "did:plc:dsa-tn-chattanooga",
+    "handle": "chattanoogadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Chattanooga",
+      "shortName": "Chattanooga",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Chattanooga",
+        "state": "TN",
+        "country": "US"
+      },
+      "website": "https://chattanoogadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tn-knoxville/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tn-knoxville",
+    "did": "did:plc:dsa-tn-knoxville",
+    "handle": "knoxvilledsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Knoxville",
+      "shortName": "Knoxville",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Knoxville",
+        "state": "TN",
+        "country": "US"
+      },
+      "website": "https://knoxvilledsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tn-memphis-midsouth/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tn-memphis-midsouth",
+    "did": "did:plc:dsa-tn-memphis-midsouth",
+    "handle": "memphisdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Memphis Midsouth",
+      "shortName": "Memphis Midsouth",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Memphis Midsouth",
+        "state": "TN",
+        "country": "US"
+      },
+      "website": "https://memphisdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tn-middle-tennessee/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tn-middle-tennessee",
+    "did": "did:plc:dsa-tn-middle-tennessee",
+    "handle": "midtndsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Middle Tennessee",
+      "shortName": "Middle Tennessee",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Middle Tennessee",
+        "state": "TN",
+        "country": "US"
+      },
+      "website": "https://midtndsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tn-northeast-tennessee/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tn-northeast-tennessee",
+    "did": "did:plc:dsa-tn-northeast-tennessee",
+    "handle": "northeasttndsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Northeast Tennessee",
+      "shortName": "Northeast Tennessee",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Northeast Tennessee",
+        "state": "TN",
+        "country": "US"
+      },
+      "website": "https://northeasttndsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-austin/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-austin",
+    "did": "did:plc:dsa-tx-austin",
+    "handle": "austindsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Austin",
+      "shortName": "Austin",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Austin",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "http://www.austindsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-brazos/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-brazos",
+    "did": "did:plc:dsa-tx-brazos",
+    "handle": "brazosdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Brazos",
+      "shortName": "Brazos",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Brazos",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://brazosdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-corpus-christi/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-corpus-christi",
+    "did": "did:plc:dsa-tx-corpus-christi",
+    "handle": "corpuschristidsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Corpus Christi",
+      "shortName": "Corpus Christi",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Corpus Christi",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "http://www.corpuschristidsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-fort-worth/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-fort-worth",
+    "did": "did:plc:dsa-tx-fort-worth",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Fort Worth",
+      "shortName": "Fort Worth",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Fort Worth",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-houston/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-houston",
+    "did": "did:plc:dsa-tx-houston",
+    "handle": "houstondsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Houston",
+      "shortName": "Houston",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Houston",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://www.houstondsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-laredo/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-laredo",
+    "did": "did:plc:dsa-tx-laredo",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Laredo",
+      "shortName": "Laredo",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Laredo",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-lubbock/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-lubbock",
+    "did": "did:plc:dsa-tx-lubbock",
+    "handle": "lbkdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Lubbock",
+      "shortName": "Lubbock",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Lubbock",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://lbkdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-north-texas/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-north-texas",
+    "did": "did:plc:dsa-tx-north-texas",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North Texas",
+      "shortName": "North Texas",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North Texas",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-rio-grande-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-rio-grande-valley",
+    "did": "did:plc:dsa-tx-rio-grande-valley",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Rio Grande Valley",
+      "shortName": "Rio Grande Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Rio Grande Valley",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-san-antonio/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-san-antonio",
+    "did": "did:plc:dsa-tx-san-antonio",
+    "handle": "sanantoniodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "San Antonio",
+      "shortName": "San Antonio",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "San Antonio",
+        "state": "TX",
+        "country": "US"
+      },
+      "website": "https://www.sanantoniodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-tx-nm-paso-del-norte/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-tx-nm-paso-del-norte",
+    "did": "did:plc:dsa-tx-nm-paso-del-norte",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Paso del Norte",
+      "shortName": "Paso del Norte",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Paso del Norte",
+        "state": "TX, NM",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-ut-salt-lake/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-ut-salt-lake",
+    "did": "did:plc:dsa-ut-salt-lake",
+    "handle": "saltlakedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Salt Lake",
+      "shortName": "Salt Lake",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Salt Lake",
+        "state": "UT",
+        "country": "US"
+      },
+      "website": "https://saltlakedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-va-charlottesville/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-va-charlottesville",
+    "did": "did:plc:dsa-va-charlottesville",
+    "handle": "charlottesvilledsa.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Charlottesville",
+      "shortName": "Charlottesville",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Charlottesville",
+        "state": "VA",
+        "country": "US"
+      },
+      "website": "https://charlottesvilledsa.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-va-new-river-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-va-new-river-valley",
+    "did": "did:plc:dsa-va-new-river-valley",
+    "handle": "nrvdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "New River Valley",
+      "shortName": "New River Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "New River Valley",
+        "state": "VA",
+        "country": "US"
+      },
+      "website": "https://www.nrvdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-va-richmond/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-va-richmond",
+    "did": "did:plc:dsa-va-richmond",
+    "handle": "dsarichmond.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Richmond",
+      "shortName": "Richmond",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Richmond",
+        "state": "VA",
+        "country": "US"
+      },
+      "website": "https://www.dsarichmond.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-va-shenandoah-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-va-shenandoah-valley",
+    "did": "did:plc:dsa-va-shenandoah-valley",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Shenandoah Valley",
+      "shortName": "Shenandoah Valley",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Shenandoah Valley",
+        "state": "VA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-va-tidewater/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-va-tidewater",
+    "did": "did:plc:dsa-va-tidewater",
+    "handle": "tidewaterdsa.com",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Tidewater",
+      "shortName": "Tidewater",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Tidewater",
+        "state": "VA",
+        "country": "US"
+      },
+      "website": "http://tidewaterdsa.com/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-vt-green-mountain/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-vt-green-mountain",
+    "did": "did:plc:dsa-vt-green-mountain",
+    "handle": "greenmountaindsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Green Mountain",
+      "shortName": "Green Mountain",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Green Mountain",
+        "state": "VT",
+        "country": "US"
+      },
+      "website": "https://www.greenmountaindsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-north-olympic/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-north-olympic",
+    "did": "did:plc:dsa-wa-north-olympic",
+    "handle": "noroly.chapters.dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North Olympic",
+      "shortName": "North Olympic",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North Olympic",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://noroly.chapters.dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-olympia/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-olympia",
+    "did": "did:plc:dsa-wa-olympia",
+    "handle": "olydsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Olympia",
+      "shortName": "Olympia",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Olympia",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://olydsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-palouse/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-palouse",
+    "did": "did:plc:dsa-wa-palouse",
+    "handle": "palousedsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Palouse",
+      "shortName": "Palouse",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Palouse",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://palousedsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-seattle/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-seattle",
+    "did": "did:plc:dsa-wa-seattle",
+    "handle": "seattledsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Seattle",
+      "shortName": "Seattle",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Seattle",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://seattledsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-skagit-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-skagit-county",
+    "did": "did:plc:dsa-wa-skagit-county",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Skagit County",
+      "shortName": "Skagit County",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Skagit County",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-snohomish-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-snohomish-county",
+    "did": "did:plc:dsa-wa-snohomish-county",
+    "handle": "snocodsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Snohomish County",
+      "shortName": "Snohomish County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Snohomish County",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://www.snocodsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-spokane/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-spokane",
+    "did": "did:plc:dsa-wa-spokane",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Spokane",
+      "shortName": "Spokane",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Spokane",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-tacoma-pierce-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-tacoma-pierce-county",
+    "did": "did:plc:dsa-wa-tacoma-pierce-county",
+    "handle": "tacomadsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Tacoma & Pierce County",
+      "shortName": "Tacoma & Pierce County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Tacoma & Pierce County",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://tacomadsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-walla-walla/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-walla-walla",
+    "did": "did:plc:dsa-wa-walla-walla",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Walla Walla",
+      "shortName": "Walla Walla",
+      "jurisdiction": {
+        "type": "organizing-committee",
+        "name": "Walla Walla",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-west-sound/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-west-sound",
+    "did": "did:plc:dsa-wa-west-sound",
+    "handle": "westsound.dsachapters.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "West Sound",
+      "shortName": "West Sound",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "West Sound",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://westsound.dsachapters.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wa-whatcom-county/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wa-whatcom-county",
+    "did": "did:plc:dsa-wa-whatcom-county",
+    "handle": "whatcomdsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Whatcom County",
+      "shortName": "Whatcom County",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Whatcom County",
+        "state": "WA",
+        "country": "US"
+      },
+      "website": "https://whatcomdsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-chippewa-valley/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-chippewa-valley",
+    "did": "did:plc:dsa-wi-chippewa-valley",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Chippewa Valley",
+      "shortName": "Chippewa Valley",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Chippewa Valley",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-coulee-region/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-coulee-region",
+    "did": "did:plc:dsa-wi-coulee-region",
+    "handle": "coulee.dsawi.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Coulee Region",
+      "shortName": "Coulee Region",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Coulee Region",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "http://coulee.dsawi.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-madison-area/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-madison-area",
+    "did": "did:plc:dsa-wi-madison-area",
+    "handle": "madison-dsa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Madison Area",
+      "shortName": "Madison Area",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Madison Area",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "https://madison-dsa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-milwaukee/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-milwaukee",
+    "did": "did:plc:dsa-wi-milwaukee",
+    "handle": "milwaukee.dsawi.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Milwaukee",
+      "shortName": "Milwaukee",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Milwaukee",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "https://milwaukee.dsawi.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-north-east-wisconsin/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-north-east-wisconsin",
+    "did": "did:plc:dsa-wi-north-east-wisconsin",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "North East Wisconsin",
+      "shortName": "North East Wisconsin",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "North East Wisconsin",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:dsa-wi-rock-river/org.dsa.profile.chapter/self",
+    "cid": "bafy-dsa-wi-rock-river",
+    "did": "did:plc:dsa-wi-rock-river",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "Rock River",
+      "shortName": "Rock River",
+      "jurisdiction": {
+        "type": "chapter",
+        "name": "Rock River",
+        "state": "WI",
+        "country": "US"
+      },
+      "website": "https://dsausa.org/chapters/",
+      "status": "active"
+    }
+  }
+]
