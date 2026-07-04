@@ -13,7 +13,7 @@ export type DirectoryRepository = {
   listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
   ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
-  getOrgChart(): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
+  getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
 };
 
 export function getConfig(env: NodeJS.ProcessEnv = process.env) {
@@ -58,8 +58,8 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
       const nextDirectoryRecords = dedupeEntities(rawRecords);
       records.splice(0, records.length, ...nextDirectoryRecords);
     },
-    async getOrgChart() {
-      return buildOrgChartFromRecords(rawRecords);
+    async getOrgChart(filters = {}) {
+      return buildOrgChartFromRecords(rawRecords, filters);
     },
   };
 }
@@ -250,9 +250,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         );
       }
     },
-    async getOrgChart() {
+    async getOrgChart(filters = {}) {
       const result = await pool.query(`select uri, record, collection, indexed_at from atproto_records where collection in ('org.dsa.profile.orgUnit', 'org.dsa.relationship.governance') order by indexed_at asc`);
-      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: 'db', did: 'did:plc:db', handle: 'dsausa.org', collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)));
+      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: 'db', did: 'did:plc:db', handle: 'dsausa.org', collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), filters);
     },
   };
 }
@@ -324,8 +324,9 @@ export function createApp(repository: DirectoryRepository) {
         return toJson(res, 200, { prototype: true, data: await repository.listEntities({ type: type as DirectoryEntityFilters['type'], search, state: state ?? undefined, jurisdictionType: jurisdictionType ?? undefined, limit: Number.isFinite(limit) ? limit : undefined }) });
       }
     }
-    if (req.method === 'GET' && req.url === '/api/org-chart') {
-      return toJson(res, 200, await repository.getOrgChart());
+    if (req.method === 'GET' && req.url?.startsWith('/api/org-chart')) {
+      const url = new URL(req.url, 'http://localhost');
+      return toJson(res, 200, await repository.getOrgChart({ kind: url.searchParams.get('kind') as OrgUnitRecord['kind'] | undefined, unit: url.searchParams.get('unit') ?? undefined }));
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities/')) {
       const id = decodeURIComponent(req.url.slice('/api/entities/'.length));
@@ -341,15 +342,23 @@ export function createApp(repository: DirectoryRepository) {
   });
 }
 
-function buildOrgChartFromRecords(records: RecordEnvelope[]) {
+function buildOrgChartFromRecords(records: RecordEnvelope[], filters: { kind?: OrgUnitRecord['kind']; unit?: string } = {}) {
   const unitRecords = records.filter((record): record is RecordEnvelope & { record: OrgUnitRecord } => record.collection === 'org.dsa.profile.orgUnit' && orgUnitRecordSchema.safeParse(record.record).success);
   const relationshipRecords = records.filter((record): record is RecordEnvelope & { record: GovernanceRelationshipRecord } => record.collection === 'org.dsa.relationship.governance' && governanceRelationshipRecordSchema.safeParse(record.record).success);
+  const selectedUnit = filters.unit ? unitRecords.find((unit) => unit.uri === filters.unit) : undefined;
+  const connectedUris = selectedUnit ? new Set([selectedUnit.uri, ...relationshipRecords.filter((rel) => rel.record.subjectUri === selectedUnit.uri || rel.record.objectUri === selectedUnit.uri).flatMap((rel) => [rel.record.subjectUri, rel.record.objectUri])]) : undefined;
+  const units = unitRecords.filter((unit) => (filters.kind ? unit.record.kind === filters.kind : true) && (connectedUris ? connectedUris.has(unit.uri) : true));
+  const visibleUnitUris = new Set(units.map((unit) => unit.uri));
+  const relationships = relationshipRecords.filter((rel) => {
+    if (selectedUnit) return visibleUnitUris.has(rel.record.subjectUri) && visibleUnitUris.has(rel.record.objectUri);
+    return (filters.kind ? visibleUnitUris.has(rel.record.subjectUri) || visibleUnitUris.has(rel.record.objectUri) : true) && (visibleUnitUris.has(rel.record.subjectUri) || visibleUnitUris.has(rel.record.objectUri));
+  });
   return {
     prototype: true as const,
     sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg',
     updatedLabel: 'Last updated June 2020',
-    units: unitRecords.map((item) => ({ uri: item.uri, ...item.record })),
-    relationships: relationshipRecords.map((item) => ({ uri: item.uri, ...item.record })),
+    units: units.map((item) => ({ uri: item.uri, ...item.record })),
+    relationships: relationships.map((item) => ({ uri: item.uri, ...item.record })),
   };
 }
 

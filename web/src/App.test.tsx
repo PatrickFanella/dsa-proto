@@ -67,12 +67,27 @@ describe('App', () => {
   });
 
   it('renders the org chart section with source and relationships', () => {
-    const html = renderToString(<App initialEntities={[]} initialOrgChart={{ prototype: true, sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', updatedLabel: 'Last updated June 2020', units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active' }], relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }] }} />);
+    const html = renderToString(<App initialEntities={[]} initialOrgChart={{ prototype: true, sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', updatedLabel: 'Last updated June 2020', units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active' }, { uri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self', name: 'Democratic Left', shortName: 'Dem Left', kind: 'publication', description: 'National publication that accepts pitches and submissions from members.', status: 'active' }], relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }, { uri: 'at://did:plc:npc/org.dsa.relationship.governance/appoints-publications', subjectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', relationship: 'appoints', objectUri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self', description: 'NPC appoints the editorial board for publications.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }] }} />);
     expect(html).toContain('How DSA operates');
     expect(html).toContain('Organization chart source');
     expect(html).toContain('Last updated June 2020');
     expect(html).toContain('National Political Committee');
     expect(html).toContain('Chapter delegates elect the National Political Committee at convention.');
+    expect(html).toContain('National committees');
+    expect(html).toContain('Publications');
+    expect(html).toContain('NPC appoints the editorial board for publications.');
+  });
+
+  it('renders focused org unit details and relationship directions', () => {
+    const html = renderToString(<App initialEntities={[]} initialOrgChart={{ prototype: true, sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', updatedLabel: 'Last updated June 2020', units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active', website: 'https://www.dsausa.org/' }, { uri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', name: 'Chapter Delegates', shortName: 'Chapter Delegates', kind: 'delegate-body', description: 'Delegates elected by membership to convention who elect the NPC.', status: 'active' }], relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }] }} />);
+    expect(html).toContain('National Political Committee');
+    expect(html).toContain('National committees');
+    expect(html).toContain('Source link');
+    expect(html).toContain('Prototype caveat');
+    expect(html).toContain('Incoming relationships');
+    expect(html).toContain('Outgoing relationships');
+    expect(html).toContain('Chapter delegates elect the National Political Committee at convention.');
+    expect(html).toContain('elects');
   });
 
   it('renders search and type filters with filtered results', () => {

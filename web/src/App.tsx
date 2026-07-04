@@ -28,6 +28,21 @@ export type OrgChartUnit = { uri: string; name: string; shortName: string; kind:
 export type OrgChartRelationship = { uri: string; subjectUri: string; relationship: string; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string };
 export type OrgChartPayload = { prototype: boolean; sourceUrl: string; updatedLabel: string; units: OrgChartUnit[]; relationships: OrgChartRelationship[] };
 
+const orgChartKindLabels: Record<string, string> = {
+  'national-committee': 'National committees',
+  'steering-committee': 'Steering committees',
+  staff: 'Staff',
+  publication: 'Publications',
+  'priority-committee': 'Priority committees',
+  'working-group': 'Working groups and commissions',
+  commission: 'Working groups and commissions',
+  'chapter-network': 'Chapter network',
+  'membership-body': 'Membership',
+  'delegate-body': 'Delegates',
+  'youth-committee': 'Youth committee',
+  'staff-role': 'Staff',
+};
+
 const fallbackEntities: DirectoryCard[] = [
   {
     id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
@@ -97,6 +112,8 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [stateFilter, setStateFilter] = useState('all');
   const [jurisdictionTypeFilter, setJurisdictionTypeFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
+  const [orgChartKindFilter, setOrgChartKindFilter] = useState<string>('all');
+  const [orgChartSelectedUnit, setOrgChartSelectedUnit] = useState<string>('');
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -121,8 +138,11 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`).then((response) => response.json()).then((payload) => setOrgChart(payload)).catch(() => setOrgChart(initialOrgChart));
-  }, [initialOrgChart]);
+    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`);
+    if (orgChartKindFilter !== 'all') url.searchParams.set('kind', orgChartKindFilter);
+    if (orgChartSelectedUnit) url.searchParams.set('unit', orgChartSelectedUnit);
+    fetch(url.toString()).then((response) => response.json()).then((payload) => setOrgChart(payload)).catch(() => setOrgChart(initialOrgChart));
+  }, [initialOrgChart, orgChartKindFilter, orgChartSelectedUnit]);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
@@ -136,6 +156,20 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   }), [entities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
+  const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
+  const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
+    (acc[unit.kind] ??= []).push(unit);
+    return acc;
+  }, {})).sort(([a], [b]) => (orgChartKindLabels[a] ?? a).localeCompare(orgChartKindLabels[b] ?? b)), [orgChart.units]);
+  const selectedOrgUnit = orgChart.units.find((unit) => unit.uri === orgChartSelectedUnit);
+  const activeOrgUnit = selectedOrgUnit ?? orgChart.units[0];
+  const selectedOrgRelationships = activeOrgUnit ? orgChart.relationships.filter((relationship) => relationship.subjectUri === activeOrgUnit.uri || relationship.objectUri === activeOrgUnit.uri) : [];
+  const incomingOrgRelationships = activeOrgUnit ? selectedOrgRelationships.filter((relationship) => relationship.objectUri === activeOrgUnit.uri) : [];
+  const outgoingOrgRelationships = activeOrgUnit ? selectedOrgRelationships.filter((relationship) => relationship.subjectUri === activeOrgUnit.uri) : [];
+
+  function unitName(uri: string) {
+    return orgChartUnitsByUri.get(uri)?.name ?? uri;
+  }
 
   async function publishPrototypeChapter(event: FormEvent) {
     event.preventDefault();
@@ -191,15 +225,46 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           <h2 className="text-2xl font-semibold">How DSA operates</h2>
           <p className="mt-2 text-sm text-zinc-300">Source-linked public organization chart slice.</p>
           <p className="mt-1 text-sm text-emerald-200"><a href={orgChart.sourceUrl} className="underline">Organization chart source</a> · {orgChart.updatedLabel}</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div>
-              <h3 className="text-lg font-semibold">Units</h3>
-              <ul className="mt-2 space-y-2 text-sm">{orgChart.units.map((unit) => <li key={unit.uri} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3"><strong>{unit.shortName}</strong> — {unit.name} ({unit.kind})<div className="text-zinc-400">{unit.description}</div></li>)}</ul>
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            <button type="button" onClick={() => { setOrgChartKindFilter('all'); setOrgChartSelectedUnit(''); }} className={`rounded-full border px-3 py-1 ${orgChartKindFilter === 'all' ? 'border-emerald-300 text-emerald-100' : 'border-zinc-700 text-zinc-300'}`}>All kinds</button>
+            {[...new Set(orgChart.units.map((unit) => unit.kind))].map((kind) => <button key={kind} type="button" onClick={() => { setOrgChartKindFilter(kind); setOrgChartSelectedUnit(''); }} className={`rounded-full border px-3 py-1 ${orgChartKindFilter === kind ? 'border-emerald-300 text-emerald-100' : 'border-zinc-700 text-zinc-300'}`}>{orgChartKindLabels[kind] ?? kind}</button>)}
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+            <div className="space-y-4">
+              {orgChartUnitsByKind.map(([kind, units]) => (
+                <section key={kind} className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+                  <h3 className="text-lg font-semibold">{orgChartKindLabels[kind] ?? kind}</h3>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {units.map((unit) => <li key={unit.uri}><button type="button" onClick={() => setOrgChartSelectedUnit(unit.uri)} className={`w-full rounded-lg border px-3 py-2 text-left ${activeOrgUnit?.uri === unit.uri ? 'border-cyan-400 bg-zinc-950' : 'border-zinc-800 bg-zinc-950'}`}><strong>{unit.shortName}</strong> — {unit.name}<div className="text-zinc-400">{unit.description}</div></button></li>)}
+                  </ul>
+                </section>
+              ))}
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">Relationships</h3>
-              <ul className="mt-2 space-y-2 text-sm">{orgChart.relationships.map((rel) => <li key={rel.uri} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3"><strong>{rel.relationship}</strong> · {rel.description}</li>)}</ul>
-            </div>
+            <aside className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm">
+              {activeOrgUnit ? (
+                <>
+                  <h3 className="text-xl font-semibold">{activeOrgUnit.name}</h3>
+                  <p className="mt-1 text-zinc-400">{orgChartKindLabels[activeOrgUnit.kind] ?? activeOrgUnit.kind}</p>
+                  <p className="mt-3 text-zinc-200">{activeOrgUnit.description}</p>
+                  {activeOrgUnit.website ? <p className="mt-2"><a href={activeOrgUnit.website} className="underline">Source link</a></p> : null}
+                  <p className="mt-2 text-amber-300">Prototype caveat: public alignment slice only.</p>
+                  <div className="mt-4 grid gap-4">
+                    <div>
+                      <h4 className="font-semibold">Incoming relationships</h4>
+                      <ul className="mt-2 space-y-2">{incomingOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{unitName(relationship.subjectUri)} {relationship.relationship} {unitName(relationship.objectUri)}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Outgoing relationships</h4>
+                      <ul className="mt-2 space-y-2">{outgoingOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{unitName(relationship.subjectUri)} {relationship.relationship} {unitName(relationship.objectUri)}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Relationships summary</h4>
+                      <ul className="mt-2 space-y-2">{selectedOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{relationship.description}</li>)}</ul>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </aside>
           </div>
         </section>
         <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">

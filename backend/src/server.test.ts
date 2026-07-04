@@ -208,6 +208,32 @@ describe('API response', () => {
     expect(json.relationships.some((rel) => rel.relationship === 'elects')).toBe(true);
   });
 
+  it('filters org chart units by kind', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/org-chart?kind=publication`);
+    const json = await response.json() as { units: Array<{ kind: string; uri: string }>; relationships: Array<{ subjectUri: string; objectUri: string }> };
+    expect(json.units.length).toBeGreaterThan(0);
+    expect(json.units.every((unit) => unit.kind === 'publication')).toBe(true);
+    expect(json.relationships.every((relationship) => json.units.some((unit) => unit.uri === relationship.subjectUri || unit.uri === relationship.objectUri))).toBe(true);
+  });
+
+  it('focuses the org chart on a unit and its direct connections', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const unit = 'at://did:plc:npc/org.dsa.profile.orgUnit/self';
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/org-chart?unit=${encodeURIComponent(unit)}`);
+    const json = await response.json() as { units: Array<{ uri: string }>; relationships: Array<{ subjectUri: string; objectUri: string }> };
+    expect(json.units.map((item) => item.uri)).toContain(unit);
+    expect(json.units.length).toBeGreaterThan(1);
+    expect(json.relationships.length).toBeGreaterThan(0);
+    expect(json.relationships.every((relationship) => json.units.some((unitRecord) => unitRecord.uri === relationship.subjectUri || unitRecord.uri === relationship.objectUri))).toBe(true);
+  });
+
   it('filters entities by type and search text', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));
