@@ -126,18 +126,18 @@ The web UI also includes a local-only prototype publisher panel for quick chapte
    ```
 
 2. Open <http://localhost:5173>.
-3. Use the **Local prototype publisher** form to edit chapter fields.
-4. Review the generated ATProto-shaped JSON preview.
-5. Click **Publish local fixture**.
+3. Use the **Local prototype publisher** form to edit chapter fields, or the **Local verification assertion publisher** form to author a mock verification/dispute record.
+4. Review the generated ATProto-shaped JSON previews.
+5. Click **Publish local fixture** or **Publish verification assertion**.
 6. The browser posts to the local backend endpoint:
 
    ```http
    POST /api/admin/fixtures/ingest
    ```
 
-7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the new chapter for provenance review.
+7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the related subject for provenance review when possible.
 
-This browser flow is intentionally limited to safe chapter records for now. It is not authenticated, is not production admin tooling, and should remain local prototype-only until a real security model exists.
+This browser flow is intentionally limited to safe local fixture records. It is not authenticated, is not production admin tooling, and should remain local prototype-only until a real security model exists.
 
 ## What the prototype proves
 

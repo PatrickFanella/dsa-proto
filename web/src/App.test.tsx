@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import App from './App';
-import { buildChapterFixtureEnvelope, createDefaultChapterDraft } from './publisher';
+import { buildChapterFixtureEnvelope, buildVerificationFixtureEnvelope, createDefaultChapterDraft, createDefaultVerificationDraft } from './publisher';
 
 describe('App', () => {
   it('renders mixed directory entities and labels member prototype data', () => {
@@ -100,12 +100,30 @@ describe('App', () => {
 
   it('renders the local prototype publisher and chapter preview', () => {
     const preview = buildChapterFixtureEnvelope(createDefaultChapterDraft());
+    const verificationPreview = buildVerificationFixtureEnvelope(createDefaultVerificationDraft());
     const html = renderToString(<App initialEntities={[]} />);
     expect(html).toContain('Local prototype publisher');
     expect(html).toContain('Local prototype publishing only');
+    expect(html).toContain('Local verification assertion publisher');
+    expect(html).toContain('This does not create real DSA legitimacy');
     expect(html).toContain('/api/admin/fixtures/ingest');
     expect(html).toContain(preview.uri);
     expect(html).toContain(preview.record.jurisdiction.name);
     expect(html).toContain(preview.record.jurisdiction.state);
+    expect(html).toContain(verificationPreview.record.subjectUri);
+    expect(html).toContain('org.dsa.verification.assertion');
+  });
+
+  it('builds verification assertion fixture envelopes', () => {
+    const preview = buildVerificationFixtureEnvelope(createDefaultVerificationDraft());
+    expect(preview).toMatchObject({
+      collection: 'org.dsa.verification.assertion',
+      trustLabel: 'mock-official',
+      record: {
+        $type: 'org.dsa.verification.assertion',
+        assertion: 'verified',
+      },
+    });
+    expect(preview.uri).toContain(preview.record.subjectUri);
   });
 });

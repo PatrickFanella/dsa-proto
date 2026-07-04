@@ -269,6 +269,32 @@ describe('API response', () => {
     expect((await repo.listEntities()).map((entity) => entity.id)).toContain(record.uri);
   });
 
+  it('updates entity verification metadata after ingesting a verification assertion', async () => {
+    const repo = createMemoryRepository([]);
+    server = createApp(repo);
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const records = [chapterSeedRecords[0], verificationAssertionSeedRecords[0]];
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ records }),
+    });
+    expect(response.status).toBe(200);
+
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities/${encodeURIComponent(chapterSeedRecords[0].uri)}`);
+    const detail = await detailResponse.json() as { data: { verificationStatus: string; verifiedBy?: string; verificationReason?: string } };
+    expect(detail.data.verificationStatus).toBe('mock-verified');
+    expect(detail.data.verifiedBy).toBe('dsausa.org');
+    expect(detail.data.verificationReason).toContain('NYC chapter');
+
+    const listResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const list = await listResponse.json() as { data: Array<{ id: string; verificationStatus: string; verifiedBy?: string; verificationReason?: string }> };
+    expect(list.data.find((item) => item.id === chapterSeedRecords[0].uri)).toMatchObject({ verificationStatus: 'mock-verified', verifiedBy: 'dsausa.org' });
+  });
+
   it('rejects invalid admin fixture bodies', async () => {
     server = createApp(createMemoryRepository([]));
     await new Promise<void>((resolve) => server!.listen(0, resolve));
