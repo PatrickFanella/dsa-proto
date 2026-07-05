@@ -272,9 +272,30 @@ Acceptance criteria:
 
 See [private-voting-service-design.md](private-voting-service-design.md).
 
+### Slice 2.5: Voting protocol requirements
+
+Status: documented as an implementation gate; no ballot-casting implementation has begun.
+
+See [voting-protocol-requirements.md](voting-protocol-requirements.md).
+
+Acceptance criteria:
+
+- ballot secrecy model requirements
+- voting method scope
+- eligibility snapshot requirements
+- auth/session requirements
+- receipt semantics
+- revote/replacement rules
+- tally/certification constraints
+- retention requirements
+- admin role separation
+- threat-model acceptance checks
+
 ### Slice 3: Non-production ballot casting prototype
 
-Implement a local-only, non-production ballot flow after the design gate.
+Status: blocked by [voting-protocol-requirements.md](voting-protocol-requirements.md).
+
+Implement a local-only, non-production ballot flow only after the protocol requirements gate is accepted.
 
 Acceptance criteria:
 

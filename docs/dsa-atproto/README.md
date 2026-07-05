@@ -89,4 +89,5 @@ Use a hybrid architecture:
 - [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
 - [plan-3-internal-voting.md](plan-3-internal-voting.md): internal voting architecture and safety boundary
 - [private-voting-service-design.md](private-voting-service-design.md): private voting service boundary and data model
+- [voting-protocol-requirements.md](voting-protocol-requirements.md): required protocol decisions before ballot-casting code
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation

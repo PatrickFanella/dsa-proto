@@ -37,6 +37,7 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/plan-2-public-civic-records.md`](docs/dsa-atproto/plan-2-public-civic-records.md) — next-phase civic records plan
 - [`docs/dsa-atproto/plan-3-internal-voting.md`](docs/dsa-atproto/plan-3-internal-voting.md) — internal voting architecture and safety boundary
 - [`docs/dsa-atproto/private-voting-service-design.md`](docs/dsa-atproto/private-voting-service-design.md) — private voting service boundary and data model
+- [`docs/dsa-atproto/voting-protocol-requirements.md`](docs/dsa-atproto/voting-protocol-requirements.md) — required protocol decisions before ballot-casting code
 - [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
 
 ## Open Pilot
