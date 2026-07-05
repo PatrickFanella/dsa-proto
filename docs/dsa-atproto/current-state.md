@@ -59,7 +59,7 @@ This slice does **not** include ballots, eligibility rosters, member identity da
 
 The private voting service design is documented in `private-voting-service-design.md`. It defines the future private boundary for eligibility, authentication, ballots, receipts, tallying, audits, recounts, disputes, and admin controls, but no private voting backend is implemented.
 
-The implementation gate for ballot casting is documented in `voting-protocol-requirements.md`. A narrow local-only non-production profile is documented in `voting-local-protocol-profile.md`; it allows the next slice to prototype ballot casting locally but still blocks production, binding elections, real auth, real rosters, certified results, and any broader voting method.
+The implementation gate for ballot casting is documented in `voting-protocol-requirements.md`. The narrow local-only non-production profile is documented in `voting-local-protocol-profile.md`, and the prototype is now implemented behind `/api/local-voting/*` using synthetic voters, single-use credentials, anonymous ballot submission, and opaque receipts. Production voting remains blocked.
 
 ### Ingestion and fixture workflows
 
@@ -136,6 +136,8 @@ There are also local scratch docs that may remain untracked while being evaluate
 - `docs/caucus-article.md`
 - `docs/caucus-article-extraction.md`
 - `docs/caucus-shape.md`
+
+The local voting prototype intentionally keeps ballots and receipts out of `atproto_records`, uses only synthetic voters like `member-alpha`, `member-beta`, and `member-gamma`, and labels the UI/API as local-only and non-production.
 
 ## Current architecture
 

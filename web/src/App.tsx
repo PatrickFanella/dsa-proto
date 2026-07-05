@@ -142,6 +142,7 @@ export type PublicEventCard = {
 export type PublicVoteElectionCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; sponsorEntityName: string; opensAt: string; closesAt: string; status: string; eligibilityDescription: string; votingSystemUrl?: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
 export type PublicVoteProposalCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; electionUri: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; status: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
 export type PublicVoteChoiceCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; proposalUri: string; label: string; description: string; sortOrder: number; prototypeCaveat: string; record: { record: Record<string, unknown> } };
+export type LocalVotingStatus = { prototype: boolean; nonProduction: boolean; eligible: boolean; credentialAvailable: boolean; credentialIssued: boolean; caveat: string };
 
 export type CivicActivityCard = {
   uri: string;
@@ -278,6 +279,8 @@ const fallbackVoteElections: PublicVoteElectionCard[] = [{ uri: 'at://did:plc:np
 const fallbackVoteProposals: PublicVoteProposalCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.proposal', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', electionUri: fallbackVoteElections[0].uri, title: 'Convention priorities platform', summary: 'Public proposal metadata for a convention vote item.', bodyMarkdown: 'This proposal record only describes the public question text and metadata. It does not contain ballots or tallying.', sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', status: 'active', prototypeCaveat: 'Public proposal metadata only; private voting service will hold ballots later.', relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.vote.proposal' } } }];
 const fallbackVoteChoices: PublicVoteChoiceCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-yes', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Approve', description: 'Support the proposal.', sortOrder: 1, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }, { uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-no', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Reject', description: 'Do not support the proposal.', sortOrder: 2, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }];
 
+const syntheticVoters = ['member-alpha', 'member-beta', 'member-gamma'];
+
 const fallbackActivity: CivicActivityCard[] = [
   { uri: fallbackStatements[0].uri, type: 'statement', title: fallbackStatements[0].title, summary: fallbackStatements[0].summary, actorName: fallbackStatements[0].issuerName, actorUri: fallbackStatements[0].issuerUri, date: fallbackStatements[0].publishedAt, status: fallbackStatements[0].status, topics: fallbackStatements[0].topics, relatedEntityUris: fallbackStatements[0].relatedEntityUris, collection: fallbackStatements[0].collection, trustLabel: fallbackStatements[0].trustLabel },
   { uri: fallbackArticles[0].uri, type: 'article', title: fallbackArticles[0].title, summary: fallbackArticles[0].summary, actorName: fallbackArticles[0].publicationName, actorUri: fallbackArticles[0].publicationUri, date: fallbackArticles[0].publishedAt, status: fallbackArticles[0].status, topics: fallbackArticles[0].topics, relatedEntityUris: fallbackArticles[0].relatedEntityUris, collection: fallbackArticles[0].collection, trustLabel: fallbackArticles[0].trustLabel },
@@ -304,12 +307,26 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [voteElections, setVoteElections] = useState(fallbackVoteElections);
   const [voteProposals, setVoteProposals] = useState(fallbackVoteProposals);
   const [voteChoices, setVoteChoices] = useState(fallbackVoteChoices);
+  const [localVotingVoter, setLocalVotingVoter] = useState(syntheticVoters[0]);
+  const [localVotingProposal, setLocalVotingProposal] = useState(fallbackVoteProposals[0].uri);
+  const [localVotingChoice, setLocalVotingChoice] = useState(fallbackVoteChoices[0].uri);
+  const [localVotingCredential, setLocalVotingCredential] = useState('');
+  const [localVotingReceipt, setLocalVotingReceipt] = useState('');
+  const [localVotingStatus, setLocalVotingStatus] = useState<LocalVotingStatus | null>(null);
+  const [localVotingMessage, setLocalVotingMessage] = useState('');
   const [activity, setActivity] = useState(fallbackActivity);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
   const preview = useMemo(() => buildChapterFixtureEnvelope(draft), [draft]);
   const verificationPreview = useMemo(() => buildVerificationFixtureEnvelope(verificationDraft), [verificationDraft]);
+
+  useEffect(() => {
+    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/status`);
+    url.searchParams.set('voter', localVotingVoter);
+    url.searchParams.set('proposal', localVotingProposal);
+    fetch(url).then(async (response) => setLocalVotingStatus(await response.json() as LocalVotingStatus)).catch(() => setLocalVotingStatus(null));
+  }, [localVotingVoter, localVotingProposal]);
 
   useEffect(() => {
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
@@ -425,6 +442,34 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     } catch (error) {
       setSubmitState(`Prototype publish failed: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
+  }
+
+  async function requestLocalVotingCredential(event: FormEvent) {
+    event.preventDefault();
+    setLocalVotingMessage('');
+    const response = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/credentials`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ voterKey: localVotingVoter, proposalUri: localVotingProposal }),
+    });
+    const json = await response.json() as { credential?: string; expiresAt?: string; error?: string };
+    if (!response.ok || !json.credential) return setLocalVotingMessage(json.error ?? 'credential request failed');
+    setLocalVotingCredential(json.credential);
+    setLocalVotingMessage(`Credential issued until ${json.expiresAt}`);
+  }
+
+  async function submitLocalVotingBallot(event: FormEvent) {
+    event.preventDefault();
+    setLocalVotingMessage('');
+    const response = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/ballots`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ credential: localVotingCredential, proposalUri: localVotingProposal, choiceUri: localVotingChoice }),
+    });
+    const json = await response.json() as { receipt?: string; error?: string };
+    if (!response.ok || !json.receipt) return setLocalVotingMessage(json.error ?? 'ballot submission failed');
+    setLocalVotingReceipt(json.receipt);
+    setLocalVotingMessage('Ballot accepted.');
   }
 
   return (
@@ -581,6 +626,37 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
             <div className="space-y-3">{voteProposals.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-zinc-300">{item.summary}</p><p className="mt-1 text-zinc-500">Election: {item.electionUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
             <div className="space-y-3">{voteChoices.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.label}</h3><p className="mt-2 text-zinc-300">{item.description}</p><p className="mt-1 text-zinc-500">Proposal: {item.proposalUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
           </div>
+        </section>
+        <section className="mt-8 rounded-xl border border-yellow-400/40 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Local voting prototype</h2>
+          <p className="mt-2 text-sm text-amber-300">Local-only non-production prototype. No real auth, no binding, no cryptographic secrecy, and no revoting.</p>
+          <p className="mt-2 text-sm text-zinc-300">Two-phase flow: request a credential with a synthetic voter, then submit an anonymous ballot with the credential only.</p>
+          <div className="mt-3 grid gap-2 text-sm text-zinc-300">
+            <p>Eligible voters: {syntheticVoters.join(', ')}</p>
+            <p>Status: {localVotingStatus ? `eligible=${String(localVotingStatus.eligible)} credentialIssued=${String(localVotingStatus.credentialIssued)}` : 'loading'}</p>
+            {localVotingStatus ? <p>{localVotingStatus.caveat}</p> : null}
+          </div>
+          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={requestLocalVotingCredential}>
+            <label className="grid gap-2 text-sm text-zinc-300">Synthetic voter
+              <select aria-label="Synthetic voter" value={localVotingVoter} onChange={(event) => setLocalVotingVoter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{syntheticVoters.map((voter) => <option key={voter} value={voter}>{voter}</option>)}</select>
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-300">Proposal
+              <select aria-label="Proposal" value={localVotingProposal} onChange={(event) => setLocalVotingProposal(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{voteProposals.map((proposal) => <option key={proposal.uri} value={proposal.uri}>{proposal.title}</option>)}</select>
+            </label>
+            <button type="submit" className="rounded-lg border border-yellow-400/50 bg-yellow-500/20 px-4 py-2 text-sm font-semibold text-yellow-100 md:col-span-2">Request credential</button>
+          </form>
+          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitLocalVotingBallot}>
+            <label className="grid gap-2 text-sm text-zinc-300">Credential
+              <input aria-label="Credential" value={localVotingCredential} onChange={(event) => setLocalVotingCredential(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-300">Choice
+              <select aria-label="Choice" value={localVotingChoice} onChange={(event) => setLocalVotingChoice(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{voteChoices.filter((choice) => choice.proposalUri === localVotingProposal).map((choice) => <option key={choice.uri} value={choice.uri}>{choice.label}</option>)}</select>
+            </label>
+            <button type="submit" className="rounded-lg border border-yellow-400/50 bg-yellow-500/20 px-4 py-2 text-sm font-semibold text-yellow-100 md:col-span-2">Cast anonymous ballot</button>
+          </form>
+          <p className="mt-3 text-sm text-amber-300">Ballot submission uses the credential only. Anonymous ballot storage is private and not exposed in public records.</p>
+          {localVotingMessage ? <p className="mt-3 text-sm text-cyan-200">{localVotingMessage}</p> : null}
+          {localVotingReceipt ? <p className="mt-2 text-sm text-zinc-300">Opaque receipt: {localVotingReceipt}</p> : null}
         </section>
         <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
           <h2 className="text-2xl font-semibold">Civic activity</h2>

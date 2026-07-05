@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 import { allSeedRecords, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, voteChoiceRecordSchema, voteElectionRecordSchema, voteProposalRecordSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type VoteChoiceRecord, type VoteElectionRecord, type VoteProposalRecord } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
+import { createLocalVotingService } from './local-voting.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 
 const envSchema = z.object({
@@ -398,6 +399,7 @@ async function ensurePrototypeSchema(pool: Pool) {
 }
 
 export function createApp(repository: DirectoryRepository) {
+  const localVoting = createLocalVotingService(repository);
   return createServer(async (req, res) => {
     res.setHeader('access-control-allow-origin', '*');
     if (req.method === 'OPTIONS') {
@@ -488,6 +490,31 @@ export function createApp(repository: DirectoryRepository) {
       if (url.pathname.startsWith('/api/votes/proposals/')) { const id = decodeURIComponent(url.pathname.slice('/api/votes/proposals/'.length)); const item = await repository.getVoteProposal(id); if (!item) return toJson(res, 404, { error: 'not_found' }); return toJson(res, 200, { prototype: true, data: item }); }
       if (url.pathname === '/api/votes/choices') return toJson(res, 200, { prototype: true, data: await repository.listVoteChoices(url.searchParams.get('proposal') ?? undefined) });
       if (url.pathname.startsWith('/api/votes/choices/')) { const id = decodeURIComponent(url.pathname.slice('/api/votes/choices/'.length)); const item = await repository.getVoteChoice(id); if (!item) return toJson(res, 404, { error: 'not_found' }); return toJson(res, 200, { prototype: true, data: item }); }
+    }
+    if (req.method === 'GET' && req.url?.startsWith('/api/local-voting/status')) {
+      const url = new URL(req.url, 'http://localhost');
+      return toJson(res, 200, await localVoting.getStatus(url.searchParams.get('voter') ?? undefined, url.searchParams.get('proposal') ?? undefined));
+    }
+    if (req.method === 'POST' && req.url === '/api/local-voting/credentials') {
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
+      const voterKey = z.string().min(1).safeParse((body as { voterKey?: unknown } | undefined)?.voterKey);
+      const proposalUri = z.string().startsWith('at://').safeParse((body as { proposalUri?: unknown } | undefined)?.proposalUri);
+      if (!voterKey.success || !proposalUri.success) return toJson(res, 400, { error: 'invalid_request_body' });
+      const result = await localVoting.issueCredential(voterKey.data, proposalUri.data);
+      if ('error' in result) return toJson(res, 403, result);
+      return toJson(res, 200, { prototype: true, ...result });
+    }
+    if (req.method === 'POST' && req.url === '/api/local-voting/ballots') {
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
+      const credential = z.string().min(1).safeParse((body as { credential?: unknown } | undefined)?.credential);
+      const proposalUri = z.string().startsWith('at://').safeParse((body as { proposalUri?: unknown } | undefined)?.proposalUri);
+      const choiceUri = z.string().startsWith('at://').safeParse((body as { choiceUri?: unknown } | undefined)?.choiceUri);
+      if (!credential.success || !proposalUri.success || !choiceUri.success) return toJson(res, 400, { error: 'invalid_request_body' });
+      const result = await localVoting.submitBallot(credential.data, proposalUri.data, choiceUri.data);
+      if ('error' in result) return toJson(res, 409, result);
+      return toJson(res, 200, { prototype: true, ...result });
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/activity')) {
       const url = new URL(req.url, 'http://localhost');

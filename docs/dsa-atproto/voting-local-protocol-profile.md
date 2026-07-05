@@ -6,7 +6,7 @@ It is accepted only for a **local-only, non-production ballot-casting prototype*
 
 ## Status
 
-Non-production profile for Plan 3 Slice 3.
+Implemented as the local-only prototype behind `/api/local-voting/*`.
 
 This profile is safe enough to guide local prototype code only if implementation keeps the caveats below visible in UI, API names, tests, and docs.
 
@@ -29,7 +29,7 @@ Slice 3 should implement only:
 - one proposal/question per ballot flow
 - one selected choice from existing public `org.dsa.vote.choice` records
 - local synthetic/minimized eligibility fixture
-- local fake voter login
+- local fake voter login / synthetic voter selection
 - first accepted ballot final
 - aggregate tally only after close
 
@@ -84,7 +84,7 @@ Use fake local auth only.
 
 Requirements:
 
-- local voter chooses or is assigned a synthetic voter key from the fixture
+- local voter chooses a synthetic voter key from the fixture
 - short-lived browser/session token
 - session expiry
 - no support/admin impersonation path

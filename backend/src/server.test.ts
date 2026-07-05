@@ -4,6 +4,7 @@ import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEv
 import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicEventSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, voteChoiceSeedRecords, voteElectionSeedRecords, voteProposalSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
+import { createLocalVotingService } from './local-voting.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 import { tmpdir } from 'node:os';
@@ -332,6 +333,99 @@ describe('API response', () => {
     const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
     const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
     expect(entityJson.data.every((item) => !item.collection.startsWith('org.dsa.vote.'))).toBe(true);
+  });
+
+  it('implements local-only two-phase ballot casting without exposing private ballot data', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const statusResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/status?voter=member-alpha&proposal=${encodeURIComponent(voteProposalSeedRecords[0].uri)}`);
+    const statusJson = await statusResponse.json() as { prototype: boolean; nonProduction: boolean; eligible: boolean; credentialAvailable: boolean; credentialIssued: boolean; caveat: string };
+    expect(statusJson).toMatchObject({ prototype: true, nonProduction: true, eligible: true, credentialAvailable: true, credentialIssued: false });
+    expect(statusJson.caveat).toContain('Local-only non-production prototype');
+
+    const credentialResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/credentials`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voterKey: 'member-alpha', proposalUri: voteProposalSeedRecords[0].uri }) });
+    const credentialJson = await credentialResponse.json() as { prototype: boolean; credential: string; expiresAt: string; caveat: string };
+    expect(credentialResponse.status).toBe(200);
+    expect(credentialJson.caveat).toContain('Local-only non-production prototype');
+    expect(credentialJson.credential).toContain('lv_');
+
+    const ballotResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: credentialJson.credential, proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[0].uri }) });
+    const ballotJson = await ballotResponse.json() as { prototype: boolean; receipt: string; caveat: string };
+    expect(ballotResponse.status).toBe(200);
+    expect(ballotJson.receipt).toContain('receipt_');
+    expect(ballotJson.caveat).toContain('Local-only non-production prototype');
+    expect(JSON.stringify(ballotJson)).not.toContain('member-alpha');
+    expect(JSON.stringify(ballotJson)).not.toContain(voteChoiceSeedRecords[0].uri);
+    expect(JSON.stringify(ballotJson)).not.toContain(credentialJson.credential);
+
+    const replayResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: credentialJson.credential, proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[1].uri }) });
+    expect(replayResponse.status).toBe(409);
+
+    const secondCredentialResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/credentials`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voterKey: 'member-alpha', proposalUri: voteProposalSeedRecords[0].uri }) });
+    const secondCredentialJson = await secondCredentialResponse.json() as { error: string };
+    expect(secondCredentialResponse.status).toBe(403);
+    expect(secondCredentialJson.error).toBe('already_voted');
+
+    const votesResponse = await fetch(`http://127.0.0.1:${address.port}/api/votes/elections`);
+    const votesJson = await votesResponse.json() as unknown;
+    expect(JSON.stringify(votesJson)).not.toContain('receipt_');
+    expect(JSON.stringify(votesJson)).not.toContain('ballot_');
+  });
+
+  it('rejects invalid local voting inputs', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const credentialResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/credentials`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voterKey: 'not-a-voter', proposalUri: voteProposalSeedRecords[0].uri }) });
+    expect(credentialResponse.status).toBe(403);
+
+    const ballotResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: 'bad', proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[0].uri }) });
+    expect(ballotResponse.status).toBe(409);
+  });
+
+  it('rejects invalid local voting choice proposals', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const credentialResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/credentials`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voterKey: 'member-beta', proposalUri: voteProposalSeedRecords[0].uri }) });
+    const credentialJson = await credentialResponse.json() as { credential: string };
+    const invalidChoiceResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: credentialJson.credential, proposalUri: voteProposalSeedRecords[0].uri, choiceUri: chapterSeedRecords[0].uri }) });
+    expect(invalidChoiceResponse.status).toBe(409);
+  });
+
+  it('allows only one concurrent ballot submission per credential', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const credentialResponse = await fetch(`http://127.0.0.1:${address.port}/api/local-voting/credentials`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voterKey: 'member-gamma', proposalUri: voteProposalSeedRecords[0].uri }) });
+    const credentialJson = await credentialResponse.json() as { credential: string };
+    const submissions = await Promise.all([
+      fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: credentialJson.credential, proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[0].uri }) }),
+      fetch(`http://127.0.0.1:${address.port}/api/local-voting/ballots`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: credentialJson.credential, proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[1].uri }) }),
+    ]);
+    const statuses = submissions.map((response) => response.status).sort();
+    expect(statuses).toEqual([200, 409]);
+  });
+
+  it('keeps anonymous ballot storage private in the local voting helper', async () => {
+    const service = createLocalVotingService(createMemoryRepository());
+    const issued = await service.issueCredential('member-alpha', voteProposalSeedRecords[0].uri);
+    if ('error' in issued) throw new Error('expected credential');
+    const submitted = await service.submitBallot(issued.credential, voteProposalSeedRecords[0].uri, voteChoiceSeedRecords[0].uri);
+    expect('error' in submitted).toBe(false);
+    expect(service.getAnonymousBallots()).toHaveLength(1);
+    expect(service.getAnonymousBallots()[0]).toMatchObject({ proposalUri: voteProposalSeedRecords[0].uri, choiceUri: voteChoiceSeedRecords[0].uri });
+    expect(JSON.stringify(service.getAnonymousBallots())).not.toContain('member-alpha');
+    expect(JSON.stringify(service.getAnonymousBallots())).not.toContain(issued.credential);
   });
 
   it('serves unified civic activity and filters by entity and type', async () => {

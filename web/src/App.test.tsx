@@ -116,6 +116,19 @@ describe('App', () => {
     expect(html).toContain('Reject');
   });
 
+  it('renders the local voting prototype caveats and labels', () => {
+    const html = renderToString(<App initialEntities={[]} />);
+    expect(html).toContain('Local voting prototype');
+    expect(html).toContain('Local-only non-production prototype. No real auth, no binding, no cryptographic secrecy, and no revoting.');
+    expect(html).toContain('Two-phase flow');
+    expect(html).toContain('Eligible voters:');
+    expect(html).toContain('member-alpha');
+    expect(html).toContain('member-beta');
+    expect(html).toContain('member-gamma');
+    expect(html).toContain('Request credential');
+    expect(html).toContain('Cast anonymous ballot');
+  });
+
   it('renders focused org unit details and relationship directions', () => {
     const html = renderToString(<App initialEntities={[]} initialOrgChart={{ prototype: true, sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', updatedLabel: 'Last updated June 2020', units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active', website: 'https://www.dsausa.org/' }, { uri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', name: 'Chapter Delegates', shortName: 'Chapter Delegates', kind: 'delegate-body', description: 'Delegates elected by membership to convention who elect the NPC.', status: 'active' }], relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }] }} />);
     expect(html).toContain('National Political Committee');

@@ -295,7 +295,7 @@ Acceptance criteria:
 
 ### Slice 3: Non-production ballot casting prototype
 
-Status: unblocked only for the narrow local profile in [voting-local-protocol-profile.md](voting-local-protocol-profile.md); blocked for production or anything broader.
+Status: implemented as a local-only prototype via `/api/local-voting/*`; blocked for production or anything broader.
 
 Implement a local-only, non-production ballot flow following [voting-local-protocol-profile.md](voting-local-protocol-profile.md).
 
@@ -306,6 +306,8 @@ Acceptance criteria:
 - one ballot per eligible voter
 - receipt that does not reveal choice
 - no ballot contents in ATProto records
+- split credential issuance from anonymous ballot submission
+- concurrency-safe single-use credentials
 
 ### Slice 4: Tally and certification
 

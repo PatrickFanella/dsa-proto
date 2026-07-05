@@ -1,6 +1,6 @@
 # Local Demo and Reseed Workflow
 
-This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, and public voting registry UI.
+This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, public voting registry, and local voting prototype UI.
 
 The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
 
@@ -31,6 +31,9 @@ Then open:
 - Public elections API: <http://localhost:8080/api/votes/elections>
 - Public proposals API: <http://localhost:8080/api/votes/proposals>
 - Public choices API: <http://localhost:8080/api/votes/choices>
+- Local voting status API: <http://localhost:8080/api/local-voting/status?voter=member-alpha&proposal=at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities>
+- Local voting credential API: `POST /api/local-voting/credentials`
+- Local voting ballot API: `POST /api/local-voting/ballots`
 
 The Compose stack starts:
 
@@ -106,8 +109,9 @@ Use the destructive reset only when you intentionally want to discard local Post
 12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
 13. Open the public events section to show non-directory event records linked back to hosts and related entities.
 14. Open the public voting registry section to show election, proposal, and choice metadata only; call out that voting itself is private and not implemented here.
-15. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
-16. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+15. Open the local voting prototype section to show the synthetic voter selection, credential issuance, anonymous ballot submission, and opaque receipt; call out that it is local-only and does not bind identity to choice.
+16. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
+17. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
 17. Optionally try query filters:
 
    ```text
@@ -205,6 +209,24 @@ The web UI also includes a local-only prototype publisher panel for quick chapte
 7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the related subject for provenance review when possible.
 
 This browser flow is intentionally limited to safe local fixture records. It is not authenticated, is not production admin tooling, and should remain local prototype-only until a real security model exists.
+
+## Local voting prototype
+
+The local voting prototype is separate from the public voting registry and uses only `/api/local-voting/*`.
+
+1. Choose a synthetic voter such as `member-alpha`, `member-beta`, or `member-gamma`.
+2. Request a credential for a proposal.
+3. Submit an anonymous ballot with `{ credential, proposalUri, choiceUri }`.
+4. Show the opaque receipt only.
+
+Important caveats:
+
+- local-only / non-production
+- no real auth
+- no binding identity to ballot choice
+- no cryptographic secrecy claim
+- no revoting
+- ballots, credentials, and receipts stay out of `atproto_records`
 
 ## What the prototype proves
 
