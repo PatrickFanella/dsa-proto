@@ -295,6 +295,38 @@ describe('API response', () => {
     expect(entityJson.data.every((item) => item.collection !== 'org.dsa.event.public')).toBe(true);
   });
 
+  it('serves unified civic activity and filters by entity and type', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/activity`);
+    const json = await response.json() as { prototype: boolean; data: Array<{ type: string; actorName: string; collection: string }> };
+    expect(response.status).toBe(200);
+    expect(json.prototype).toBe(true);
+    expect(json.data.some((item) => item.type === 'statement')).toBe(true);
+    expect(json.data.some((item) => item.type === 'article')).toBe(true);
+    expect(json.data.some((item) => item.type === 'endorsement')).toBe(true);
+    expect(json.data.some((item) => item.type === 'event')).toBe(true);
+
+    const byEntity = await fetch(`http://127.0.0.1:${address.port}/api/activity?entity=${encodeURIComponent('at://did:plc:nycdsa/org.dsa.profile.chapter/self')}`);
+    const byEntityJson = await byEntity.json() as { data: Array<{ actorName: string }> };
+    expect(byEntityJson.data.some((item) => item.actorName === 'New York City DSA')).toBe(true);
+
+    const byRelatedEntity = await fetch(`http://127.0.0.1:${address.port}/api/activity?entity=${encodeURIComponent('at://did:plc:demleft/org.dsa.profile.orgUnit/self')}`);
+    const byRelatedEntityJson = await byRelatedEntity.json() as { data: Array<{ title: string }> };
+    expect(byRelatedEntityJson.data.map((item) => item.title)).toContain('Public governance demo note');
+
+    const byType = await fetch(`http://127.0.0.1:${address.port}/api/activity?type=event`);
+    const byTypeJson = await byType.json() as { data: Array<{ type: string }> };
+    expect(byTypeJson.data.every((item) => item.type === 'event')).toBe(true);
+
+    const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
+    expect(entityJson.data.every((item) => item.collection !== 'org.dsa.statement.public' && item.collection !== 'org.dsa.publication.article' && item.collection !== 'org.dsa.endorsement.public' && item.collection !== 'org.dsa.event.public')).toBe(true);
+  });
+
   it('filters events by host entity and status and serves detail payloads', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));

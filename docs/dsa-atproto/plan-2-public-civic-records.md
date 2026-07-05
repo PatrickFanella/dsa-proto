@@ -124,6 +124,8 @@ Once at least one civic record family exists, entity details should show related
 - endorsement → statement/source
 - event → host chapter/caucus
 
+Status: implemented in the local prototype as a unified related civic activity timeline.
+
 ## Plan 2 first slice: public statements
 
 Status: implemented in the local prototype.

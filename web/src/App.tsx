@@ -139,6 +139,21 @@ export type PublicEventCard = {
   record: { record: Record<string, unknown> };
 };
 
+export type CivicActivityCard = {
+  uri: string;
+  type: 'statement' | 'article' | 'endorsement' | 'event';
+  title: string;
+  summary: string;
+  actorName: string;
+  actorUri?: string;
+  date: string;
+  status: string;
+  topics: string[];
+  relatedEntityUris: string[];
+  collection: string;
+  trustLabel: string;
+};
+
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
   'steering-committee': 'Steering committees',
@@ -255,6 +270,13 @@ const fallbackEvents: PublicEventCard[] = [
   { uri: 'at://did:plc:npc/org.dsa.event.public/governance-forum', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NPC public governance forum', hostEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', hostEntityName: 'National Political Committee', startsAt: '2026-07-25T22:00:00.000Z', mode: 'in-person', locationLabel: 'Prototype public session room', status: 'archived', topics: ['governance', 'public process', 'prototype'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.event.public' } } },
 ];
 
+const fallbackActivity: CivicActivityCard[] = [
+  { uri: fallbackStatements[0].uri, type: 'statement', title: fallbackStatements[0].title, summary: fallbackStatements[0].summary, actorName: fallbackStatements[0].issuerName, actorUri: fallbackStatements[0].issuerUri, date: fallbackStatements[0].publishedAt, status: fallbackStatements[0].status, topics: fallbackStatements[0].topics, relatedEntityUris: fallbackStatements[0].relatedEntityUris, collection: fallbackStatements[0].collection, trustLabel: fallbackStatements[0].trustLabel },
+  { uri: fallbackArticles[0].uri, type: 'article', title: fallbackArticles[0].title, summary: fallbackArticles[0].summary, actorName: fallbackArticles[0].publicationName, actorUri: fallbackArticles[0].publicationUri, date: fallbackArticles[0].publishedAt, status: fallbackArticles[0].status, topics: fallbackArticles[0].topics, relatedEntityUris: fallbackArticles[0].relatedEntityUris, collection: fallbackArticles[0].collection, trustLabel: fallbackArticles[0].trustLabel },
+  { uri: fallbackEndorsements[0].uri, type: 'endorsement', title: fallbackEndorsements[0].candidateOrMeasureName, summary: `${fallbackEndorsements[0].officeOrMeasure} · ${fallbackEndorsements[0].jurisdiction}`, actorName: fallbackEndorsements[0].endorsingEntityName, actorUri: fallbackEndorsements[0].endorsingEntityUri, date: fallbackEndorsements[0].electionDate, status: fallbackEndorsements[0].status, topics: fallbackEndorsements[0].topics, relatedEntityUris: fallbackEndorsements[0].relatedEntityUris, collection: fallbackEndorsements[0].collection, trustLabel: fallbackEndorsements[0].trustLabel },
+  { uri: fallbackEvents[0].uri, type: 'event', title: fallbackEvents[0].title, summary: fallbackEvents[0].locationLabel ?? fallbackEvents[0].mode, actorName: fallbackEvents[0].hostEntityName, actorUri: fallbackEvents[0].hostEntityUri, date: fallbackEvents[0].startsAt, status: fallbackEvents[0].status, topics: fallbackEvents[0].topics, relatedEntityUris: fallbackEvents[0].relatedEntityUris, collection: fallbackEvents[0].collection, trustLabel: fallbackEvents[0].trustLabel },
+];
+
 export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
@@ -271,6 +293,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [articles, setArticles] = useState(fallbackArticles);
   const [endorsements, setEndorsements] = useState(fallbackEndorsements);
   const [events, setEvents] = useState(fallbackEvents);
+  const [activity, setActivity] = useState(fallbackActivity);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -314,6 +337,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/articles`).then((response) => response.json()).then((payload) => setArticles(payload.data ?? fallbackArticles)).catch(() => setArticles(fallbackArticles));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/endorsements`).then((response) => response.json()).then((payload) => setEndorsements(payload.data ?? fallbackEndorsements)).catch(() => setEndorsements(fallbackEndorsements));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/events`).then((response) => response.json()).then((payload) => setEvents(payload.data ?? fallbackEvents)).catch(() => setEvents(fallbackEvents));
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/activity`).then((response) => response.json()).then((payload) => setActivity(payload.data ?? fallbackActivity)).catch(() => setActivity(fallbackActivity));
   }, []);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
@@ -332,6 +356,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const relatedArticles = useMemo(() => selectedEntity ? articles.filter((article) => article.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, articles]);
   const relatedEndorsements = useMemo(() => selectedEntity ? endorsements.filter((endorsement) => endorsement.endorsingEntityUri === selectedEntity.id || endorsement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, endorsements]);
   const relatedEvents = useMemo(() => selectedEntity ? events.filter((event) => event.hostEntityUri === selectedEntity.id || event.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, events]);
+  const relatedActivity = useMemo(() => selectedEntity ? activity.filter((item) => item.actorUri === selectedEntity.id || item.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, activity]);
   const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
   const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
     (acc[unit.kind] ??= []).push(unit);
@@ -535,6 +560,25 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
             ))}
           </div>
         </section>
+        <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Civic activity</h2>
+          <p className="mt-2 text-sm text-zinc-300">Unified feed across public statements, articles, endorsements, and events.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {activity.map((item) => (
+              <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                  <span className="rounded-full border border-cyan-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-cyan-200">{item.type}</span>
+                </div>
+                <p className="mt-2 text-zinc-300">Actor: {item.actorName}</p>
+                <p className="mt-1 text-zinc-400">Date: {item.date}</p>
+                <p className="mt-1 text-zinc-400">Status: {item.status}</p>
+                <p className="mt-2 text-zinc-300">{item.summary}</p>
+                <p className="mt-1 text-zinc-500">Topics: {item.topics.join(', ')}</p>
+              </article>
+            ))}
+          </div>
+        </section>
         <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
           <h2 className="text-2xl font-semibold">Public statements</h2>
           <p className="mt-2 text-sm text-zinc-300">Public statement records are loaded from the prototype backend and kept out of directory entities.</p>
@@ -676,6 +720,26 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   {selectedEntity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{selectedEntity.verifiedBy}</dd></div> : null}
                 </dl>
                 <p className="mt-4 text-sm text-amber-300">{selectedEntity.verificationReason ?? (selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.')}</p>
+                <section className="mt-5 rounded-lg border border-cyan-400/30 bg-zinc-900 p-4">
+                  <h3 className="text-lg font-semibold">Related civic activity</h3>
+                  {relatedActivity.length ? (
+                    <div className="mt-3 grid gap-3">
+                      {relatedActivity.map((item) => (
+                        <article key={item.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="font-semibold">{item.title}</h4>
+                            <span className="rounded-full border border-cyan-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-cyan-200">{item.type}</span>
+                          </div>
+                          <p className="mt-2 text-zinc-300">Actor: {item.actorName}</p>
+                          <p className="mt-1 text-zinc-400">Date: {item.date}</p>
+                          <p className="mt-1 text-zinc-400">Status: {item.status}</p>
+                          <p className="mt-2 text-zinc-300">{item.summary}</p>
+                          <p className="mt-1 text-zinc-500">Topics: {item.topics.join(', ')}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : <p className="mt-3 text-sm text-zinc-400">No civic activity linked to this entity yet.</p>}
+                </section>
                 <section className="mt-5 rounded-lg border border-sky-400/30 bg-zinc-900 p-4">
                   <h3 className="text-lg font-semibold">Related public statements</h3>
                   {relatedStatements.length ? (

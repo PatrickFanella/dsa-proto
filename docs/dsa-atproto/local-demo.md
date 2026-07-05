@@ -99,8 +99,9 @@ Use the destructive reset only when you intentionally want to discard local Post
 11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
 12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
 13. Open the public events section to show non-directory event records linked back to hosts and related entities.
-14. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
-15. Optionally try query filters:
+14. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
+15. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+16. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter
@@ -110,6 +111,7 @@ Use the destructive reset only when you intentionally want to discard local Post
    http://localhost:8080/api/statements
    http://localhost:8080/api/publications
    http://localhost:8080/api/articles
+   http://localhost:8080/api/activity?entity=at://did:plc:nycdsa/org.dsa.profile.chapter/self
    http://localhost:8080/api/endorsements
    ```
 

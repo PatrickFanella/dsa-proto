@@ -67,6 +67,9 @@ describe('App', () => {
     expect(html).toContain('Public statements');
     expect(html).toContain('Welcome to the prototype chapter feed');
     expect(html).toContain('Public governance demo note');
+    expect(html).toContain('Civic activity');
+    expect(html).toContain('statement');
+    expect(html).toContain('endorsement');
     expect(html).toContain('Public publications');
     expect(html).toContain('Democratic Left');
     expect(html).toContain('A public demo article for the prototype');
@@ -115,7 +118,7 @@ describe('App', () => {
     expect(html).toContain('elects');
   });
 
-  it('renders related public statements for the selected entity', () => {
+  it('renders related civic activity for the selected entity', () => {
     const html = renderToString(<App initialEntities={[{
       id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
       name: 'New York City DSA',
@@ -144,15 +147,14 @@ describe('App', () => {
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
     }]} initialSearch="" />);
 
-    expect(html).toContain('Related public statements');
+    expect(html).toContain('Related civic activity');
     expect(html).toContain('Welcome to the prototype chapter feed');
-    expect(html).toContain('Related publication articles');
     expect(html).toContain('A public demo article for the prototype');
-    expect(html).toContain('Related public endorsements');
-    expect(html).toContain('Related public events');
+    expect(html).toContain('Prototype candidate endorsement sample');
+    expect(html).toContain('NYC DSA public orientation');
   });
 
-  it('renders related public statements empty state when none are linked', () => {
+  it('renders related civic activity empty state when none are linked', () => {
     const html = renderToString(<App initialEntities={[{
       id: 'at://did:plc:miunit/org.dsa.profile.chapter/self',
       name: 'Michigan DSA',
@@ -168,14 +170,8 @@ describe('App', () => {
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
     }]} initialSearch="Michigan" />);
 
-    expect(html).toContain('Related public statements');
-    expect(html).toContain('No public statements linked to this entity yet.');
-    expect(html).toContain('Related publication articles');
-    expect(html).toContain('No publication articles linked to this entity yet.');
-    expect(html).toContain('Related public endorsements');
-    expect(html).toContain('No public endorsements linked to this entity yet.');
-    expect(html).toContain('Related public events');
-    expect(html).toContain('No public events linked to this entity yet.');
+    expect(html).toContain('Related civic activity');
+    expect(html).toContain('No civic activity linked to this entity yet.');
   });
 
   it('renders search and type filters with filtered results', () => {

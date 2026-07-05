@@ -1,6 +1,6 @@
 # Current State
 
-Last regrouped after commit `26b6edb Add public endorsements slice`.
+Last regrouped after commit `1f46bbf Add public events slice`.
 
 ## Summary
 
@@ -41,7 +41,9 @@ Implemented Plan 2 civic record types:
 
 Statements are stored as raw ATProto-shaped records, served through `/api/statements`, and rendered in the UI. Publication profiles/articles are served through `/api/publications` and `/api/articles`. Public endorsements are served through `/api/endorsements`. Public events are served through `/api/events`. None of these become ordinary directory cards.
 
-Selected entity detail panels also show related public statements, related publication articles, related public endorsements, and related public events when the linked URIs point back to the entity.
+The unified civic activity feed is served through `/api/activity` and powers the top-level civic activity section plus the merged related civic activity timeline on selected entities. The feed normalizes statements, articles, endorsements, and events into one ordered list.
+
+Selected entity detail panels also show related public statements, related publication articles, related public endorsements, related public events, and the merged civic activity timeline when the linked URIs point back to the entity.
 
 ### Ingestion and fixture workflows
 
