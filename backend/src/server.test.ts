@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -35,6 +35,10 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(publicationSeedRecords[1]).collection).toBe('org.dsa.publication.article');
   });
 
+  it('accepts public endorsement records', () => {
+    expect(recordEnvelopeSchema.parse(endorsementSeedRecords[0]).collection).toBe('org.dsa.endorsement.public');
+  });
+
   it('accepts org unit and governance relationship records', () => {
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
@@ -48,7 +52,7 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
@@ -62,6 +66,7 @@ describe('ingestion and read path', () => {
     expect(await repo.getStatement(publicStatementSeedRecords[0].uri)).toMatchObject({ title: 'Welcome to the prototype chapter feed', issuerName: 'New York City DSA' });
     expect(await repo.listPublications()).toHaveLength(1);
     expect(await repo.listArticles()).toHaveLength(1);
+    expect(await repo.listEndorsements()).toHaveLength(2);
   });
 
   it('loads and replays fixture files from disk', async () => {
@@ -249,6 +254,52 @@ describe('API response', () => {
     const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
     const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
     expect(entityJson.data.every((item) => item.collection !== 'org.dsa.publication.profile' && item.collection !== 'org.dsa.publication.article')).toBe(true);
+  });
+
+  it('serves public endorsements and keeps them out of entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const endorsementsResponse = await fetch(`http://127.0.0.1:${address.port}/api/endorsements`);
+    const endorsementsJson = await endorsementsResponse.json() as { prototype: boolean; data: Array<{ collection: string; endorsingEntityName: string }> };
+    expect(endorsementsJson.prototype).toBe(true);
+    expect(endorsementsJson.data).toHaveLength(2);
+    expect(endorsementsJson.data[0]).toMatchObject({ collection: 'org.dsa.endorsement.public' });
+
+    const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
+    expect(entityJson.data.every((item) => item.collection !== 'org.dsa.endorsement.public')).toBe(true);
+  });
+
+  it('filters endorsements by entity and status', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const entity = 'at://did:plc:nycdsa/org.dsa.profile.chapter/self';
+    const byEntity = await fetch(`http://127.0.0.1:${address.port}/api/endorsements?entity=${encodeURIComponent(entity)}`);
+    const byEntityJson = await byEntity.json() as { data: Array<{ endorsingEntityUri: string }> };
+    expect(byEntityJson.data.map((item) => item.endorsingEntityUri)).toContain(entity);
+
+    const byStatus = await fetch(`http://127.0.0.1:${address.port}/api/endorsements?status=archived`);
+    const byStatusJson = await byStatus.json() as { data: Array<{ status: string }> };
+    expect(byStatusJson.data.every((item) => item.status === 'archived')).toBe(true);
+  });
+
+  it('serves endorsement detail payloads', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/endorsements/${encodeURIComponent(endorsementSeedRecords[0].uri)}`);
+    const json = await response.json() as { prototype: boolean; data: { uri: string; endorsingEntityName: string; statementUri?: string } };
+    expect(response.status).toBe(200);
+    expect(json.prototype).toBe(true);
+    expect(json.data).toMatchObject({ uri: endorsementSeedRecords[0].uri, endorsingEntityName: 'New York City DSA' });
   });
 
   it('filters articles by publication and entity uri', async () => {

@@ -49,6 +49,21 @@ export const publicationArticleRecordSchema = z.object({
   status: z.enum(['published', 'archived', 'draft']),
 });
 
+export const endorsementPublicRecordSchema = z.object({
+  $type: z.literal('org.dsa.endorsement.public'),
+  endorsingEntityUri: z.string().startsWith('at://'),
+  endorsingEntityName: z.string().min(1),
+  candidateOrMeasureName: z.string().min(1),
+  officeOrMeasure: z.string().min(1),
+  jurisdiction: z.string().min(1),
+  electionDate: z.string().date(),
+  status: z.enum(['active', 'withdrawn', 'archived']),
+  statementUri: z.string().startsWith('at://').optional(),
+  sourceUrl: z.string().url().optional(),
+  topics: z.array(z.string().min(1)),
+  relatedEntityUris: z.array(z.string().startsWith('at://')),
+});
+
 export const chapterRecordSchema = z.object({
   $type: z.literal('org.dsa.profile.chapter'),
   name: z.string().min(1),
@@ -113,10 +128,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article'), z.literal('org.dsa.endorsement.public')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema, endorsementPublicRecordSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -133,6 +148,7 @@ export type VerificationAssertionRecord = z.infer<typeof verificationAssertionSc
 export type PublicStatementRecord = z.infer<typeof publicStatementRecordSchema>;
 export type PublicationProfileRecord = z.infer<typeof publicationProfileRecordSchema>;
 export type PublicationArticleRecord = z.infer<typeof publicationArticleRecordSchema>;
+export type EndorsementPublicRecord = z.infer<typeof endorsementPublicRecordSchema>;
 
 export type VerificationStatus = 'mock-verified' | 'self-declared' | 'unverified' | 'disputed' | 'revoked' | 'experimental';
 
@@ -723,7 +739,56 @@ export const publicationSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords];
+export const endorsementSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:nycdsa/org.dsa.endorsement.public/mock-nyc-city-council',
+    cid: 'bafy-mock-endorsement-nyc-city-council',
+    did: 'did:plc:nycdsa',
+    handle: 'nyc.dsausa.org',
+    collection: 'org.dsa.endorsement.public',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.endorsement.public',
+      endorsingEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      endorsingEntityName: 'New York City DSA',
+      candidateOrMeasureName: 'Prototype candidate endorsement sample',
+      officeOrMeasure: 'City Council District 1',
+      jurisdiction: 'New York City, NY',
+      electionDate: '2026-11-03',
+      status: 'active',
+      statementUri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note',
+      sourceUrl: 'https://example.org/public-prototype/endorsements/nyc-city-council',
+      topics: ['prototype', 'elections', 'municipal'],
+      relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self', 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note'],
+    },
+  },
+  {
+    uri: 'at://did:plc:npc/org.dsa.endorsement.public/mock-proposal-measure',
+    cid: 'bafy-mock-endorsement-npc-measure',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.endorsement.public',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.endorsement.public',
+      endorsingEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+      endorsingEntityName: 'National Political Committee',
+      candidateOrMeasureName: 'Prototype ballot measure sample',
+      officeOrMeasure: 'Housing and tenant protections measure',
+      jurisdiction: 'National / prototype',
+      electionDate: '2026-11-03',
+      status: 'archived',
+      statementUri: 'at://did:plc:npc/org.dsa.statement.public/governance-note',
+      sourceUrl: 'https://example.org/public-prototype/endorsements/npc-measure',
+      topics: ['prototype', 'ballot-measure', 'housing'],
+      relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece'],
+    },
+  },
+];
+
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords];
 
 export type DirectoryRecordEnvelope = RecordEnvelope & { collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member' };
 
