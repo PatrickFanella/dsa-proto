@@ -35,6 +35,7 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/atproto-ingestion-spike.md`](docs/dsa-atproto/atproto-ingestion-spike.md) — real ATProto ingestion adapter spike
 - [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
 - [`docs/dsa-atproto/plan-2-public-civic-records.md`](docs/dsa-atproto/plan-2-public-civic-records.md) — next-phase civic records plan
+- [`docs/dsa-atproto/plan-3-internal-voting.md`](docs/dsa-atproto/plan-3-internal-voting.md) — internal voting architecture and safety boundary
 - [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
 
 ## Open Pilot

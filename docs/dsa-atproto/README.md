@@ -87,4 +87,5 @@ Use a hybrid architecture:
 - [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
 - [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
+- [plan-3-internal-voting.md](plan-3-internal-voting.md): internal voting architecture and safety boundary
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
