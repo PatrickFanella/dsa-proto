@@ -14,7 +14,7 @@ const envSchema = z.object({
 export type DirectoryRepository = {
   listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
-  listStatements(): Promise<Array<ReturnType<typeof normalizeStatementEnvelope>>>;
+  listStatements(entityUri?: string): Promise<Array<ReturnType<typeof normalizeStatementEnvelope>>>;
   getStatement(id: string): Promise<ReturnType<typeof normalizeStatementEnvelope> | undefined>;
   ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
   getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
@@ -56,8 +56,8 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
     async getEntity(id: string) {
       return records.find((record) => record.id === id);
     },
-    async listStatements() {
-      return listStatementEnvelopes(rawRecords);
+    async listStatements(entityUri?: string) {
+      return listStatementEnvelopes(rawRecords, entityUri);
     },
     async getStatement(id: string) {
       return listStatementEnvelopes(rawRecords).find((record) => record.uri === id);
@@ -218,9 +218,9 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
         record: row.record,
       };
     },
-    async listStatements() {
+    async listStatements(entityUri?: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.statement.public' order by indexed_at desc`);
-      return result.rows.map((row) => normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record }));
+      return listStatementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), entityUri);
     },
     async getStatement(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.statement.public' limit 1`, [id]);
@@ -360,7 +360,7 @@ export function createApp(repository: DirectoryRepository) {
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/statements')) {
       const url = new URL(req.url, 'http://localhost');
-      if (url.pathname === '/api/statements') return toJson(res, 200, { prototype: true, data: await repository.listStatements() });
+      if (url.pathname === '/api/statements') return toJson(res, 200, { prototype: true, data: await repository.listStatements(url.searchParams.get('entity') ?? undefined) });
       const id = decodeURIComponent(url.pathname.slice('/api/statements/'.length));
       const statement = await repository.getStatement(id);
       if (!statement) return toJson(res, 404, { error: 'not_found' });
@@ -415,8 +415,13 @@ function normalizeStatementEnvelope(record: RecordEnvelope & { record: PublicSta
   };
 }
 
-function listStatementEnvelopes(records: RecordEnvelope[]) {
-  return records.filter((record): record is RecordEnvelope & { record: PublicStatementRecord } => record.collection === 'org.dsa.statement.public' && publicStatementRecordSchema.safeParse(record.record).success).map(normalizeStatementEnvelope);
+function listStatementEnvelopes(records: RecordEnvelope[], entityUri?: string) {
+  return records.filter((record): record is RecordEnvelope & { record: PublicStatementRecord } => {
+    if (record.collection !== 'org.dsa.statement.public') return false;
+    const parsed = publicStatementRecordSchema.safeParse(record.record);
+    if (!parsed.success) return false;
+    return !entityUri || parsed.data.issuerUri === entityUri || parsed.data.relatedEntityUris.includes(entityUri);
+  }).map(normalizeStatementEnvelope);
 }
 
 export async function bootstrapRepository(databaseUrl: string) {

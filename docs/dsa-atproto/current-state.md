@@ -37,6 +37,8 @@ Implemented Plan 2 civic record type:
 
 Statements are stored as raw ATProto-shaped records, served through `/api/statements`, and rendered in the UI. They do not become ordinary directory cards.
 
+Selected entity detail panels also show related public statements when the statement issuer or `relatedEntityUris` link back to the entity.
+
 ### Ingestion and fixture workflows
 
 Implemented ingestion paths:

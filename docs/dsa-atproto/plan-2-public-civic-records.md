@@ -163,7 +163,7 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 ## Follow-up slices
 
 1. Public statements end-to-end. ✅
-2. Related-record panel on entity detail pages.
+2. Related-record panel on entity detail pages. ✅
 3. Public publications/articles.
 4. Public endorsements.
 5. Public events.

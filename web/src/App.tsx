@@ -220,6 +220,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   }), [entities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
+  const relatedStatements = useMemo(() => selectedEntity ? statements.filter((statement) => statement.issuerUri === selectedEntity.id || statement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, statements]);
   const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
   const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
     (acc[unit.kind] ??= []).push(unit);
@@ -489,6 +490,26 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   {selectedEntity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{selectedEntity.verifiedBy}</dd></div> : null}
                 </dl>
                 <p className="mt-4 text-sm text-amber-300">{selectedEntity.verificationReason ?? (selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.')}</p>
+                <section className="mt-5 rounded-lg border border-sky-400/30 bg-zinc-900 p-4">
+                  <h3 className="text-lg font-semibold">Related public statements</h3>
+                  {relatedStatements.length ? (
+                    <div className="mt-3 grid gap-3">
+                      {relatedStatements.map((statement) => (
+                        <article key={statement.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="font-semibold">{statement.title}</h4>
+                            <span className="rounded-full border border-sky-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-sky-200">{statement.status}</span>
+                          </div>
+                          <p className="mt-2 text-zinc-300">{statement.summary}</p>
+                          <p className="mt-2 text-zinc-400">Issuer: {statement.issuerName}</p>
+                          <p className="mt-1 text-zinc-500">Topics: {statement.topics.join(', ')}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-zinc-400">No public statements linked to this entity yet.</p>
+                  )}
+                </section>
                 <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(selectedEntity.record.record, null, 2)}</pre>
               </>
             ) : null}

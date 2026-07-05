@@ -222,6 +222,35 @@ describe('API response', () => {
     expect(entitiesJson.data.every((item) => item.collection !== 'org.dsa.statement.public')).toBe(true);
   });
 
+  it('filters statements by related entity uri', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const chapterEntityUri = 'at://did:plc:nycdsa/org.dsa.profile.chapter/self';
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/statements?entity=${encodeURIComponent(chapterEntityUri)}`);
+    const json = await response.json() as { prototype: boolean; data: Array<{ title: string; issuerUri: string }> };
+
+    expect(response.status).toBe(200);
+    expect(json.data.some((item) => item.title === 'Welcome to the prototype chapter feed')).toBe(true);
+    expect(json.data.every((item) => item.issuerUri === chapterEntityUri || item.title !== 'Public governance demo note')).toBe(true);
+    expect(json.data.every((item) => item.title !== 'Climate caucus demo update')).toBe(true);
+  });
+
+  it('returns statements related through relatedEntityUris, not only issuerUri', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/statements?entity=${encodeURIComponent('at://did:plc:demleft/org.dsa.profile.orgUnit/self')}`);
+    const json = await response.json() as { data: Array<{ title: string }> };
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((item) => item.title)).toContain('Public governance demo note');
+  });
+
   it('serves the org chart slice', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));

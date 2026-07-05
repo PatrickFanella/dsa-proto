@@ -108,6 +108,59 @@ describe('App', () => {
     expect(html).toContain('elects');
   });
 
+  it('renders related public statements for the selected entity', () => {
+    const html = renderToString(<App initialEntities={[{
+      id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      name: 'New York City DSA',
+      shortName: 'NYC-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'nyc.dsausa.org',
+      did: 'did:plc:nycdsa',
+      jurisdiction: 'New York City, NY',
+      trustLabel: 'mock-official',
+      verificationStatus: 'mock-verified',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
+    }, {
+      id: 'at://did:plc:miunit/org.dsa.profile.chapter/self',
+      name: 'Michigan DSA',
+      shortName: 'MI-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'michigan.socialists.org',
+      did: 'did:plc:midsa',
+      jurisdiction: 'Michigan, MI',
+      trustLabel: 'self-declared',
+      verificationStatus: 'self-declared',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
+    }]} initialSearch="" />);
+
+    expect(html).toContain('Related public statements');
+    expect(html).toContain('Welcome to the prototype chapter feed');
+  });
+
+  it('renders related public statements empty state when none are linked', () => {
+    const html = renderToString(<App initialEntities={[{
+      id: 'at://did:plc:miunit/org.dsa.profile.chapter/self',
+      name: 'Michigan DSA',
+      shortName: 'MI-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'michigan.socialists.org',
+      did: 'did:plc:midsa',
+      jurisdiction: 'Michigan, MI',
+      trustLabel: 'self-declared',
+      verificationStatus: 'self-declared',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'Michigan DSA' } },
+    }]} initialSearch="Michigan" />);
+
+    expect(html).toContain('Related public statements');
+    expect(html).toContain('No public statements linked to this entity yet.');
+  });
+
   it('renders search and type filters with filtered results', () => {
     const html = renderToString(<App initialSearch="michigan" initialTypeFilter="chapter" initialEntities={[{
       id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
