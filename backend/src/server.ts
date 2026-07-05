@@ -1,8 +1,10 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { allSeedRecords, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type GovernanceRelationshipRecord, type OrgUnitRecord, type RecordEnvelope } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
+import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -304,6 +306,10 @@ export function createApp(repository: DirectoryRepository) {
       return;
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
+    if (req.method === 'GET' && req.url === '/api/registry/health') {
+      const report = await loadRegistryHealthReport(resolve('fixtures/records.json'));
+      return toJson(res, 200, { prototype: true, ...getRegistryHealthSummary(report) });
+    }
     if (req.method === 'POST' && req.url === '/api/admin/fixtures/ingest') {
       const body = await readJsonBody(req);
       if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });

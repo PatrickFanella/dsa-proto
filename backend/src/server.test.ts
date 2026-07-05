@@ -208,6 +208,25 @@ describe('API response', () => {
     expect(json.relationships.some((rel) => rel.relationship === 'elects')).toBe(true);
   });
 
+  it('serves registry health from the canonical fixture file', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/registry/health`);
+    const json = await response.json() as { prototype: boolean; status: string; totalRecords: number; validCount: number; invalidCount: number; duplicateCount: number; directoryCountsByType: Record<string, number>; directoryCountsByCollection: Record<string, number>; fileLabel: string };
+    expect(response.status).toBe(200);
+    expect(json.prototype).toBe(true);
+    expect(json.status).toBe('ok');
+    expect(json.totalRecords).toBe(247);
+    expect(json.validCount).toBe(247);
+    expect(json.invalidCount).toBe(0);
+    expect(json.duplicateCount).toBe(0);
+    expect(json.directoryCountsByType).toMatchObject({ chapter: 233, caucus: 14 });
+    expect(json.directoryCountsByCollection).toMatchObject({ 'org.dsa.profile.chapter': 233, 'org.dsa.profile.caucus': 14 });
+    expect(json.fileLabel).toContain('fixtures/records.json');
+  });
+
   it('filters org chart units by kind', async () => {
     server = createApp(createMemoryRepository());
     await new Promise<void>((resolve) => server!.listen(0, resolve));

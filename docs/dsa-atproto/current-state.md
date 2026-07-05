@@ -27,6 +27,7 @@ The directory supports:
 - detail/provenance panel
 - verification status display
 - raw record JSON preview
+- registry health dashboard panel backed by the canonical fixture file
 
 ### Ingestion and fixture workflows
 
@@ -37,6 +38,7 @@ Implemented ingestion paths:
 - `make chapters-import`
 - `make caucuses-import`
 - `make registry-health`
+- `GET /api/registry/health`
 - `make fixture-replay`
 - browser `POST /api/admin/fixtures/ingest`
 - opt-in `pnpm --dir backend run ingest:atproto`
@@ -93,6 +95,7 @@ These forms post to `POST /api/admin/fixtures/ingest`. They are unauthenticated 
 - `docs/dsa-caucuses.csv`: neutral curated caucus fixture list used by `make caucuses-import`.
 - `backend/fixtures/records.json`: generated fixture storage replayed into Postgres.
 - `make registry-health`: offline validation for canonical fixture records and duplicate registry identifiers.
+- `GET /api/registry/health`: backend summary endpoint for the same canonical fixture file.
 - Built-in seed arrays in backend domain code.
 - DSA organization chart source documented in `org-chart-alignment.md`.
 

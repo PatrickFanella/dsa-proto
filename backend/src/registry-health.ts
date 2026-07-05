@@ -27,6 +27,30 @@ export type RegistryHealthReport = {
   };
 };
 
+export type RegistryHealthStatus = 'ok' | 'warning' | 'fail';
+
+export function getRegistryHealthStatus(report: RegistryHealthReport): RegistryHealthStatus {
+  if (report.invalidRecords.length > 0) return 'fail';
+  if (report.duplicates.uri.length > 0 || report.duplicates.did.length > 0 || report.duplicates.handle.length > 0 || report.duplicates.name.length > 0) return 'warning';
+  return 'ok';
+}
+
+export function getRegistryHealthSummary(report: RegistryHealthReport) {
+  return {
+    file: report.file,
+    fileLabel: report.file,
+    status: getRegistryHealthStatus(report),
+    totalRecords: report.totalRecords,
+    validCount: report.validRecords,
+    invalidCount: report.invalidRecords.length,
+    duplicateCount: report.duplicates.uri.length + report.duplicates.did.length + report.duplicates.handle.length + report.duplicates.name.length,
+    directoryCountsByCollection: report.directoryCountsByCollection,
+    directoryCountsByType: report.directoryCountsByType,
+    invalidRecords: report.invalidRecords,
+    duplicates: report.duplicates,
+  };
+}
+
 function formatIssues(error: { issues?: Array<{ path?: ReadonlyArray<unknown>; message: string }> }) {
   return error.issues?.map((issue) => `${issue.path?.length ? issue.path.map(String).join('.') : 'record'}: ${issue.message}`).join('; ') ?? 'invalid record envelope';
 }

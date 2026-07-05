@@ -1,6 +1,6 @@
 # Local Demo and Reseed Workflow
 
-This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory and org-chart UI.
+This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, and org-chart UI.
 
 The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
 
@@ -24,6 +24,7 @@ Then open:
 - Web UI: <http://localhost:5173>
 - API health check: <http://localhost:8080/health>
 - Directory API: <http://localhost:8080/api/entities>
+- Registry health API: <http://localhost:8080/api/registry/health>
 
 The Compose stack starts:
 
@@ -89,7 +90,8 @@ Use the destructive reset only when you intentionally want to discard local Post
 7. For member-affiliation examples, call out that they are public prototype self-declarations. They do not imply verified membership.
 8. Open <http://localhost:8080/api/entities> to show the normalized API response that powers the UI.
 9. Open the org-chart section to show public organizational units and governance relationships from the source-linked DSA chart.
-10. Optionally try query filters:
+10. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+11. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter

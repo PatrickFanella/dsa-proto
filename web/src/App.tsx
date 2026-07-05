@@ -27,6 +27,20 @@ export type DirectoryCard = {
 export type OrgChartUnit = { uri: string; name: string; shortName: string; kind: string; description: string; status: string; website?: string };
 export type OrgChartRelationship = { uri: string; subjectUri: string; relationship: string; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string };
 export type OrgChartPayload = { prototype: boolean; sourceUrl: string; updatedLabel: string; units: OrgChartUnit[]; relationships: OrgChartRelationship[] };
+export type RegistryHealthPayload = {
+  prototype: boolean;
+  file: string;
+  fileLabel: string;
+  status: 'ok' | 'warning' | 'fail';
+  totalRecords: number;
+  validCount: number;
+  invalidCount: number;
+  duplicateCount: number;
+  directoryCountsByCollection: Record<string, number>;
+  directoryCountsByType: Record<string, number>;
+  invalidRecords: Array<{ index: number; reason: string }>;
+  duplicates: Record<string, Array<{ value: string; indexes: number[] }>>;
+};
 
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
@@ -104,9 +118,25 @@ const fallbackOrgChart: OrgChartPayload = {
   relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }],
 };
 
-export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
+const fallbackRegistryHealth: RegistryHealthPayload = {
+  prototype: true,
+  file: 'fixtures/records.json',
+  fileLabel: 'fixtures/records.json',
+  status: 'ok',
+  totalRecords: 247,
+  validCount: 247,
+  invalidCount: 0,
+  duplicateCount: 0,
+  directoryCountsByCollection: { 'org.dsa.profile.chapter': 233, 'org.dsa.profile.caucus': 14 },
+  directoryCountsByType: { chapter: 233, caucus: 14 },
+  invalidRecords: [],
+  duplicates: { uri: [], did: [], handle: [], name: [] },
+};
+
+export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
+  const [registryHealth, setRegistryHealth] = useState(initialRegistryHealth);
   const [search, setSearch] = useState(initialSearch);
   const [typeFilter, setTypeFilter] = useState<'all' | DirectoryCard['type']>(initialTypeFilter);
   const [stateFilter, setStateFilter] = useState('all');
@@ -143,6 +173,10 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     if (orgChartSelectedUnit) url.searchParams.set('unit', orgChartSelectedUnit);
     fetch(url.toString()).then((response) => response.json()).then((payload) => setOrgChart(payload)).catch(() => setOrgChart(initialOrgChart));
   }, [initialOrgChart, orgChartKindFilter, orgChartSelectedUnit]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/registry/health`).then((response) => response.json()).then((payload) => setRegistryHealth(payload)).catch(() => setRegistryHealth(initialRegistryHealth));
+  }, [initialRegistryHealth]);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
@@ -266,6 +300,23 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
               ) : null}
             </aside>
           </div>
+        </section>
+        <section className="mt-8 rounded-xl border border-lime-400/30 bg-zinc-950 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-2xl font-semibold">Registry health</h2>
+            <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] ${registryHealth.status === 'ok' ? 'border-emerald-400/50 text-emerald-200' : registryHealth.status === 'warning' ? 'border-amber-400/50 text-amber-200' : 'border-rose-400/50 text-rose-200'}`}>{registryHealth.status.toUpperCase()}</span>
+          </div>
+          <p className="mt-2 text-sm text-zinc-300">Last checked from fixture file: {registryHealth.fileLabel}</p>
+          <p className="mt-3 text-sm text-zinc-200">{registryHealth.directoryCountsByType.chapter ?? 0} chapters, {registryHealth.directoryCountsByType.caucus ?? 0} caucuses, {registryHealth.totalRecords} total records</p>
+          <p className="mt-1 text-sm text-zinc-400">Invalid: {registryHealth.invalidCount} · Duplicates: {registryHealth.duplicateCount}</p>
+          {registryHealth.invalidRecords.length || registryHealth.duplicateCount ? (
+            <div className="mt-4 grid gap-2 text-sm text-amber-200">
+              {registryHealth.invalidRecords.length ? <p>Invalid records present in the canonical fixture file.</p> : null}
+              {Object.entries(registryHealth.duplicates).flatMap(([label, entries]) => entries.map((entry) => <p key={`${label}-${entry.value}`}>Duplicate {label}: {entry.value}</p>))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-emerald-200">Canonical registry fixture set is healthy.</p>
+          )}
         </section>
         <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
           <label className="grid gap-2 text-sm text-zinc-300">
