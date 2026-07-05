@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicEventSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicEventSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, voteChoiceSeedRecords, voteElectionSeedRecords, voteProposalSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -43,6 +43,12 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(publicEventSeedRecords[0]).collection).toBe('org.dsa.event.public');
   });
 
+  it('accepts public voting registry records', () => {
+    expect(recordEnvelopeSchema.parse(voteElectionSeedRecords[0]).collection).toBe('org.dsa.vote.election');
+    expect(recordEnvelopeSchema.parse(voteProposalSeedRecords[0]).collection).toBe('org.dsa.vote.proposal');
+    expect(recordEnvelopeSchema.parse(voteChoiceSeedRecords[0]).collection).toBe('org.dsa.vote.choice');
+  });
+
   it('accepts org unit and governance relationship records', () => {
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
@@ -56,7 +62,7 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords, ...voteElectionSeedRecords, ...voteProposalSeedRecords, ...voteChoiceSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
@@ -72,6 +78,9 @@ describe('ingestion and read path', () => {
     expect(await repo.listArticles()).toHaveLength(1);
     expect(await repo.listEndorsements()).toHaveLength(2);
     expect(await repo.listEvents()).toHaveLength(3);
+    expect(await repo.listVoteElections()).toHaveLength(1);
+    expect(await repo.listVoteProposals()).toHaveLength(1);
+    expect(await repo.listVoteChoices()).toHaveLength(2);
   });
 
   it('loads and replays fixture files from disk', async () => {
@@ -293,6 +302,36 @@ describe('API response', () => {
     const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
     const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
     expect(entityJson.data.every((item) => item.collection !== 'org.dsa.event.public')).toBe(true);
+  });
+
+  it('serves public voting registry records and keeps them out of entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const electionsResponse = await fetch(`http://127.0.0.1:${address.port}/api/votes/elections`);
+    const electionsJson = await electionsResponse.json() as { prototype: boolean; data: Array<{ collection: string; title: string }> };
+    expect(electionsJson.prototype).toBe(true);
+    expect(electionsJson.data).toHaveLength(1);
+    expect(electionsJson.data[0]).toMatchObject({ collection: 'org.dsa.vote.election', title: '2026 Annual Convention votes' });
+
+    const proposalResponse = await fetch(`http://127.0.0.1:${address.port}/api/votes/proposals?election=${encodeURIComponent(voteElectionSeedRecords[0].uri)}`);
+    const proposalJson = await proposalResponse.json() as { data: Array<{ electionUri: string; title: string }> };
+    expect(proposalJson.data).toHaveLength(1);
+    expect(proposalJson.data[0]).toMatchObject({ electionUri: voteElectionSeedRecords[0].uri, title: 'Convention priorities platform' });
+
+    const choiceResponse = await fetch(`http://127.0.0.1:${address.port}/api/votes/choices?proposal=${encodeURIComponent(voteProposalSeedRecords[0].uri)}`);
+    const choiceJson = await choiceResponse.json() as { data: Array<{ proposalUri: string; label: string }> };
+    expect(choiceJson.data).toHaveLength(2);
+    expect(choiceJson.data.map((item) => item.label)).toEqual(['Approve', 'Reject']);
+
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/api/votes/elections/${encodeURIComponent(voteElectionSeedRecords[0].uri)}`);
+    expect(detailResponse.status).toBe(200);
+
+    const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
+    expect(entityJson.data.every((item) => !item.collection.startsWith('org.dsa.vote.'))).toBe(true);
   });
 
   it('serves unified civic activity and filters by entity and type', async () => {

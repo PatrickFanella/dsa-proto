@@ -139,6 +139,10 @@ export type PublicEventCard = {
   record: { record: Record<string, unknown> };
 };
 
+export type PublicVoteElectionCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; sponsorEntityName: string; opensAt: string; closesAt: string; status: string; eligibilityDescription: string; votingSystemUrl?: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
+export type PublicVoteProposalCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; electionUri: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; status: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
+export type PublicVoteChoiceCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; proposalUri: string; label: string; description: string; sortOrder: number; prototypeCaveat: string; record: { record: Record<string, unknown> } };
+
 export type CivicActivityCard = {
   uri: string;
   type: 'statement' | 'article' | 'endorsement' | 'event';
@@ -270,6 +274,10 @@ const fallbackEvents: PublicEventCard[] = [
   { uri: 'at://did:plc:npc/org.dsa.event.public/governance-forum', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NPC public governance forum', hostEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', hostEntityName: 'National Political Committee', startsAt: '2026-07-25T22:00:00.000Z', mode: 'in-person', locationLabel: 'Prototype public session room', status: 'archived', topics: ['governance', 'public process', 'prototype'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.event.public' } } },
 ];
 
+const fallbackVoteElections: PublicVoteElectionCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.election/2026-annual-convention', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.election', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: '2026 Annual Convention votes', summary: 'Prototype public notice for convention motions and resolutions.', bodyMarkdown: 'Public metadata only. Voting itself is handled in a private system and is not implemented in this slice.', sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', sponsorEntityName: 'National Political Committee', opensAt: '2026-08-01T00:00:00.000Z', closesAt: '2026-08-15T00:00:00.000Z', status: 'scheduled', eligibilityDescription: 'Eligibility is determined privately and is not published here.', votingSystemUrl: 'https://example.org/public-prototype/voting-registry', prototypeCaveat: 'Prototype/public metadata only; no ballots, rosters, eligibility proofs, or vote results.', relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.vote.election' } } }];
+const fallbackVoteProposals: PublicVoteProposalCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.proposal', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', electionUri: fallbackVoteElections[0].uri, title: 'Convention priorities platform', summary: 'Public proposal metadata for a convention vote item.', bodyMarkdown: 'This proposal record only describes the public question text and metadata. It does not contain ballots or tallying.', sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', status: 'active', prototypeCaveat: 'Public proposal metadata only; private voting service will hold ballots later.', relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.vote.proposal' } } }];
+const fallbackVoteChoices: PublicVoteChoiceCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-yes', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Approve', description: 'Support the proposal.', sortOrder: 1, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }, { uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-no', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Reject', description: 'Do not support the proposal.', sortOrder: 2, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }];
+
 const fallbackActivity: CivicActivityCard[] = [
   { uri: fallbackStatements[0].uri, type: 'statement', title: fallbackStatements[0].title, summary: fallbackStatements[0].summary, actorName: fallbackStatements[0].issuerName, actorUri: fallbackStatements[0].issuerUri, date: fallbackStatements[0].publishedAt, status: fallbackStatements[0].status, topics: fallbackStatements[0].topics, relatedEntityUris: fallbackStatements[0].relatedEntityUris, collection: fallbackStatements[0].collection, trustLabel: fallbackStatements[0].trustLabel },
   { uri: fallbackArticles[0].uri, type: 'article', title: fallbackArticles[0].title, summary: fallbackArticles[0].summary, actorName: fallbackArticles[0].publicationName, actorUri: fallbackArticles[0].publicationUri, date: fallbackArticles[0].publishedAt, status: fallbackArticles[0].status, topics: fallbackArticles[0].topics, relatedEntityUris: fallbackArticles[0].relatedEntityUris, collection: fallbackArticles[0].collection, trustLabel: fallbackArticles[0].trustLabel },
@@ -293,6 +301,9 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [articles, setArticles] = useState(fallbackArticles);
   const [endorsements, setEndorsements] = useState(fallbackEndorsements);
   const [events, setEvents] = useState(fallbackEvents);
+  const [voteElections, setVoteElections] = useState(fallbackVoteElections);
+  const [voteProposals, setVoteProposals] = useState(fallbackVoteProposals);
+  const [voteChoices, setVoteChoices] = useState(fallbackVoteChoices);
   const [activity, setActivity] = useState(fallbackActivity);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
@@ -316,6 +327,8 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
       })
       .catch(() => setEntities(initialEntities));
   }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
+
+  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/elections`).then((r) => r.json()).then((p) => setVoteElections(p.data ?? fallbackVoteElections)).catch(() => setVoteElections(fallbackVoteElections)); fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/proposals`).then((r) => r.json()).then((p) => setVoteProposals(p.data ?? fallbackVoteProposals)).catch(() => setVoteProposals(fallbackVoteProposals)); fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/choices`).then((r) => r.json()).then((p) => setVoteChoices(p.data ?? fallbackVoteChoices)).catch(() => setVoteChoices(fallbackVoteChoices)); }, []);
 
   useEffect(() => {
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`);
@@ -558,6 +571,15 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                 <p className="mt-1 text-zinc-500">{event.collection} · {event.trustLabel}</p>
               </article>
             ))}
+          </div>
+        </section>
+        <section className="mt-8 rounded-xl border border-rose-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Public voting registry</h2>
+          <p className="mt-2 text-sm text-zinc-300">Public election, proposal, and choice metadata only. Voting itself is private and not implemented in this slice.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <div className="space-y-3">{voteElections.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-zinc-300">{item.summary}</p><p className="mt-1 text-zinc-400">{item.sponsorEntityName}</p><p className="mt-1 text-zinc-500">{item.status} · {item.opensAt} → {item.closesAt}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
+            <div className="space-y-3">{voteProposals.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-zinc-300">{item.summary}</p><p className="mt-1 text-zinc-500">Election: {item.electionUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
+            <div className="space-y-3">{voteChoices.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.label}</h3><p className="mt-2 text-zinc-300">{item.description}</p><p className="mt-1 text-zinc-500">Proposal: {item.proposalUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
           </div>
         </section>
         <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">

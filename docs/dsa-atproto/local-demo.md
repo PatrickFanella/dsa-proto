@@ -1,6 +1,6 @@
 # Local Demo and Reseed Workflow
 
-This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, and org-chart UI.
+This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, and public voting registry UI.
 
 The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
 
@@ -28,6 +28,9 @@ Then open:
 - Public statements API: <http://localhost:8080/api/statements>
 - Public endorsements API: <http://localhost:8080/api/endorsements>
 - Public events API: <http://localhost:8080/api/events>
+- Public elections API: <http://localhost:8080/api/votes/elections>
+- Public proposals API: <http://localhost:8080/api/votes/proposals>
+- Public choices API: <http://localhost:8080/api/votes/choices>
 
 The Compose stack starts:
 
@@ -47,13 +50,16 @@ On backend startup, `bootstrapRepository` connects to Postgres, ensures the prot
 - `org.dsa.relationship.governance`
 - `org.dsa.endorsement.public`
 - `org.dsa.event.public`
+- `org.dsa.vote.election`
+- `org.dsa.vote.proposal`
+- `org.dsa.vote.choice`
 
 The backend upserts both:
 
 - raw ATProto-shaped envelopes into `atproto_records`
 - normalized searchable directory rows into `directory_entities`
 
-Verification, org-unit, governance-relationship, public endorsement, and public event records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
+Verification, org-unit, governance-relationship, public endorsement, public event, and public voting registry records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
 
 If Postgres is unavailable, the backend falls back to an in-memory repository so local tests and development can still run.
 
@@ -99,9 +105,10 @@ Use the destructive reset only when you intentionally want to discard local Post
 11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
 12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
 13. Open the public events section to show non-directory event records linked back to hosts and related entities.
-14. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
-15. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
-16. Optionally try query filters:
+14. Open the public voting registry section to show election, proposal, and choice metadata only; call out that voting itself is private and not implemented here.
+15. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
+16. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+17. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter
@@ -111,6 +118,9 @@ Use the destructive reset only when you intentionally want to discard local Post
    http://localhost:8080/api/statements
    http://localhost:8080/api/publications
    http://localhost:8080/api/articles
+   http://localhost:8080/api/votes/elections
+   http://localhost:8080/api/votes/proposals?election=at://did:plc:npc/org.dsa.vote.election/2026-annual-convention
+   http://localhost:8080/api/votes/choices?proposal=at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities
    http://localhost:8080/api/activity?entity=at://did:plc:nycdsa/org.dsa.profile.chapter/self
    http://localhost:8080/api/endorsements
    ```
@@ -203,6 +213,7 @@ This browser flow is intentionally limited to safe local fixture records. It is 
 - Search and type filters work over a Postgres-backed read model.
 - Trust assertions and org-chart relationship records can be modeled without becoming ordinary directory cards.
 - The fixture ingestion boundary can be supplemented by real ATProto transport without changing the UI concept.
+- Public election/proposal/choice registry metadata can be served without publishing ballots or eligibility data.
 
 ## Safety boundary
 

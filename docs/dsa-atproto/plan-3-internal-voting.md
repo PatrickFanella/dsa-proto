@@ -221,7 +221,7 @@ The private schema should be designed after the security/privacy design gate.
 
 ### Slice 0: Voting threat model and requirements
 
-Status: next recommended slice.
+Status: initial architecture boundary documented; a deeper implementation-grade threat model is still required before private voting code.
 
 Deliverables:
 
@@ -238,6 +238,8 @@ No code.
 
 ### Slice 1: Public election/proposal registry
 
+Status: implemented in the local prototype.
+
 Implement public ATProto-shaped records for election notices, proposals, and choices.
 
 No ballots.
@@ -249,6 +251,8 @@ Acceptance criteria:
 - read API
 - UI section
 - clear copy that voting itself happens in a private system
+
+Implemented as public registry metadata only; ballots, eligibility, and voting results remain out of scope.
 
 ### Slice 2: Private voting service prototype design
 

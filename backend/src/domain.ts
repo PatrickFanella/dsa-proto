@@ -79,6 +79,43 @@ export const publicEventRecordSchema = z.object({
   relatedEntityUris: z.array(z.string().startsWith('at://')),
 });
 
+export const voteElectionRecordSchema = z.object({
+  $type: z.literal('org.dsa.vote.election'),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  bodyMarkdown: z.string().min(1),
+  sponsorEntityUri: z.string().startsWith('at://'),
+  sponsorEntityName: z.string().min(1),
+  opensAt: z.string().datetime(),
+  closesAt: z.string().datetime(),
+  status: z.enum(['draft', 'scheduled', 'open', 'closed', 'certified', 'archived']),
+  eligibilityDescription: z.string().min(1),
+  votingSystemUrl: z.string().url().optional(),
+  prototypeCaveat: z.string().min(1),
+  relatedEntityUris: z.array(z.string().startsWith('at://')),
+});
+
+export const voteProposalRecordSchema = z.object({
+  $type: z.literal('org.dsa.vote.proposal'),
+  electionUri: z.string().startsWith('at://'),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  bodyMarkdown: z.string().min(1),
+  sponsorEntityUri: z.string().startsWith('at://'),
+  status: z.enum(['draft', 'active', 'withdrawn', 'archived']),
+  prototypeCaveat: z.string().min(1),
+  relatedEntityUris: z.array(z.string().startsWith('at://')),
+});
+
+export const voteChoiceRecordSchema = z.object({
+  $type: z.literal('org.dsa.vote.choice'),
+  proposalUri: z.string().startsWith('at://'),
+  label: z.string().min(1),
+  description: z.string().min(1),
+  sortOrder: z.number().int(),
+  prototypeCaveat: z.string().min(1),
+});
+
 export const chapterRecordSchema = z.object({
   $type: z.literal('org.dsa.profile.chapter'),
   name: z.string().min(1),
@@ -143,10 +180,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article'), z.literal('org.dsa.endorsement.public'), z.literal('org.dsa.event.public')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article'), z.literal('org.dsa.endorsement.public'), z.literal('org.dsa.event.public'), z.literal('org.dsa.vote.election'), z.literal('org.dsa.vote.proposal'), z.literal('org.dsa.vote.choice')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema, endorsementPublicRecordSchema, publicEventRecordSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema, endorsementPublicRecordSchema, publicEventRecordSchema, voteElectionRecordSchema, voteProposalRecordSchema, voteChoiceRecordSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -165,6 +202,9 @@ export type PublicationProfileRecord = z.infer<typeof publicationProfileRecordSc
 export type PublicationArticleRecord = z.infer<typeof publicationArticleRecordSchema>;
 export type EndorsementPublicRecord = z.infer<typeof endorsementPublicRecordSchema>;
 export type PublicEventRecord = z.infer<typeof publicEventRecordSchema>;
+export type VoteElectionRecord = z.infer<typeof voteElectionRecordSchema>;
+export type VoteProposalRecord = z.infer<typeof voteProposalRecordSchema>;
+export type VoteChoiceRecord = z.infer<typeof voteChoiceRecordSchema>;
 
 export type VerificationStatus = 'mock-verified' | 'self-declared' | 'unverified' | 'disputed' | 'revoked' | 'experimental';
 
@@ -872,7 +912,94 @@ export const publicEventSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords];
+export const voteElectionSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:npc/org.dsa.vote.election/2026-annual-convention',
+    cid: 'bafy-mock-vote-election-annual-convention',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.vote.election',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.vote.election',
+      title: '2026 Annual Convention votes',
+      summary: 'Prototype public notice for convention motions and resolutions.',
+      bodyMarkdown: 'Public metadata only. Voting itself is handled in a private system and is not implemented in this slice.',
+      sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+      sponsorEntityName: 'National Political Committee',
+      opensAt: '2026-08-01T00:00:00.000Z',
+      closesAt: '2026-08-15T00:00:00.000Z',
+      status: 'scheduled',
+      eligibilityDescription: 'Eligibility is determined privately and is not published here.',
+      votingSystemUrl: 'https://example.org/public-prototype/voting-registry',
+      prototypeCaveat: 'Prototype/public metadata only; no ballots, rosters, eligibility proofs, or vote results.',
+      relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self'],
+    },
+  },
+];
+
+export const voteProposalSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities',
+    cid: 'bafy-mock-vote-proposal-priorities',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.vote.proposal',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.vote.proposal',
+      electionUri: 'at://did:plc:npc/org.dsa.vote.election/2026-annual-convention',
+      title: 'Convention priorities platform',
+      summary: 'Public proposal metadata for a convention vote item.',
+      bodyMarkdown: 'This proposal record only describes the public question text and metadata. It does not contain ballots or tallying.',
+      sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+      status: 'active',
+      prototypeCaveat: 'Public proposal metadata only; private voting service will hold ballots later.',
+      relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'],
+    },
+  },
+];
+
+export const voteChoiceSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-yes',
+    cid: 'bafy-mock-vote-choice-yes',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.vote.choice',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.vote.choice',
+      proposalUri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities',
+      label: 'Approve',
+      description: 'Support the proposal.',
+      sortOrder: 1,
+      prototypeCaveat: 'Public choice label only; does not record any vote.',
+    },
+  },
+  {
+    uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-no',
+    cid: 'bafy-mock-vote-choice-no',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.vote.choice',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.vote.choice',
+      proposalUri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities',
+      label: 'Reject',
+      description: 'Do not support the proposal.',
+      sortOrder: 2,
+      prototypeCaveat: 'Public choice label only; does not record any vote.',
+    },
+  },
+];
+
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords, ...voteElectionSeedRecords, ...voteProposalSeedRecords, ...voteChoiceSeedRecords];
 
 export type DirectoryRecordEnvelope = RecordEnvelope & { collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member' };
 

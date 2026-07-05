@@ -1,6 +1,6 @@
 # Current State
 
-Last regrouped after commit `1f46bbf Add public events slice`.
+Last regrouped after commit `f7e2e0d Add internal voting plan`.
 
 ## Summary
 
@@ -44,6 +44,18 @@ Statements are stored as raw ATProto-shaped records, served through `/api/statem
 The unified civic activity feed is served through `/api/activity` and powers the top-level civic activity section plus the merged related civic activity timeline on selected entities. The feed normalizes statements, articles, endorsements, and events into one ordered list.
 
 Selected entity detail panels also show related public statements, related publication articles, related public endorsements, related public events, and the merged civic activity timeline when the linked URIs point back to the entity.
+
+### Public voting registry
+
+Implemented Slice 1 of Plan 3 as public metadata only:
+
+- `org.dsa.vote.election`
+- `org.dsa.vote.proposal`
+- `org.dsa.vote.choice`
+
+These records are served through `/api/votes/elections`, `/api/votes/proposals`, and `/api/votes/choices`. They render in the UI as a public voting registry section and are intentionally excluded from ordinary directory entities.
+
+This slice does **not** include ballots, eligibility rosters, member identity data, or vote results.
 
 ### Ingestion and fixture workflows
 
@@ -144,6 +156,7 @@ The prototype should continue to exclude:
 - private member rosters
 - dues/payment status
 - internal votes
+ - public voting registry metadata only (elections/proposals/choices are public; ballots remain private)
 - casework
 - disciplinary records
 - private deliberation
