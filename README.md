@@ -36,7 +36,10 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
 - [`docs/dsa-atproto/plan-2-public-civic-records.md`](docs/dsa-atproto/plan-2-public-civic-records.md) — next-phase civic records plan
 - [`docs/dsa-atproto/plan-3-internal-voting.md`](docs/dsa-atproto/plan-3-internal-voting.md) — internal voting architecture and safety boundary
+- [`docs/dsa-atproto/plan-4-production-voting.md`](docs/dsa-atproto/plan-4-production-voting.md) — production voting and auditability roadmap
+- [`docs/dsa-atproto/production-voting-architecture-plan.md`](docs/dsa-atproto/production-voting-architecture-plan.md) — production internal voting blockers, security architecture, auditability, and phase order
 - [`docs/dsa-atproto/private-voting-service-design.md`](docs/dsa-atproto/private-voting-service-design.md) — private voting service boundary and data model
+- [`docs/dsa-atproto/production-internal-voting-data-architecture.md`](docs/dsa-atproto/production-internal-voting-data-architecture.md) — production-oriented private voting data architecture plan
 - [`docs/dsa-atproto/voting-protocol-requirements.md`](docs/dsa-atproto/voting-protocol-requirements.md) — required protocol decisions before ballot-casting code
 - [`docs/dsa-atproto/voting-local-protocol-profile.md`](docs/dsa-atproto/voting-local-protocol-profile.md) — local-only non-production voting profile
 - [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues

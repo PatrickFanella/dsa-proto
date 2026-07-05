@@ -139,6 +139,8 @@ There are also local scratch docs that may remain untracked while being evaluate
 
 The local voting prototype intentionally keeps ballots and receipts out of `atproto_records`, uses only synthetic voters like `member-alpha`, `member-beta`, and `member-gamma`, and labels the UI/API as local-only and non-production.
 
+Production voting is tracked separately in `plan-4-production-voting.md`, with supporting architecture docs for production voting security/auditability and private data boundaries. The current `/api/local-voting/*` prototype is not the production path.
+
 ## Current architecture
 
 ```text
@@ -175,4 +177,4 @@ The prototype should continue to exclude:
 2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
 3. **Expanded civic records**: public statements, publications/articles, endorsements, and events slices implemented.
 4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.
-5. **Private voting prototype**: implement only the narrow local profile in `voting-local-protocol-profile.md`; production voting remains blocked.
+5. **Production voting plan**: execute Plan 4 governance/protocol gate before production voting components.

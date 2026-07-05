@@ -88,7 +88,10 @@ Use a hybrid architecture:
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
 - [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
 - [plan-3-internal-voting.md](plan-3-internal-voting.md): internal voting architecture and safety boundary
+- [plan-4-production-voting.md](plan-4-production-voting.md): production voting and auditability roadmap
+- [production-voting-architecture-plan.md](production-voting-architecture-plan.md): production internal voting blockers, security architecture, auditability, and phase order
 - [private-voting-service-design.md](private-voting-service-design.md): private voting service boundary and data model
+- [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): production-oriented private voting data boundaries, schema concepts, and implementation slices
 - [voting-protocol-requirements.md](voting-protocol-requirements.md): required protocol decisions before ballot-casting code
 - [voting-local-protocol-profile.md](voting-local-protocol-profile.md): narrow local-only non-production voting profile for the next prototype slice
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation

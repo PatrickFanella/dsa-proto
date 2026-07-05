@@ -346,6 +346,8 @@ Acceptance criteria:
 
 ## Near-term recommendation
 
-Do **Slice 0** before any voting implementation.
+For local prototype work, `/api/local-voting/*` exists only as non-production Slice 3.
 
-The current prototype can safely add public election/proposal registry records later, but real ballot casting should wait until the private voting architecture and threat model are explicit.
+For production voting, continue with [plan-4-production-voting.md](plan-4-production-voting.md). The Plan 4 track covers production security architecture, private data architecture, auditability, certification, recount/dispute handling, external review, and rollout phases.
+
+For a production-oriented architecture, blocker list, auditability requirements, and suggested phase order, see [production-voting-architecture-plan.md](production-voting-architecture-plan.md).
