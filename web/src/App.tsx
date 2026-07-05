@@ -118,6 +118,27 @@ export type PublicEndorsementCard = {
   record: { record: Record<string, unknown> };
 };
 
+export type PublicEventCard = {
+  uri: string;
+  did: string;
+  handle: string;
+  collection: string;
+  indexedAt: string;
+  trustLabel: string;
+  title: string;
+  hostEntityUri: string;
+  hostEntityName: string;
+  startsAt: string;
+  endsAt?: string;
+  mode: string;
+  publicUrl?: string;
+  locationLabel?: string;
+  status: string;
+  topics: string[];
+  relatedEntityUris: string[];
+  record: { record: Record<string, unknown> };
+};
+
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
   'steering-committee': 'Steering committees',
@@ -228,6 +249,12 @@ const fallbackEndorsements: PublicEndorsementCard[] = [
   { uri: 'at://did:plc:npc/org.dsa.endorsement.public/mock-proposal-measure', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.endorsement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', endorsingEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', endorsingEntityName: 'National Political Committee', candidateOrMeasureName: 'Prototype ballot measure sample', officeOrMeasure: 'Housing and tenant protections measure', jurisdiction: 'National / prototype', electionDate: '2026-11-03', status: 'archived', statementUri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', sourceUrl: 'https://example.org/public-prototype/endorsements/npc-measure', topics: ['prototype', 'ballot-measure', 'housing'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece'], record: { record: { $type: 'org.dsa.endorsement.public' } } },
 ];
 
+const fallbackEvents: PublicEventCard[] = [
+  { uri: 'at://did:plc:nycdsa/org.dsa.event.public/orientation', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NYC DSA public orientation', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'New York City DSA', startsAt: '2026-07-15T18:00:00.000Z', mode: 'online', publicUrl: 'https://example.org/public-prototype/events/nyc-orientation', status: 'scheduled', topics: ['welcome', 'membership', 'prototype'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+  { uri: 'at://did:plc:climatecaucus/org.dsa.event.public/briefing', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'experimental', title: 'Climate caucus public briefing', hostEntityUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', hostEntityName: 'DSA Climate Caucus', startsAt: '2026-07-20T00:00:00.000Z', endsAt: '2026-07-20T01:00:00.000Z', mode: 'hybrid', publicUrl: 'https://example.org/public-prototype/events/climate-briefing', locationLabel: 'Public demo location shared for the prototype only', status: 'scheduled', topics: ['climate', 'education', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+  { uri: 'at://did:plc:npc/org.dsa.event.public/governance-forum', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NPC public governance forum', hostEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', hostEntityName: 'National Political Committee', startsAt: '2026-07-25T22:00:00.000Z', mode: 'in-person', locationLabel: 'Prototype public session room', status: 'archived', topics: ['governance', 'public process', 'prototype'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+];
+
 export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
@@ -243,6 +270,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [publications, setPublications] = useState(fallbackPublications);
   const [articles, setArticles] = useState(fallbackArticles);
   const [endorsements, setEndorsements] = useState(fallbackEndorsements);
+  const [events, setEvents] = useState(fallbackEvents);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -285,6 +313,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/publications`).then((response) => response.json()).then((payload) => setPublications(payload.data ?? fallbackPublications)).catch(() => setPublications(fallbackPublications));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/articles`).then((response) => response.json()).then((payload) => setArticles(payload.data ?? fallbackArticles)).catch(() => setArticles(fallbackArticles));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/endorsements`).then((response) => response.json()).then((payload) => setEndorsements(payload.data ?? fallbackEndorsements)).catch(() => setEndorsements(fallbackEndorsements));
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/events`).then((response) => response.json()).then((payload) => setEvents(payload.data ?? fallbackEvents)).catch(() => setEvents(fallbackEvents));
   }, []);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
@@ -302,6 +331,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const relatedStatements = useMemo(() => selectedEntity ? statements.filter((statement) => statement.issuerUri === selectedEntity.id || statement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, statements]);
   const relatedArticles = useMemo(() => selectedEntity ? articles.filter((article) => article.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, articles]);
   const relatedEndorsements = useMemo(() => selectedEntity ? endorsements.filter((endorsement) => endorsement.endorsingEntityUri === selectedEntity.id || endorsement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, endorsements]);
+  const relatedEvents = useMemo(() => selectedEntity ? events.filter((event) => event.hostEntityUri === selectedEntity.id || event.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, events]);
   const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
   const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
     (acc[unit.kind] ??= []).push(unit);
@@ -479,6 +509,28 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                 {endorsement.statementUri ? <p className="mt-1 text-zinc-500">Statement: {endorsement.statementUri}</p> : null}
                 {endorsement.sourceUrl ? <p className="mt-1 text-zinc-500">Source: <a className="underline" href={endorsement.sourceUrl}>link</a></p> : null}
                 <p className="mt-1 text-zinc-500">{endorsement.collection} · {endorsement.trustLabel}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="mt-8 rounded-xl border border-amber-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Public events</h2>
+          <p className="mt-2 text-sm text-zinc-300">Public event records are loaded from the prototype backend and kept out of directory entities.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {events.map((event) => (
+              <article key={event.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold">{event.title}</h3>
+                  <span className="rounded-full border border-amber-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-amber-200">{event.status}</span>
+                </div>
+                <p className="mt-2 text-zinc-300">Host: {event.hostEntityName}</p>
+                <p className="mt-1 text-zinc-400">Starts: {event.startsAt}{event.endsAt ? ` · Ends: ${event.endsAt}` : ''}</p>
+                <p className="mt-1 text-zinc-500">Mode: {event.mode}</p>
+                <p className="mt-1 text-zinc-500">Topics: {event.topics.join(', ')}</p>
+                <p className="mt-1 text-zinc-500">Related URIs: {event.relatedEntityUris.join(', ')}</p>
+                {event.publicUrl ? <p className="mt-1 text-zinc-500">Public URL: <a className="underline" href={event.publicUrl}>link</a></p> : null}
+                {event.locationLabel ? <p className="mt-1 text-zinc-500">Location: {event.locationLabel}</p> : null}
+                <p className="mt-1 text-zinc-500">{event.collection} · {event.trustLabel}</p>
               </article>
             ))}
           </div>
@@ -681,6 +733,26 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                     </div>
                   ) : (
                     <p className="mt-3 text-sm text-zinc-400">No public endorsements linked to this entity yet.</p>
+                  )}
+                </section>
+                <section className="mt-5 rounded-lg border border-amber-400/30 bg-zinc-900 p-4">
+                  <h3 className="text-lg font-semibold">Related public events</h3>
+                  {relatedEvents.length ? (
+                    <div className="mt-3 grid gap-3">
+                      {relatedEvents.map((event) => (
+                        <article key={event.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="font-semibold">{event.title}</h4>
+                            <span className="rounded-full border border-amber-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-amber-200">{event.status}</span>
+                          </div>
+                          <p className="mt-2 text-zinc-300">Host: {event.hostEntityName}</p>
+                          <p className="mt-1 text-zinc-400">Starts: {event.startsAt}</p>
+                          <p className="mt-1 text-zinc-500">Mode: {event.mode}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-zinc-400">No public events linked to this entity yet.</p>
                   )}
                 </section>
                 <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(selectedEntity.record.record, null, 2)}</pre>

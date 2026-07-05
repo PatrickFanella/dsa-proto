@@ -87,6 +87,8 @@ Fields:
 - `locationLabel`
 - `status: scheduled | cancelled | archived`
 
+Status: implemented in the local prototype as a narrow public-event slice.
+
 Avoid precise sensitive logistics unless explicitly public.
 
 ### 4. Publications and articles
@@ -170,5 +172,5 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 2. Related-record panel on entity detail pages. ✅
 3. Public publications/articles. ✅
 4. Public endorsements. ✅
-5. Public events.
+5. Public events. ✅
 6. Safe deploy/demo mode with local admin disabled.

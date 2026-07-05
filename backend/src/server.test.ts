@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, endorsementSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicEventSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -39,6 +39,10 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(endorsementSeedRecords[0]).collection).toBe('org.dsa.endorsement.public');
   });
 
+  it('accepts public event records', () => {
+    expect(recordEnvelopeSchema.parse(publicEventSeedRecords[0]).collection).toBe('org.dsa.event.public');
+  });
+
   it('accepts org unit and governance relationship records', () => {
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
@@ -52,7 +56,7 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
@@ -67,6 +71,7 @@ describe('ingestion and read path', () => {
     expect(await repo.listPublications()).toHaveLength(1);
     expect(await repo.listArticles()).toHaveLength(1);
     expect(await repo.listEndorsements()).toHaveLength(2);
+    expect(await repo.listEvents()).toHaveLength(3);
   });
 
   it('loads and replays fixture files from disk', async () => {
@@ -271,6 +276,45 @@ describe('API response', () => {
     const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
     const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
     expect(entityJson.data.every((item) => item.collection !== 'org.dsa.endorsement.public')).toBe(true);
+  });
+
+  it('serves public events and keeps them out of entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const eventsResponse = await fetch(`http://127.0.0.1:${address.port}/api/events`);
+    const eventsJson = await eventsResponse.json() as { prototype: boolean; data: Array<{ collection: string; title: string }> };
+    expect(eventsJson.prototype).toBe(true);
+    expect(eventsJson.data).toHaveLength(3);
+    expect(eventsJson.data[0]).toMatchObject({ collection: 'org.dsa.event.public' });
+
+    const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
+    expect(entityJson.data.every((item) => item.collection !== 'org.dsa.event.public')).toBe(true);
+  });
+
+  it('filters events by host entity and status and serves detail payloads', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const host = 'at://did:plc:nycdsa/org.dsa.profile.chapter/self';
+    const byHost = await fetch(`http://127.0.0.1:${address.port}/api/events?entity=${encodeURIComponent(host)}`);
+    const byHostJson = await byHost.json() as { data: Array<{ hostEntityUri: string }> };
+    expect(byHostJson.data.every((item) => item.hostEntityUri === host)).toBe(true);
+
+    const byStatus = await fetch(`http://127.0.0.1:${address.port}/api/events?status=scheduled`);
+    const byStatusJson = await byStatus.json() as { data: Array<{ status: string }> };
+    expect(byStatusJson.data.every((item) => item.status === 'scheduled')).toBe(true);
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/events/${encodeURIComponent(publicEventSeedRecords[0].uri)}`);
+    const json = await response.json() as { prototype: boolean; data: { uri: string; hostEntityName: string } };
+    expect(response.status).toBe(200);
+    expect(json.prototype).toBe(true);
+    expect(json.data).toMatchObject({ uri: publicEventSeedRecords[0].uri, hostEntityName: 'New York City DSA' });
   });
 
   it('filters endorsements by entity and status', async () => {

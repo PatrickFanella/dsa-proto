@@ -72,6 +72,8 @@ describe('App', () => {
     expect(html).toContain('A public demo article for the prototype');
     expect(html).toContain('Public endorsements');
     expect(html).toContain('Prototype candidate endorsement sample');
+    expect(html).toContain('Public events');
+    expect(html).toContain('NYC DSA public orientation');
   });
 
   it('renders the org chart section with source and relationships', () => {
@@ -147,6 +149,7 @@ describe('App', () => {
     expect(html).toContain('Related publication articles');
     expect(html).toContain('A public demo article for the prototype');
     expect(html).toContain('Related public endorsements');
+    expect(html).toContain('Related public events');
   });
 
   it('renders related public statements empty state when none are linked', () => {
@@ -171,6 +174,8 @@ describe('App', () => {
     expect(html).toContain('No publication articles linked to this entity yet.');
     expect(html).toContain('Related public endorsements');
     expect(html).toContain('No public endorsements linked to this entity yet.');
+    expect(html).toContain('Related public events');
+    expect(html).toContain('No public events linked to this entity yet.');
   });
 
   it('renders search and type filters with filtered results', () => {

@@ -1,6 +1,6 @@
 # Current State
 
-Last regrouped after commit `18ebf9c Add DSA org chart explorer`.
+Last regrouped after commit `26b6edb Add public endorsements slice`.
 
 ## Summary
 
@@ -31,16 +31,17 @@ The directory supports:
 
 ### Public civic records
 
-Implemented Plan 2 civic record type:
+Implemented Plan 2 civic record types:
 
 - `org.dsa.statement.public`
 - `org.dsa.publication.profile`
 - `org.dsa.publication.article`
 - `org.dsa.endorsement.public`
+- `org.dsa.event.public`
 
-Statements are stored as raw ATProto-shaped records, served through `/api/statements`, and rendered in the UI. Publication profiles/articles are served through `/api/publications` and `/api/articles`. Public endorsements are served through `/api/endorsements`. None of these become ordinary directory cards.
+Statements are stored as raw ATProto-shaped records, served through `/api/statements`, and rendered in the UI. Publication profiles/articles are served through `/api/publications` and `/api/articles`. Public endorsements are served through `/api/endorsements`. Public events are served through `/api/events`. None of these become ordinary directory cards.
 
-Selected entity detail panels also show related public statements, related publication articles, and related public endorsements when the linked URIs point back to the entity.
+Selected entity detail panels also show related public statements, related publication articles, related public endorsements, and related public events when the linked URIs point back to the entity.
 
 ### Ingestion and fixture workflows
 
@@ -151,5 +152,5 @@ The prototype should continue to exclude:
 
 1. **Source/provenance model**: make sources and caveats first-class for imported records and derived org-chart/caucus data.
 2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
-3. **Expanded civic records**: public statements, publications/articles, and endorsements slices implemented; events remain planned.
+3. **Expanded civic records**: public statements, publications/articles, endorsements, and events slices implemented.
 4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.

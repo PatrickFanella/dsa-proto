@@ -27,6 +27,7 @@ Then open:
 - Registry health API: <http://localhost:8080/api/registry/health>
 - Public statements API: <http://localhost:8080/api/statements>
 - Public endorsements API: <http://localhost:8080/api/endorsements>
+- Public events API: <http://localhost:8080/api/events>
 
 The Compose stack starts:
 
@@ -45,13 +46,14 @@ On backend startup, `bootstrapRepository` connects to Postgres, ensures the prot
 - `org.dsa.profile.orgUnit`
 - `org.dsa.relationship.governance`
 - `org.dsa.endorsement.public`
+- `org.dsa.event.public`
 
 The backend upserts both:
 
 - raw ATProto-shaped envelopes into `atproto_records`
 - normalized searchable directory rows into `directory_entities`
 
-Verification, org-unit, governance-relationship, and public endorsement records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
+Verification, org-unit, governance-relationship, public endorsement, and public event records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
 
 If Postgres is unavailable, the backend falls back to an in-memory repository so local tests and development can still run.
 
@@ -96,8 +98,9 @@ Use the destructive reset only when you intentionally want to discard local Post
 10. Open the public publications section to show publication profiles and articles linked back to publishers and related entities.
 11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
 12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
-13. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
-14. Optionally try query filters:
+13. Open the public events section to show non-directory event records linked back to hosts and related entities.
+14. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+15. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter

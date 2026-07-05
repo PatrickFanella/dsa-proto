@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { allSeedRecords, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope } from './domain.js';
+import { allSeedRecords, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 
@@ -22,6 +22,8 @@ export type DirectoryRepository = {
   getArticle(id: string): Promise<ReturnType<typeof normalizePublicationArticleEnvelope> | undefined>;
   listEndorsements(entityUri?: string, status?: EndorsementPublicRecord['status']): Promise<Array<ReturnType<typeof normalizeEndorsementEnvelope>>>;
   getEndorsement(id: string): Promise<ReturnType<typeof normalizeEndorsementEnvelope> | undefined>;
+  listEvents(entityUri?: string, status?: PublicEventRecord['status']): Promise<Array<ReturnType<typeof normalizeEventEnvelope>>>;
+  getEvent(id: string): Promise<ReturnType<typeof normalizeEventEnvelope> | undefined>;
   ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
   getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
 };
@@ -74,6 +76,8 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
     async getArticle(id: string) { return listPublicationArticleEnvelopes(rawRecords).find((record) => record.uri === id); },
     async listEndorsements(entityUri?: string, status?: EndorsementPublicRecord['status']) { return listEndorsementEnvelopes(rawRecords, entityUri, status); },
     async getEndorsement(id: string) { return listEndorsementEnvelopes(rawRecords).find((record) => record.uri === id); },
+    async listEvents(entityUri?: string, status?: PublicEventRecord['status']) { return listEventEnvelopes(rawRecords, entityUri, status); },
+    async getEvent(id: string) { return listEventEnvelopes(rawRecords).find((record) => record.uri === id); },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
       rawRecords.push(...parsed);
@@ -270,6 +274,16 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       if (!row) return undefined;
       return normalizeEndorsementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
     },
+    async listEvents(entityUri?: string, status?: PublicEventRecord['status']) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.event.public' order by indexed_at desc`);
+      return listEventEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), entityUri, status);
+    },
+    async getEvent(id: string) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.event.public' limit 1`, [id]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return normalizeEventEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+    },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
       for (const rawRecord of parsed) {
@@ -432,6 +446,14 @@ export function createApp(repository: DirectoryRepository) {
       if (!endorsement) return toJson(res, 404, { error: 'not_found' });
       return toJson(res, 200, { prototype: true, data: endorsement });
     }
+    if (req.method === 'GET' && req.url?.startsWith('/api/events')) {
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/events') return toJson(res, 200, { prototype: true, data: await repository.listEvents(url.searchParams.get('entity') ?? undefined, (url.searchParams.get('status') ?? undefined) as PublicEventRecord['status'] | undefined) });
+      const id = decodeURIComponent(url.pathname.slice('/api/events/'.length));
+      const event = await repository.getEvent(id);
+      if (!event) return toJson(res, 404, { error: 'not_found' });
+      return toJson(res, 200, { prototype: true, data: event });
+    }
     if (req.url === '/api/chapters' && req.method === 'GET') {
       const chapters = (await repository.listEntities()).filter((entity) => entity.type === 'chapter');
       return toJson(res, 200, { prototype: true, data: chapters });
@@ -493,6 +515,10 @@ function normalizeEndorsementEnvelope(record: RecordEnvelope & { record: Endorse
   return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, endorsingEntityUri: record.record.endorsingEntityUri, endorsingEntityName: record.record.endorsingEntityName, candidateOrMeasureName: record.record.candidateOrMeasureName, officeOrMeasure: record.record.officeOrMeasure, jurisdiction: record.record.jurisdiction, electionDate: record.record.electionDate, status: record.record.status, statementUri: record.record.statementUri, sourceUrl: record.record.sourceUrl, topics: record.record.topics, relatedEntityUris: record.record.relatedEntityUris };
 }
 
+function normalizeEventEnvelope(record: RecordEnvelope & { record: PublicEventRecord }) {
+  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, title: record.record.title, hostEntityUri: record.record.hostEntityUri, hostEntityName: record.record.hostEntityName, startsAt: record.record.startsAt, endsAt: record.record.endsAt, mode: record.record.mode, publicUrl: record.record.publicUrl, locationLabel: record.record.locationLabel, status: record.record.status, topics: record.record.topics, relatedEntityUris: record.record.relatedEntityUris };
+}
+
 function listStatementEnvelopes(records: RecordEnvelope[], entityUri?: string) {
   return records.filter((record): record is RecordEnvelope & { record: PublicStatementRecord } => {
     if (record.collection !== 'org.dsa.statement.public') return false;
@@ -522,6 +548,15 @@ function listEndorsementEnvelopes(records: RecordEnvelope[], entityUri?: string,
     if (!parsed.success) return false;
     return (!entityUri || parsed.data.endorsingEntityUri === entityUri || parsed.data.relatedEntityUris.includes(entityUri)) && (!status || parsed.data.status === status);
   }).map(normalizeEndorsementEnvelope);
+}
+
+function listEventEnvelopes(records: RecordEnvelope[], entityUri?: string, status?: PublicEventRecord['status']) {
+  return records.filter((record): record is RecordEnvelope & { record: PublicEventRecord } => {
+    if (record.collection !== 'org.dsa.event.public') return false;
+    const parsed = publicEventRecordSchema.safeParse(record.record);
+    if (!parsed.success) return false;
+    return (!entityUri || parsed.data.hostEntityUri === entityUri || parsed.data.relatedEntityUris.includes(entityUri)) && (!status || parsed.data.status === status);
+  }).map(normalizeEventEnvelope);
 }
 
 export async function bootstrapRepository(databaseUrl: string) {
