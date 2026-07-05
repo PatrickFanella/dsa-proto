@@ -86,4 +86,5 @@ Use a hybrid architecture:
 - [org-chart-alignment.md](org-chart-alignment.md): public org-chart mapping notes and caveats
 - [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
+- [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements, endorsements, events, and publications
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
