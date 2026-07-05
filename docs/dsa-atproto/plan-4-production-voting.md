@@ -15,6 +15,7 @@ Plan 4 is split across two detailed architecture docs:
 - [production-voting-architecture-plan.md](production-voting-architecture-plan.md): security, protocol, governance, public/private boundary, auditability, certification, recount, and rollout phases.
 - [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): private data boundaries, schema concepts, constraints, append-only audit chains, retention, backup, and implementation slices.
 - [production-voting-governance-gate.md](production-voting-governance-gate.md): concrete Phase 0 checklist, role matrix, dual-control matrix, retention template, and review gate.
+- [production-voting-implementation-backlog.md](production-voting-implementation-backlog.md): issue-ready implementation backlog with dependencies and acceptance criteria.
 
 ## Production architecture target
 
@@ -170,9 +171,11 @@ Only after a successful limited binding pilot:
 
 ## Next recommended slice
 
-Do **Phase 0: Governance and protocol gate** as concrete issue-ready requirements.
+Do **production-mode route guardrails** next while Phase 0 governance/protocol gate is reviewed.
 
-That slice should produce:
+Reason: the current public app still contains local-only prototype mutation and voting routes. Any public demo must disable those before deployment.
+
+The broader production voting backlog is defined in [production-voting-implementation-backlog.md](production-voting-implementation-backlog.md). Phase 0 should still produce:
 
 - a signed-off scope for the first production election type
 - an eligibility source contract
