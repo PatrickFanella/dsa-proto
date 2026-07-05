@@ -42,6 +42,25 @@ export type RegistryHealthPayload = {
   duplicates: Record<string, Array<{ value: string; indexes: number[] }>>;
 };
 
+export type PublicStatementCard = {
+  uri: string;
+  did: string;
+  handle: string;
+  collection: string;
+  indexedAt: string;
+  trustLabel: string;
+  title: string;
+  summary: string;
+  bodyMarkdown: string;
+  issuerUri: string;
+  issuerName: string;
+  publishedAt: string;
+  topics: string[];
+  relatedEntityUris: string[];
+  status: string;
+  record: { record: Record<string, unknown> };
+};
+
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
   'steering-committee': 'Steering committees',
@@ -133,6 +152,12 @@ const fallbackRegistryHealth: RegistryHealthPayload = {
   duplicates: { uri: [], did: [], handle: [], name: [] },
 };
 
+const fallbackStatements: PublicStatementCard[] = [
+  { uri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'Welcome to the prototype chapter feed', summary: 'A safe sample statement for the local demo.', bodyMarkdown: 'This prototype statement shows how a chapter post can point back to the registry.', issuerUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', issuerName: 'New York City DSA', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'directory'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+  { uri: 'at://did:plc:climatecaucus/org.dsa.statement.public/community-note', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'experimental', title: 'Climate caucus demo update', summary: 'Prototype caucus note linking back to the public directory.', bodyMarkdown: 'This is a short demo statement about public-facing organizing and education.', issuerUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', issuerName: 'DSA Climate Caucus', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['climate', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+  { uri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'Public governance demo note', summary: 'A short org-unit statement for the prototype feed.', bodyMarkdown: 'Public prototype note for governance and publication examples only.', issuerUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', issuerName: 'National Political Committee', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['governance', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+];
+
 export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
@@ -144,6 +169,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
   const [orgChartKindFilter, setOrgChartKindFilter] = useState<string>('all');
   const [orgChartSelectedUnit, setOrgChartSelectedUnit] = useState<string>('');
+  const [statements, setStatements] = useState(fallbackStatements);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -177,6 +203,10 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/registry/health`).then((response) => response.json()).then((payload) => setRegistryHealth(payload)).catch(() => setRegistryHealth(initialRegistryHealth));
   }, [initialRegistryHealth]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/statements`).then((response) => response.json()).then((payload) => setStatements(payload.data ?? fallbackStatements)).catch(() => setStatements(fallbackStatements));
+  }, []);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
@@ -317,6 +347,26 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           ) : (
             <p className="mt-4 text-sm text-emerald-200">Canonical registry fixture set is healthy.</p>
           )}
+        </section>
+        <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Public statements</h2>
+          <p className="mt-2 text-sm text-zinc-300">Public statement records are loaded from the prototype backend and kept out of directory entities.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {statements.map((statement) => (
+              <article key={statement.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold">{statement.title}</h3>
+                  <span className="rounded-full border border-sky-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-sky-200">{statement.status}</span>
+                </div>
+                <p className="mt-2 text-zinc-300">{statement.summary}</p>
+                <p className="mt-2 text-zinc-400">Issuer: {statement.issuerName}</p>
+                <p className="mt-1 text-zinc-500">Published: {statement.publishedAt}</p>
+                <p className="mt-1 text-zinc-500">Topics: {statement.topics.join(', ')}</p>
+                <p className="mt-1 text-zinc-500">Related URIs: {statement.relatedEntityUris.join(', ')}</p>
+                <p className="mt-1 text-zinc-500">{statement.collection} · {statement.trustLabel}</p>
+              </article>
+            ))}
+          </div>
         </section>
         <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
           <label className="grid gap-2 text-sm text-zinc-300">

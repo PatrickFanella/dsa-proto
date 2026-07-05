@@ -12,6 +12,19 @@ export const verificationAssertionSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+export const publicStatementRecordSchema = z.object({
+  $type: z.literal('org.dsa.statement.public'),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  bodyMarkdown: z.string().min(1),
+  issuerUri: z.string().startsWith('at://'),
+  issuerName: z.string().min(1),
+  publishedAt: z.string().datetime(),
+  topics: z.array(z.string().min(1)),
+  relatedEntityUris: z.array(z.string().startsWith('at://')),
+  status: z.enum(['published', 'archived', 'draft']),
+});
+
 export const chapterRecordSchema = z.object({
   $type: z.literal('org.dsa.profile.chapter'),
   name: z.string().min(1),
@@ -76,10 +89,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -93,6 +106,7 @@ export type OrgUnitRecord = z.infer<typeof orgUnitRecordSchema>;
 export type GovernanceRelationshipRecord = z.infer<typeof governanceRelationshipRecordSchema>;
 export type MemberAffiliationRecord = z.infer<typeof memberAffiliationRecordSchema>;
 export type VerificationAssertionRecord = z.infer<typeof verificationAssertionSchema>;
+export type PublicStatementRecord = z.infer<typeof publicStatementRecordSchema>;
 
 export type VerificationStatus = 'mock-verified' | 'self-declared' | 'unverified' | 'disputed' | 'revoked' | 'experimental';
 
@@ -574,7 +588,73 @@ export const verificationAssertionSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords];
+export const publicStatementSeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note',
+    cid: 'bafy-mock-statement-nyc-welcome',
+    did: 'did:plc:nycdsa',
+    handle: 'nyc.dsausa.org',
+    collection: 'org.dsa.statement.public',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.statement.public',
+      title: 'Welcome to the prototype chapter feed',
+      summary: 'A safe sample statement for the local demo.',
+      bodyMarkdown: 'This prototype statement shows how a chapter post can point back to the registry.',
+      issuerUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      issuerName: 'New York City DSA',
+      publishedAt: '2026-07-01T00:00:00.000Z',
+      topics: ['prototype', 'directory'],
+      relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'],
+      status: 'published',
+    },
+  },
+  {
+    uri: 'at://did:plc:climatecaucus/org.dsa.statement.public/community-note',
+    cid: 'bafy-mock-statement-climate-note',
+    did: 'did:plc:climatecaucus',
+    handle: 'climate.dsausa.org',
+    collection: 'org.dsa.statement.public',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'experimental',
+    record: {
+      $type: 'org.dsa.statement.public',
+      title: 'Climate caucus demo update',
+      summary: 'Prototype caucus note linking back to the public directory.',
+      bodyMarkdown: 'This is a short demo statement about public-facing organizing and education.',
+      issuerUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
+      issuerName: 'DSA Climate Caucus',
+      publishedAt: '2026-07-01T00:00:00.000Z',
+      topics: ['climate', 'prototype'],
+      relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'],
+      status: 'published',
+    },
+  },
+  {
+    uri: 'at://did:plc:npc/org.dsa.statement.public/governance-note',
+    cid: 'bafy-mock-statement-npc-note',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.statement.public',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'mock-official',
+    record: {
+      $type: 'org.dsa.statement.public',
+      title: 'Public governance demo note',
+      summary: 'A short org-unit statement for the prototype feed.',
+      bodyMarkdown: 'Public prototype note for governance and publication examples only.',
+      issuerUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+      issuerName: 'National Political Committee',
+      publishedAt: '2026-07-01T00:00:00.000Z',
+      topics: ['governance', 'publication'],
+      relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'],
+      status: 'published',
+    },
+  },
+];
+
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords];
 
 export type DirectoryRecordEnvelope = RecordEnvelope & { collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member' };
 

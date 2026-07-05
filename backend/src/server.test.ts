@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -26,6 +26,10 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(verificationAssertionSeedRecords[0]).collection).toBe('org.dsa.verification.assertion');
   });
 
+  it('accepts public statement records', () => {
+    expect(recordEnvelopeSchema.parse(publicStatementSeedRecords[0]).collection).toBe('org.dsa.statement.public');
+  });
+
   it('accepts org unit and governance relationship records', () => {
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
@@ -39,7 +43,7 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
@@ -49,6 +53,8 @@ describe('ingestion and read path', () => {
     expect(entities[2].record.record.$type).toBe('org.dsa.affiliation.member');
     expect(normalizeDirectoryEntity(caucusSeedRecords[0], allSeedRecords)?.searchText).toContain('climate caucus');
     expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0], allSeedRecords)?.searchText).toContain('member.alpha.example');
+    expect(await repo.listStatements()).toHaveLength(3);
+    expect(await repo.getStatement(publicStatementSeedRecords[0].uri)).toMatchObject({ title: 'Welcome to the prototype chapter feed', issuerName: 'New York City DSA' });
   });
 
   it('loads and replays fixture files from disk', async () => {
@@ -192,6 +198,28 @@ describe('API response', () => {
     expect(json.data.some((item) => item.type === 'caucus')).toBe(true);
     expect(json.data.some((item) => item.type === 'member-affiliation')).toBe(true);
     expect(json.data.every((item) => item.type !== 'verification-assertion')).toBe(true);
+  });
+
+  it('serves public statements and keeps them out of entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const listResponse = await fetch(`http://127.0.0.1:${address.port}/api/statements`);
+    const listJson = await listResponse.json() as { prototype: boolean; data: Array<{ uri: string; title: string; issuerName: string; collection: string }> };
+    expect(listJson.prototype).toBe(true);
+    expect(listJson.data).toHaveLength(3);
+    expect(listJson.data[0]).toMatchObject({ collection: 'org.dsa.statement.public' });
+    expect(listJson.data.some((item) => item.title === 'Public governance demo note')).toBe(true);
+
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/api/statements/${encodeURIComponent(publicStatementSeedRecords[0].uri)}`);
+    const detailJson = await detailResponse.json() as { prototype: boolean; data: { uri: string; issuerName: string; relatedEntityUris: string[] } };
+    expect(detailResponse.status).toBe(200);
+    expect(detailJson.data).toMatchObject({ uri: publicStatementSeedRecords[0].uri, issuerName: 'New York City DSA' });
+
+    const entitiesResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entitiesJson = await entitiesResponse.json() as { data: Array<{ collection: string }> };
+    expect(entitiesJson.data.every((item) => item.collection !== 'org.dsa.statement.public')).toBe(true);
   });
 
   it('serves the org chart slice', async () => {

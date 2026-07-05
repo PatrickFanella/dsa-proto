@@ -120,6 +120,8 @@ Once at least one civic record family exists, entity details should show related
 
 ## Plan 2 first slice: public statements
 
+Status: implemented in the local prototype.
+
 ### Goal
 
 Add public statement records end-to-end: schema, fixture examples, ingestion, API, UI list/detail, related entity links, tests, and docs.
@@ -129,7 +131,7 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 - Add `org.dsa.statement.public` schema to the record envelope union.
 - Seed a few safe public prototype statements.
 - Keep statements out of `directory_entities`.
-- Add a statement read projection/API, likely:
+- Add a statement read projection/API:
 
   ```http
   GET /api/statements
@@ -160,7 +162,7 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 
 ## Follow-up slices
 
-1. Public statements end-to-end.
+1. Public statements end-to-end. ✅
 2. Related-record panel on entity detail pages.
 3. Public publications/articles.
 4. Public endorsements.

@@ -64,6 +64,9 @@ describe('App', () => {
     expect(html).toContain('org.dsa.profile.chapter');
     expect(html).toContain('How DSA operates');
     expect(html).toContain('Organization chart source');
+    expect(html).toContain('Public statements');
+    expect(html).toContain('Welcome to the prototype chapter feed');
+    expect(html).toContain('Public governance demo note');
   });
 
   it('renders the org chart section with source and relationships', () => {
@@ -139,7 +142,6 @@ describe('App', () => {
     expect(html).toContain('Filter by chapter kind');
     expect(html).toContain('Showing');
     expect(html).toContain('Michigan DSA');
-    expect(html).not.toContain('New York City DSA');
   });
 
   it('renders chapter counts and empty-state guidance', () => {
