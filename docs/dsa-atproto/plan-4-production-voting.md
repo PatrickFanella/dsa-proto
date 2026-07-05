@@ -14,6 +14,7 @@ Plan 4 is split across two detailed architecture docs:
 
 - [production-voting-architecture-plan.md](production-voting-architecture-plan.md): security, protocol, governance, public/private boundary, auditability, certification, recount, and rollout phases.
 - [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): private data boundaries, schema concepts, constraints, append-only audit chains, retention, backup, and implementation slices.
+- [production-voting-governance-gate.md](production-voting-governance-gate.md): concrete Phase 0 checklist, role matrix, dual-control matrix, retention template, and review gate.
 
 ## Production architecture target
 
@@ -79,6 +80,8 @@ A production voting system must prove:
 ### Phase 0: Governance and protocol gate
 
 No production code.
+
+Status: gate checklist documented in [production-voting-governance-gate.md](production-voting-governance-gate.md).
 
 Deliverables:
 
