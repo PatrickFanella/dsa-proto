@@ -6,7 +6,7 @@ It is **not** ballot-casting code and it does not make `dsa-proto` production-re
 
 ## Status
 
-Requirements draft.
+Requirements draft with a local-only non-production profile documented in [voting-local-protocol-profile.md](voting-local-protocol-profile.md).
 
 Slice 3 remains blocked until every requirement below is either satisfied by a concrete design decision, explicitly deferred with a non-production limitation, or marked as a blocker.
 
@@ -40,6 +40,8 @@ Recommended constraints:
 - no binding DSA election claims
 
 Anything beyond this scope should require another security review.
+
+The concrete local profile is [voting-local-protocol-profile.md](voting-local-protocol-profile.md). It resolves the checklist only for a local prototype and does not claim production-grade secret ballots or coercion resistance.
 
 ## Ballot secrecy model
 
@@ -295,3 +297,5 @@ Slice 3 can start only when this checklist is complete:
 - [ ] threat-model acceptance checks documented
 - [ ] non-production constraints visible in UI/API/docs
 - [ ] security review completed after updates
+
+For the local-only prototype profile, see [voting-local-protocol-profile.md](voting-local-protocol-profile.md). Production remains blocked even if Slice 3 uses that profile.

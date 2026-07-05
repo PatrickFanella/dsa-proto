@@ -274,9 +274,11 @@ See [private-voting-service-design.md](private-voting-service-design.md).
 
 ### Slice 2.5: Voting protocol requirements
 
-Status: documented as an implementation gate; no ballot-casting implementation has begun.
+Status: documented as an implementation gate; a local-only non-production profile is documented; no ballot-casting implementation has begun.
 
 See [voting-protocol-requirements.md](voting-protocol-requirements.md).
+
+Local prototype profile: [voting-local-protocol-profile.md](voting-local-protocol-profile.md).
 
 Acceptance criteria:
 
@@ -293,9 +295,9 @@ Acceptance criteria:
 
 ### Slice 3: Non-production ballot casting prototype
 
-Status: blocked by [voting-protocol-requirements.md](voting-protocol-requirements.md).
+Status: unblocked only for the narrow local profile in [voting-local-protocol-profile.md](voting-local-protocol-profile.md); blocked for production or anything broader.
 
-Implement a local-only, non-production ballot flow only after the protocol requirements gate is accepted.
+Implement a local-only, non-production ballot flow following [voting-local-protocol-profile.md](voting-local-protocol-profile.md).
 
 Acceptance criteria:
 

@@ -59,7 +59,7 @@ This slice does **not** include ballots, eligibility rosters, member identity da
 
 The private voting service design is documented in `private-voting-service-design.md`. It defines the future private boundary for eligibility, authentication, ballots, receipts, tallying, audits, recounts, disputes, and admin controls, but no private voting backend is implemented.
 
-The implementation gate for ballot casting is documented in `voting-protocol-requirements.md`. Slice 3 remains blocked until the ballot secrecy model, voting method scope, eligibility source, auth/session model, receipt semantics, revote behavior, tally/certification rules, retention policy, admin role separation, and threat-model acceptance checks are accepted.
+The implementation gate for ballot casting is documented in `voting-protocol-requirements.md`. A narrow local-only non-production profile is documented in `voting-local-protocol-profile.md`; it allows the next slice to prototype ballot casting locally but still blocks production, binding elections, real auth, real rosters, certified results, and any broader voting method.
 
 ### Ingestion and fixture workflows
 
@@ -173,4 +173,4 @@ The prototype should continue to exclude:
 2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
 3. **Expanded civic records**: public statements, publications/articles, endorsements, and events slices implemented.
 4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.
-5. **Private voting design gate**: resolve the `voting-protocol-requirements.md` checklist before ballot casting code.
+5. **Private voting prototype**: implement only the narrow local profile in `voting-local-protocol-profile.md`; production voting remains blocked.

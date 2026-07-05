@@ -90,4 +90,5 @@ Use a hybrid architecture:
 - [plan-3-internal-voting.md](plan-3-internal-voting.md): internal voting architecture and safety boundary
 - [private-voting-service-design.md](private-voting-service-design.md): private voting service boundary and data model
 - [voting-protocol-requirements.md](voting-protocol-requirements.md): required protocol decisions before ballot-casting code
+- [voting-local-protocol-profile.md](voting-local-protocol-profile.md): narrow local-only non-production voting profile for the next prototype slice
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
