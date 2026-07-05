@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { allSeedRecords, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicStatementRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicStatementRecord, type RecordEnvelope } from './domain.js';
+import { allSeedRecords, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 
@@ -16,6 +16,10 @@ export type DirectoryRepository = {
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
   listStatements(entityUri?: string): Promise<Array<ReturnType<typeof normalizeStatementEnvelope>>>;
   getStatement(id: string): Promise<ReturnType<typeof normalizeStatementEnvelope> | undefined>;
+  listPublications(): Promise<Array<ReturnType<typeof normalizePublicationProfileEnvelope>>>;
+  getPublication(id: string): Promise<ReturnType<typeof normalizePublicationProfileEnvelope> | undefined>;
+  listArticles(publicationUri?: string, entityUri?: string): Promise<Array<ReturnType<typeof normalizePublicationArticleEnvelope>>>;
+  getArticle(id: string): Promise<ReturnType<typeof normalizePublicationArticleEnvelope> | undefined>;
   ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
   getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
 };
@@ -62,6 +66,10 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
     async getStatement(id: string) {
       return listStatementEnvelopes(rawRecords).find((record) => record.uri === id);
     },
+    async listPublications() { return listPublicationProfileEnvelopes(rawRecords); },
+    async getPublication(id: string) { return listPublicationProfileEnvelopes(rawRecords).find((record) => record.uri === id); },
+    async listArticles(publicationUri?: string, entityUri?: string) { return listPublicationArticleEnvelopes(rawRecords, publicationUri, entityUri); },
+    async getArticle(id: string) { return listPublicationArticleEnvelopes(rawRecords).find((record) => record.uri === id); },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
       rawRecords.push(...parsed);
@@ -228,6 +236,26 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       if (!row) return undefined;
       return normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
     },
+    async listPublications() {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.profile' order by indexed_at desc`);
+      return listPublicationProfileEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)));
+    },
+    async getPublication(id: string) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.profile' limit 1`, [id]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return normalizePublicationProfileEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+    },
+    async listArticles(publicationUri?: string, entityUri?: string) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.article' order by indexed_at desc`);
+      return listPublicationArticleEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), publicationUri, entityUri);
+    },
+    async getArticle(id: string) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.article' limit 1`, [id]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return normalizePublicationArticleEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+    },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
       for (const rawRecord of parsed) {
@@ -366,6 +394,22 @@ export function createApp(repository: DirectoryRepository) {
       if (!statement) return toJson(res, 404, { error: 'not_found' });
       return toJson(res, 200, { prototype: true, data: statement });
     }
+    if (req.method === 'GET' && req.url?.startsWith('/api/publications')) {
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/publications') return toJson(res, 200, { prototype: true, data: await repository.listPublications() });
+      const id = decodeURIComponent(url.pathname.slice('/api/publications/'.length));
+      const publication = await repository.getPublication(id);
+      if (!publication) return toJson(res, 404, { error: 'not_found' });
+      return toJson(res, 200, { prototype: true, data: publication });
+    }
+    if (req.method === 'GET' && req.url?.startsWith('/api/articles')) {
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/articles') return toJson(res, 200, { prototype: true, data: await repository.listArticles(url.searchParams.get('publication') ?? undefined, url.searchParams.get('entity') ?? undefined) });
+      const id = decodeURIComponent(url.pathname.slice('/api/articles/'.length));
+      const article = await repository.getArticle(id);
+      if (!article) return toJson(res, 404, { error: 'not_found' });
+      return toJson(res, 200, { prototype: true, data: article });
+    }
     if (req.url === '/api/chapters' && req.method === 'GET') {
       const chapters = (await repository.listEntities()).filter((entity) => entity.type === 'chapter');
       return toJson(res, 200, { prototype: true, data: chapters });
@@ -415,6 +459,14 @@ function normalizeStatementEnvelope(record: RecordEnvelope & { record: PublicSta
   };
 }
 
+function normalizePublicationProfileEnvelope(record: RecordEnvelope & { record: PublicationProfileRecord }) {
+  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, name: record.record.name, shortName: record.record.shortName, publisherUri: record.record.publisherUri, publisherName: record.record.publisherName, website: record.record.website, status: record.record.status };
+}
+
+function normalizePublicationArticleEnvelope(record: RecordEnvelope & { record: PublicationArticleRecord }) {
+  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, publicationUri: record.record.publicationUri, publicationName: record.record.publicationName, title: record.record.title, summary: record.record.summary, bodyMarkdown: record.record.bodyMarkdown, authorName: record.record.authorName, publishedAt: record.record.publishedAt, topics: record.record.topics, relatedEntityUris: record.record.relatedEntityUris, status: record.record.status };
+}
+
 function listStatementEnvelopes(records: RecordEnvelope[], entityUri?: string) {
   return records.filter((record): record is RecordEnvelope & { record: PublicStatementRecord } => {
     if (record.collection !== 'org.dsa.statement.public') return false;
@@ -422,6 +474,19 @@ function listStatementEnvelopes(records: RecordEnvelope[], entityUri?: string) {
     if (!parsed.success) return false;
     return !entityUri || parsed.data.issuerUri === entityUri || parsed.data.relatedEntityUris.includes(entityUri);
   }).map(normalizeStatementEnvelope);
+}
+
+function listPublicationProfileEnvelopes(records: RecordEnvelope[]) {
+  return records.filter((record): record is RecordEnvelope & { record: PublicationProfileRecord } => record.collection === 'org.dsa.publication.profile' && publicationProfileRecordSchema.safeParse(record.record).success).map(normalizePublicationProfileEnvelope);
+}
+
+function listPublicationArticleEnvelopes(records: RecordEnvelope[], publicationUri?: string, entityUri?: string) {
+  return records.filter((record): record is RecordEnvelope & { record: PublicationArticleRecord } => {
+    if (record.collection !== 'org.dsa.publication.article') return false;
+    const parsed = publicationArticleRecordSchema.safeParse(record.record);
+    if (!parsed.success) return false;
+    return (!publicationUri || parsed.data.publicationUri === publicationUri) && (!entityUri || parsed.data.relatedEntityUris.includes(entityUri));
+  }).map(normalizePublicationArticleEnvelope);
 }
 
 export async function bootstrapRepository(databaseUrl: string) {

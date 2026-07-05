@@ -91,9 +91,10 @@ Use the destructive reset only when you intentionally want to discard local Post
 7. For member-affiliation examples, call out that they are public prototype self-declarations. They do not imply verified membership.
 8. Open <http://localhost:8080/api/entities> to show the normalized API response that powers the UI.
 9. Open the org-chart section to show public organizational units and governance relationships from the source-linked DSA chart.
-10. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
-11. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
-12. Optionally try query filters:
+10. Open the public publications section to show publication profiles and articles linked back to publishers and related entities.
+11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
+12. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+13. Optionally try query filters:
 
    ```text
    http://localhost:8080/api/entities?type=chapter
@@ -101,6 +102,8 @@ Use the destructive reset only when you intentionally want to discard local Post
    http://localhost:8080/api/entities?q=climate
    http://localhost:8080/api/org-chart?kind=publication
    http://localhost:8080/api/statements
+   http://localhost:8080/api/publications
+   http://localhost:8080/api/articles
    ```
 
 ## Local fixture author -> replay -> browse loop

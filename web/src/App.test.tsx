@@ -67,6 +67,9 @@ describe('App', () => {
     expect(html).toContain('Public statements');
     expect(html).toContain('Welcome to the prototype chapter feed');
     expect(html).toContain('Public governance demo note');
+    expect(html).toContain('Public publications');
+    expect(html).toContain('Democratic Left');
+    expect(html).toContain('A public demo article for the prototype');
   });
 
   it('renders the org chart section with source and relationships', () => {
@@ -139,6 +142,8 @@ describe('App', () => {
 
     expect(html).toContain('Related public statements');
     expect(html).toContain('Welcome to the prototype chapter feed');
+    expect(html).toContain('Related publication articles');
+    expect(html).toContain('A public demo article for the prototype');
   });
 
   it('renders related public statements empty state when none are linked', () => {
@@ -159,6 +164,8 @@ describe('App', () => {
 
     expect(html).toContain('Related public statements');
     expect(html).toContain('No public statements linked to this entity yet.');
+    expect(html).toContain('Related publication articles');
+    expect(html).toContain('No publication articles linked to this entity yet.');
   });
 
   it('renders search and type filters with filtered results', () => {

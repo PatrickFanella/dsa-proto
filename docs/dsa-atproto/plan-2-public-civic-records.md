@@ -108,6 +108,8 @@ Fields:
 
 This can connect Democratic Left, Socialist Forum, caucus publications, and chapter blogs.
 
+Status: implemented in the local prototype as a narrow publication profile/article slice.
+
 ### 5. Related-record graph
 
 Once at least one civic record family exists, entity details should show related records:
@@ -164,7 +166,7 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 
 1. Public statements end-to-end. ✅
 2. Related-record panel on entity detail pages. ✅
-3. Public publications/articles.
+3. Public publications/articles. ✅
 4. Public endorsements.
 5. Public events.
 6. Safe deploy/demo mode with local admin disabled.

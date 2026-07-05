@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtemp } from 'node:fs/promises';
 import { getLiveAtprotoIngestionConfig, ingestLiveAtprotoEvent, mapLiveAtprotoEventToEnvelope } from './atproto-live.js';
-import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
+import { allSeedRecords, caucusSeedRecords, chapterSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, publicStatementSeedRecords, publicationSeedRecords, recordEnvelopeSchema, normalizeDirectoryEntity, verificationAssertionSeedRecords, type ChapterRecord } from './domain.js';
 import { loadFixtureRecordsFromFile, loadRawFixtureRecordsFromFile, writeFixtureRecordsToFile } from './fixture-files.js';
 import { buildAuthorFixtureRecord } from './fixtures-author.js';
 import { replayFixtureRecords } from './fixture-replay.js';
@@ -30,6 +30,11 @@ describe('directory record validation', () => {
     expect(recordEnvelopeSchema.parse(publicStatementSeedRecords[0]).collection).toBe('org.dsa.statement.public');
   });
 
+  it('accepts publication profile and article records', () => {
+    expect(recordEnvelopeSchema.parse(publicationSeedRecords[0]).collection).toBe('org.dsa.publication.profile');
+    expect(recordEnvelopeSchema.parse(publicationSeedRecords[1]).collection).toBe('org.dsa.publication.article');
+  });
+
   it('accepts org unit and governance relationship records', () => {
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
@@ -43,7 +48,7 @@ describe('directory record validation', () => {
 describe('ingestion and read path', () => {
   it('normalizes and stores mixed records in memory', async () => {
     const repo = createMemoryRepository([]);
-    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords]);
+    await repo.ingestRecordEnvelopes([chapterSeedRecords[0], caucusSeedRecords[0], memberAffiliationSeedRecords[0], ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords]);
     const entities = await repo.listEntities();
     expect(entities).toHaveLength(3);
     expect(entities[0]).toMatchObject({ name: 'New York City DSA', trustLabel: 'mock-official', type: 'chapter' });
@@ -55,6 +60,8 @@ describe('ingestion and read path', () => {
     expect(normalizeDirectoryEntity(memberAffiliationSeedRecords[0], allSeedRecords)?.searchText).toContain('member.alpha.example');
     expect(await repo.listStatements()).toHaveLength(3);
     expect(await repo.getStatement(publicStatementSeedRecords[0].uri)).toMatchObject({ title: 'Welcome to the prototype chapter feed', issuerName: 'New York City DSA' });
+    expect(await repo.listPublications()).toHaveLength(1);
+    expect(await repo.listArticles()).toHaveLength(1);
   });
 
   it('loads and replays fixture files from disk', async () => {
@@ -220,6 +227,45 @@ describe('API response', () => {
     const entitiesResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
     const entitiesJson = await entitiesResponse.json() as { data: Array<{ collection: string }> };
     expect(entitiesJson.data.every((item) => item.collection !== 'org.dsa.statement.public')).toBe(true);
+  });
+
+  it('serves publications and articles and keeps them out of entities', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const publicationsResponse = await fetch(`http://127.0.0.1:${address.port}/api/publications`);
+    const publicationsJson = await publicationsResponse.json() as { prototype: boolean; data: Array<{ collection: string; name: string }> };
+    expect(publicationsJson.prototype).toBe(true);
+    expect(publicationsJson.data).toHaveLength(1);
+    expect(publicationsJson.data[0]).toMatchObject({ collection: 'org.dsa.publication.profile', name: 'Democratic Left' });
+
+    const articlesResponse = await fetch(`http://127.0.0.1:${address.port}/api/articles`);
+    const articlesJson = await articlesResponse.json() as { prototype: boolean; data: Array<{ collection: string; title: string }> };
+    expect(articlesJson.data).toHaveLength(1);
+    expect(articlesJson.data[0]).toMatchObject({ collection: 'org.dsa.publication.article', title: 'A public demo article for the prototype' });
+
+    const entityResponse = await fetch(`http://127.0.0.1:${address.port}/api/entities`);
+    const entityJson = await entityResponse.json() as { data: Array<{ collection: string }> };
+    expect(entityJson.data.every((item) => item.collection !== 'org.dsa.publication.profile' && item.collection !== 'org.dsa.publication.article')).toBe(true);
+  });
+
+  it('filters articles by publication and entity uri', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const article = publicationSeedRecords[1];
+    const articleRecord = article.record as { publicationUri: string };
+    const byPublication = await fetch(`http://127.0.0.1:${address.port}/api/articles?publication=${encodeURIComponent(articleRecord.publicationUri)}`);
+    const byPublicationJson = await byPublication.json() as { data: Array<{ uri: string }> };
+    expect(byPublicationJson.data.map((item) => item.uri)).toContain(article.uri);
+
+    const byEntity = await fetch(`http://127.0.0.1:${address.port}/api/articles?entity=${encodeURIComponent('at://did:plc:nycdsa/org.dsa.profile.chapter/self')}`);
+    const byEntityJson = await byEntity.json() as { data: Array<{ title: string }> };
+    expect(byEntityJson.data.map((item) => item.title)).toContain('A public demo article for the prototype');
   });
 
   it('filters statements by related entity uri', async () => {

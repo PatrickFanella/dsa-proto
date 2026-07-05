@@ -61,6 +61,42 @@ export type PublicStatementCard = {
   record: { record: Record<string, unknown> };
 };
 
+export type PublicationProfileCard = {
+  uri: string;
+  did: string;
+  handle: string;
+  collection: string;
+  indexedAt: string;
+  trustLabel: string;
+  name: string;
+  shortName: string;
+  publisherUri: string;
+  publisherName: string;
+  website?: string;
+  status: string;
+  record: { record: Record<string, unknown> };
+};
+
+export type PublicationArticleCard = {
+  uri: string;
+  did: string;
+  handle: string;
+  collection: string;
+  indexedAt: string;
+  trustLabel: string;
+  publicationUri: string;
+  publicationName: string;
+  title: string;
+  summary: string;
+  bodyMarkdown: string;
+  authorName?: string;
+  publishedAt: string;
+  topics: string[];
+  relatedEntityUris: string[];
+  status: string;
+  record: { record: Record<string, unknown> };
+};
+
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
   'steering-committee': 'Steering committees',
@@ -158,6 +194,14 @@ const fallbackStatements: PublicStatementCard[] = [
   { uri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'Public governance demo note', summary: 'A short org-unit statement for the prototype feed.', bodyMarkdown: 'Public prototype note for governance and publication examples only.', issuerUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', issuerName: 'National Political Committee', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['governance', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
 ];
 
+const fallbackPublications: PublicationProfileCard[] = [
+  { uri: 'at://did:plc:demleft/org.dsa.publication.profile/self', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.profile', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', name: 'Democratic Left', shortName: 'Dem Left', publisherUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', publisherName: 'National Political Committee', website: 'https://www.dsausa.org/democratic-left/', status: 'active', record: { record: { $type: 'org.dsa.publication.profile' } } },
+];
+
+const fallbackArticles: PublicationArticleCard[] = [
+  { uri: 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.article', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', publicationUri: 'at://did:plc:demleft/org.dsa.publication.profile/self', publicationName: 'Democratic Left', title: 'A public demo article for the prototype', summary: 'Example article showing publication/article records end-to-end.', bodyMarkdown: 'This prototype article links the publication layer back to a chapter and the org chart.', authorName: 'DSA editorial collective', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.publication.article' } } },
+];
+
 export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
@@ -170,6 +214,8 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [orgChartKindFilter, setOrgChartKindFilter] = useState<string>('all');
   const [orgChartSelectedUnit, setOrgChartSelectedUnit] = useState<string>('');
   const [statements, setStatements] = useState(fallbackStatements);
+  const [publications, setPublications] = useState(fallbackPublications);
+  const [articles, setArticles] = useState(fallbackArticles);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -208,6 +254,11 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/statements`).then((response) => response.json()).then((payload) => setStatements(payload.data ?? fallbackStatements)).catch(() => setStatements(fallbackStatements));
   }, []);
 
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/publications`).then((response) => response.json()).then((payload) => setPublications(payload.data ?? fallbackPublications)).catch(() => setPublications(fallbackPublications));
+    fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/articles`).then((response) => response.json()).then((payload) => setArticles(payload.data ?? fallbackArticles)).catch(() => setArticles(fallbackArticles));
+  }, []);
+
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
   const chapterCount = entities.filter((entity) => entity.type === 'chapter').length;
@@ -221,6 +272,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
 
   const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
   const relatedStatements = useMemo(() => selectedEntity ? statements.filter((statement) => statement.issuerUri === selectedEntity.id || statement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, statements]);
+  const relatedArticles = useMemo(() => selectedEntity ? articles.filter((article) => article.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, articles]);
   const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
   const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
     (acc[unit.kind] ??= []).push(unit);
@@ -348,6 +400,37 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           ) : (
             <p className="mt-4 text-sm text-emerald-200">Canonical registry fixture set is healthy.</p>
           )}
+        </section>
+        <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
+          <h2 className="text-2xl font-semibold">Public publications</h2>
+          <p className="mt-2 text-sm text-zinc-300">Publication profiles and articles are loaded from the prototype backend and kept out of directory entities.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {publications.map((publication) => (
+              <article key={publication.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold">{publication.name}</h3>
+                  <span className="rounded-full border border-violet-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-violet-200">{publication.status}</span>
+                </div>
+                <p className="mt-2 text-zinc-300">{publication.shortName}</p>
+                <p className="mt-2 text-zinc-400">Publisher: {publication.publisherName}</p>
+                <p className="mt-1 text-zinc-500">{publication.collection} · {publication.trustLabel}</p>
+                {publication.website ? <p className="mt-1 text-zinc-500"><a className="underline" href={publication.website}>Website</a></p> : null}
+              </article>
+            ))}
+            {articles.map((article) => (
+              <article key={article.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold">{article.title}</h3>
+                  <span className="rounded-full border border-sky-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-sky-200">{article.status}</span>
+                </div>
+                <p className="mt-2 text-zinc-300">{article.summary}</p>
+                <p className="mt-2 text-zinc-400">Publication: {article.publicationName}</p>
+                <p className="mt-1 text-zinc-500">Topics: {article.topics.join(', ')}</p>
+                <p className="mt-1 text-zinc-500">Related URIs: {article.relatedEntityUris.join(', ')}</p>
+                <p className="mt-1 text-zinc-500">{article.collection} · {article.trustLabel}</p>
+              </article>
+            ))}
+          </div>
         </section>
         <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
           <h2 className="text-2xl font-semibold">Public statements</h2>
@@ -508,6 +591,25 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                     </div>
                   ) : (
                     <p className="mt-3 text-sm text-zinc-400">No public statements linked to this entity yet.</p>
+                  )}
+                </section>
+                <section className="mt-5 rounded-lg border border-violet-400/30 bg-zinc-900 p-4">
+                  <h3 className="text-lg font-semibold">Related publication articles</h3>
+                  {relatedArticles.length ? (
+                    <div className="mt-3 grid gap-3">
+                      {relatedArticles.map((article) => (
+                        <article key={article.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="font-semibold">{article.title}</h4>
+                            <span className="rounded-full border border-violet-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-violet-200">{article.status}</span>
+                          </div>
+                          <p className="mt-2 text-zinc-300">{article.summary}</p>
+                          <p className="mt-2 text-zinc-400">Publication: {article.publicationName}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-zinc-400">No publication articles linked to this entity yet.</p>
                   )}
                 </section>
                 <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(selectedEntity.record.record, null, 2)}</pre>
