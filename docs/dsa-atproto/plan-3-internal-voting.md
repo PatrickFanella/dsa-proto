@@ -256,6 +256,8 @@ Implemented as public registry metadata only; ballots, eligibility, and voting r
 
 ### Slice 2: Private voting service prototype design
 
+Status: documented as a private-service design; no private voting backend has been implemented.
+
 Design private service boundaries and schema.
 
 No public ballot records.
@@ -267,6 +269,8 @@ Acceptance criteria:
 - receipt semantics
 - privacy limitations
 - audit/recount model
+
+See [private-voting-service-design.md](private-voting-service-design.md).
 
 ### Slice 3: Non-production ballot casting prototype
 

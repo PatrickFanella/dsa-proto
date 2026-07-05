@@ -1,6 +1,6 @@
 # Current State
 
-Last regrouped after commit `f7e2e0d Add internal voting plan`.
+Last regrouped after commit `afea99c Add public voting registry`.
 
 ## Summary
 
@@ -56,6 +56,8 @@ Implemented Slice 1 of Plan 3 as public metadata only:
 These records are served through `/api/votes/elections`, `/api/votes/proposals`, and `/api/votes/choices`. They render in the UI as a public voting registry section and are intentionally excluded from ordinary directory entities.
 
 This slice does **not** include ballots, eligibility rosters, member identity data, or vote results.
+
+The private voting service design is documented in `private-voting-service-design.md`. It defines the future private boundary for eligibility, authentication, ballots, receipts, tallying, audits, recounts, disputes, and admin controls, but no private voting backend is implemented.
 
 ### Ingestion and fixture workflows
 
@@ -155,8 +157,8 @@ The prototype should continue to exclude:
 
 - private member rosters
 - dues/payment status
-- internal votes
- - public voting registry metadata only (elections/proposals/choices are public; ballots remain private)
+- internal ballots and private vote records
+- public voting registry metadata only: elections/proposals/choices are public; ballots remain private
 - casework
 - disciplinary records
 - private deliberation
@@ -169,3 +171,4 @@ The prototype should continue to exclude:
 2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
 3. **Expanded civic records**: public statements, publications/articles, endorsements, and events slices implemented.
 4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.
+5. **Private voting design gate**: complete the implementation-grade threat model, protocol choice, eligibility source, and receipt semantics before ballot casting code.
