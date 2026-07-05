@@ -92,6 +92,7 @@ Use a hybrid architecture:
 - [production-voting-architecture-plan.md](production-voting-architecture-plan.md): production internal voting blockers, security architecture, auditability, and phase order
 - [production-voting-governance-gate.md](production-voting-governance-gate.md): Phase 0 production voting governance/protocol gate and role matrix
 - [production-voting-implementation-backlog.md](production-voting-implementation-backlog.md): issue-ready production voting implementation backlog
+- [production-demo-safety-guards.md](production-demo-safety-guards.md): production demo route/UI/deploy guard plan
 - [private-voting-service-design.md](private-voting-service-design.md): private voting service boundary and data model
 - [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): production-oriented private voting data boundaries, schema concepts, and implementation slices
 - [voting-protocol-requirements.md](voting-protocol-requirements.md): required protocol decisions before ballot-casting code

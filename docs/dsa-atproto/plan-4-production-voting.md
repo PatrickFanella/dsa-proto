@@ -16,6 +16,7 @@ Plan 4 is split across two detailed architecture docs:
 - [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): private data boundaries, schema concepts, constraints, append-only audit chains, retention, backup, and implementation slices.
 - [production-voting-governance-gate.md](production-voting-governance-gate.md): concrete Phase 0 checklist, role matrix, dual-control matrix, retention template, and review gate.
 - [production-voting-implementation-backlog.md](production-voting-implementation-backlog.md): issue-ready implementation backlog with dependencies and acceptance criteria.
+- [production-demo-safety-guards.md](production-demo-safety-guards.md): route/UI/deploy guard plan for read-only public demo mode.
 
 ## Production architecture target
 

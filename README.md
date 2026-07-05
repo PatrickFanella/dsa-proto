@@ -40,6 +40,7 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/production-voting-architecture-plan.md`](docs/dsa-atproto/production-voting-architecture-plan.md) — production internal voting blockers, security architecture, auditability, and phase order
 - [`docs/dsa-atproto/production-voting-governance-gate.md`](docs/dsa-atproto/production-voting-governance-gate.md) — Phase 0 production voting governance/protocol gate and role matrix
 - [`docs/dsa-atproto/production-voting-implementation-backlog.md`](docs/dsa-atproto/production-voting-implementation-backlog.md) — issue-ready production voting implementation backlog
+- [`docs/dsa-atproto/production-demo-safety-guards.md`](docs/dsa-atproto/production-demo-safety-guards.md) — production demo route/UI/deploy guard plan
 - [`docs/dsa-atproto/private-voting-service-design.md`](docs/dsa-atproto/private-voting-service-design.md) — private voting service boundary and data model
 - [`docs/dsa-atproto/production-internal-voting-data-architecture.md`](docs/dsa-atproto/production-internal-voting-data-architecture.md) — production-oriented private voting data architecture plan
 - [`docs/dsa-atproto/voting-protocol-requirements.md`](docs/dsa-atproto/voting-protocol-requirements.md) — required protocol decisions before ballot-casting code

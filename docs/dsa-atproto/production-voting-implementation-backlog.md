@@ -66,6 +66,8 @@ Production-blocking: yes for any public deploy
 
 Add production configuration that disables local-only and prototype-only mutation routes in production environments.
 
+Guard requirements are detailed in [production-demo-safety-guards.md](production-demo-safety-guards.md).
+
 Routes that must default off in production:
 
 - `POST /api/admin/fixtures/ingest`
