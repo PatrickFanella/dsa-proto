@@ -44,6 +44,8 @@ Add a small registered-app model with scoped permissions:
 
 Default registered apps may only target app-layer public record families. Foundation record families are blocked or review-only.
 
+Baseline fixture registry: one staging/demo app token may write only `org.dsa.event.public`, only for the allowed host entity scope, and only with `community-submitted` / `uncertain` trust labels while `reviewRequired` remains true.
+
 ### 4. Write Operation + Audit Store
 
 Add the write-operation model before persistence into public projections. Every write attempt should produce an operation/audit entry with app id, request hash, target collection/URI, decision, validation errors, and timestamp. Pending/rejected operations must not appear in public read projections.
