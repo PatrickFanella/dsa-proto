@@ -111,7 +111,7 @@ type IngestibleRecordEnvelope = {
   handle: string;
   collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member';
   indexedAt: string;
-  trustLabel: 'official' | 'verified-by-national' | 'verified-by-chapter' | 'verified-by-caucus' | 'self-declared' | 'community-submitted' | 'secondary-source' | 'uncertain' | 'unverified' | 'disputed' | 'revoked' | 'archived';
+  trustLabel: 'official' | 'verified-by-national' | 'verified-by-chapter' | 'verified-by-caucus' | 'self-declared' | 'community-submitted' | 'secondary-source' | 'uncertain';
   record: Record<string, unknown>;
 };
 
@@ -153,7 +153,7 @@ export function createAtprotoFirehoseAdapter(sink: RecordEnvelopeSink) {
         handle,
         collection: event.collection,
         indexedAt: new Date().toISOString(),
-        trustLabel: 'unverified',
+        trustLabel: 'uncertain',
         record: event.record,
       });
     },
@@ -165,7 +165,7 @@ Notes:
 
 - The exact event object shape should be confirmed against the installed `@atproto/sync` version during implementation.
 - If collection filtering supports exact collection names only, keep the explicit `Set` above instead of relying on wildcard filtering.
-- `trustLabel` must default to `unverified` for live self-published records unless a separate verification record is implemented.
+- `trustLabel` must default to `uncertain` for live self-published records unless a separate verification record is implemented.
 
 ## Fixture replay adapter
 
@@ -210,7 +210,7 @@ ATPROTO_RELAY_URL=wss://bsky.network \
 pnpm --dir backend run ingest:atproto
 ```
 
-Live self-published records are assigned `trustLabel: 'unverified'` unless a future verification record changes that trust model.
+Live self-published records are assigned `trustLabel: 'uncertain'` unless a future verification record changes that trust model.
 
 ## Operational and production-readiness risks
 

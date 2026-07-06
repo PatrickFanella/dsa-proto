@@ -1,4 +1,4 @@
-import { recordEnvelopeSchema, type RecordEnvelope } from './domain.js';
+import { recordEnvelopeSchema, type RecordEnvelope, validatePublicationBoundary } from './domain.js';
 import type { DirectoryRepository } from './server.js';
 
 export type FixtureReplayRejection = {
@@ -21,9 +21,17 @@ export async function replayFixtureRecords(records: unknown[], repository: Pick<
   const rejected: FixtureReplayRejection[] = [];
 
   for (const [index, record] of records.entries()) {
+    const boundaryIssues = validatePublicationBoundary(record);
+    if (boundaryIssues.length > 0) {
+      rejected.push({ index, reason: boundaryIssues.map((issue) => issue.reason).join('; ') });
+      continue;
+    }
     const parsed = recordEnvelopeSchema.safeParse(record);
-    if (parsed.success) validRecords.push(parsed.data);
-    else rejected.push({ index, reason: formatValidationReason(parsed.error) });
+    if (!parsed.success) {
+      rejected.push({ index, reason: formatValidationReason(parsed.error) });
+      continue;
+    }
+    validRecords.push(parsed.data);
   }
 
   if (validRecords.length > 0) {

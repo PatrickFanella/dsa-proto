@@ -219,4 +219,4 @@ The seed data and future demo data must exclude:
 - high-risk organizing logistics
 - personal contact information that was not explicitly published for the demo
 
-Trust labels such as `official`, `verified-by-national`, `self-declared`, `unverified`, and `community-submitted` use the governance vocabulary. In this local demo they are fixture labels only, not real DSA verification decisions.
+Trust labels such as `official`, `verified-by-national`, `self-declared`, `uncertain`, and `community-submitted` use the governance vocabulary. In this local demo they are fixture labels only, not real DSA verification decisions.

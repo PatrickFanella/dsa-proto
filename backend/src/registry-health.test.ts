@@ -34,6 +34,12 @@ describe('registry health', () => {
     expect(report.directoryCountsByType).toMatchObject({ chapter: 2, caucus: 2, 'member-affiliation': 3 });
   });
 
+  it('keeps the canonical fixture file valid', async () => {
+    const report = await loadRegistryHealthReport('fixtures/records.json');
+
+    expect(report.invalidRecords).toHaveLength(0);
+  });
+
   it('reports invalid records', async () => {
     const file = await writeFixture([{ uri: 'nope' }, chapterSeedRecords[0]]);
     const report = await loadRegistryHealthReport(file);
@@ -119,5 +125,46 @@ describe('registry health', () => {
     const report = await loadRegistryHealthReport(file);
 
     expect(report.invalidRecords.some((issue) => issue.reason.includes('cycle'))).toBe(true);
+  });
+
+  it('rejects out-of-scope publication boundary families and private-data-shaped payloads', async () => {
+    const file = await writeFixture([
+      {
+        uri: 'at://did:plc:vote/org.dsa.voting.ballot/self',
+        cid: 'bafy-mock-vote',
+        did: 'did:plc:vote',
+        handle: 'vote.example',
+        collection: 'org.dsa.voting.ballot',
+        indexedAt: '2026-07-01T00:00:00.000Z',
+        trustLabel: 'community-submitted',
+        record: { $type: 'org.dsa.voting.ballot', sourceUrl: 'https://example.org/public-ballot' },
+      },
+      {
+        uri: 'at://did:plc:chain/org.dsa.sourceChain.entry/self',
+        cid: 'bafy-mock-chain',
+        did: 'did:plc:chain',
+        handle: 'chain.example',
+        collection: 'org.dsa.sourceChain.entry',
+        indexedAt: '2026-07-01T00:00:00.000Z',
+        trustLabel: 'community-submitted',
+        record: { $type: 'org.dsa.sourceChain.entry', sourceUrl: 'https://example.org/public-source' },
+      },
+      {
+        uri: 'at://did:plc:safe/org.dsa.statement.public/private-shaped',
+        cid: 'bafy-mock-private',
+        did: 'did:plc:safe',
+        handle: 'safe.example',
+        collection: 'org.dsa.statement.public',
+        indexedAt: '2026-07-01T00:00:00.000Z',
+        trustLabel: 'community-submitted',
+        record: { $type: 'org.dsa.statement.public', title: 'x', summary: 'y', bodyMarkdown: 'z', issuerUri: 'at://did:plc:safe/org.dsa.profile.chapter/self', issuerName: 'Safe', publishedAt: '2026-07-01T00:00:00.000Z', topics: [], relatedEntityUris: [], status: 'published', contact: { email: 'hidden@example.org' } },
+      },
+    ]);
+
+    const report = await loadRegistryHealthReport(file);
+    expect(report.invalidRecords).toHaveLength(3);
+    expect(report.invalidRecords.map((issue) => issue.reason).join(' ')).toContain('out-of-scope collection family');
+    expect(report.invalidRecords.map((issue) => issue.reason).join(' ')).toContain('unsafe private-data-shaped field');
+    expect(report.invalidRecords.map((issue) => issue.reason).join(' ')).not.toContain('sourceUrl');
   });
 });

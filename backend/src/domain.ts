@@ -1,5 +1,38 @@
 import { z } from 'zod';
 
+const outOfScopeCollectionPattern = /(^|\.)(vote|voting|localvoting|sourcechain|provenance)(\.|$)/i;
+const privateDataKeys = new Set(['email', 'phone', 'address', 'homeAddress', 'personalEmail', 'privateNotes', 'ssn', 'dob', 'dateOfBirth']);
+
+export type PublicationBoundaryIssue = { reason: string };
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function collectUnsafePrivateDataKeys(value: unknown, path: string[] = []): string[] {
+  if (!isObject(value)) return [];
+  const issues: string[] = [];
+  for (const [key, nested] of Object.entries(value)) {
+    const nextPath = [...path, key];
+    if (privateDataKeys.has(key)) issues.push(nextPath.join('.'));
+    issues.push(...collectUnsafePrivateDataKeys(nested, nextPath));
+  }
+  return issues;
+}
+
+export function validatePublicationBoundary(raw: unknown): PublicationBoundaryIssue[] {
+  const issues: PublicationBoundaryIssue[] = [];
+  if (!isObject(raw)) return issues;
+  const collection = typeof raw.collection === 'string' ? raw.collection : undefined;
+  if (collection && outOfScopeCollectionPattern.test(collection)) {
+    issues.push({ reason: `out-of-scope collection family ${collection}` });
+  }
+  for (const path of collectUnsafePrivateDataKeys(raw)) {
+    issues.push({ reason: `unsafe private-data-shaped field at ${path}` });
+  }
+  return issues;
+}
+
 export const trustLabelSchema = z.enum([
   'official',
   'verified-by-national',

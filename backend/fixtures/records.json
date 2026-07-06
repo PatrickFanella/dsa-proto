@@ -5132,7 +5132,7 @@
     "handle": "socialistmajority.com",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Socialist Majority Caucus",
@@ -5149,7 +5149,7 @@
     "handle": "groundworkdsa.com",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Groundwork",
@@ -5166,7 +5166,7 @@
     "handle": "unitingtowin.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Uniting To Win",
@@ -5200,7 +5200,7 @@
     "handle": "dsanorthstar.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "North Star",
@@ -5217,7 +5217,7 @@
     "handle": "reformandrevolution.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Reform & Revolution",
@@ -5234,7 +5234,7 @@
     "handle": "breadandrosesdsa.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Bread & Roses",
@@ -5251,7 +5251,7 @@
     "handle": "marxistunity.com",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Marxist Unity Group",
@@ -5268,7 +5268,7 @@
     "handle": "redstarcaucus.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Red Star",
@@ -5285,7 +5285,7 @@
     "handle": "dsaemerge.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Emerge",
@@ -5302,7 +5302,7 @@
     "handle": "communistcaucus.com",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Communist Caucus",
@@ -5319,7 +5319,7 @@
     "handle": "wintercaucus.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Winter Caucus",
@@ -5336,7 +5336,7 @@
     "handle": "dsa-lsc.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Libertarian Socialist Caucus",
@@ -5353,7 +5353,7 @@
     "handle": "redlaborcaucus.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "unverified",
+    "trustLabel": "uncertain",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Red Labor",

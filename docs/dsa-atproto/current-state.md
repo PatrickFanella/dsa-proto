@@ -75,7 +75,7 @@ Verification assertion records can mark a subject as:
 
 - `verified`
 - `self-declared`
-- `unverified`
+- `uncertain`
 - `disputed`
 - `revoked`
 - `community-submitted`

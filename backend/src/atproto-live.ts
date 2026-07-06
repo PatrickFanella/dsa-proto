@@ -1,4 +1,4 @@
-import { recordEnvelopeSchema, type RecordEnvelope } from './domain.js';
+import { recordEnvelopeSchema, type RecordEnvelope, validatePublicationBoundary } from './domain.js';
 import type { DirectoryRepository } from './server.js';
 
 export const supportedAtprotoCollections = [
@@ -70,6 +70,7 @@ export async function ingestLiveAtprotoEvent(event: LiveAtprotoRecordEvent, repo
   if (!envelope) return 'ignored';
   const parsed = recordEnvelopeSchema.safeParse(envelope);
   if (!parsed.success) return 'rejected';
+  if (validatePublicationBoundary(parsed.data).length > 0) return 'rejected';
   await repository.ingestRecordEnvelopes([parsed.data]);
   return 'accepted';
 }

@@ -97,7 +97,7 @@ The app distinguishes governance trust/verification states such as:
 - `verified-by-national`
 - `verified-by-chapter`
 - `self-declared`
-- `unverified`
+- `uncertain`
 - `disputed`
 - `revoked`
 - `community-submitted`

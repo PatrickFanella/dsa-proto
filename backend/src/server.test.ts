@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, lifecycleStatusSchema, recordEnvelopeSchema, trustLabelSchema, identityContinuitySeedRecords, projectCurrentIdentity } from './domain.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
+import { replayFixtureRecords } from './fixture-replay.js';
 
 describe('getConfig', () => {
   it('parses a port from env', () => {
@@ -12,7 +13,7 @@ describe('record validation', () => {
   it('keeps lifecycle and trust label vocabularies separate', () => {
     expect(lifecycleStatusSchema.options).toEqual(expect.arrayContaining(['deprecated', 'tombstoned']));
     expect(trustLabelSchema.options).toEqual(expect.arrayContaining(['official', 'uncertain']));
-    expect(trustLabelSchema.options).not.toEqual(expect.arrayContaining(['revoked', 'disputed', 'archived', 'unverified']));
+    expect(trustLabelSchema.options).not.toEqual(expect.arrayContaining(['revoked', 'disputed', 'archived']));
   });
 
   it('accepts core fixture records', () => {
@@ -76,6 +77,46 @@ describe('API responses', () => {
 
     expect((await fetch(`http://127.0.0.1:${address.port}/api/entities`)).status).toBe(200);
     expect((await fetch(`http://127.0.0.1:${address.port}/api/activity`)).status).toBe(200);
+  });
+
+  it('keeps admin fixture ingest disabled in read-only demo mode', async () => {
+    server = createApp(createMemoryRepository(), { DEMO_READ_ONLY: true });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ records: [] }) });
+    expect(response.status).toBe(404);
+  });
+
+  it('rejects out-of-scope families during fixture replay', async () => {
+    const repository = createMemoryRepository();
+    const report = await replayFixtureRecords([
+      {
+        uri: 'at://did:plc:vote/org.dsa.localVoting.tally/self',
+        cid: 'bafy-mock-local-vote',
+        did: 'did:plc:vote',
+        handle: 'vote.example',
+        collection: 'org.dsa.localVoting.tally',
+        indexedAt: '2026-07-01T00:00:00.000Z',
+        trustLabel: 'community-submitted',
+        record: { $type: 'org.dsa.localVoting.tally', sourceUrl: 'https://example.org/public-vote' },
+      },
+      {
+        uri: 'at://did:plc:clean/org.dsa.statement.public/self',
+        cid: 'bafy-clean',
+        did: 'did:plc:clean',
+        handle: 'clean.example',
+        collection: 'org.dsa.statement.public',
+        indexedAt: '2026-07-01T00:00:00.000Z',
+        trustLabel: 'community-submitted',
+        record: { $type: 'org.dsa.statement.public', title: 'ok', summary: 'ok', bodyMarkdown: 'ok', issuerUri: 'at://did:plc:clean/org.dsa.profile.chapter/self', issuerName: 'Clean', publishedAt: '2026-07-01T00:00:00.000Z', topics: [], relatedEntityUris: [], status: 'published' },
+      },
+    ], repository);
+
+    expect(report.acceptedCount).toBe(1);
+    expect(report.rejected).toHaveLength(1);
+    expect(report.rejected[0].reason).toContain('out-of-scope collection family');
   });
 
   it('resolves authority without external source records', async () => {

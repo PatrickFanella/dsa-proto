@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { loadRawFixtureRecordsFromFile } from './fixture-files.js';
-import { isDirectoryEntityRecord, recordEnvelopeSchema, type RecordEnvelope } from './domain.js';
+import { isDirectoryEntityRecord, recordEnvelopeSchema, type RecordEnvelope, validatePublicationBoundary } from './domain.js';
 
 type HealthIssue = {
   index: number;
@@ -149,9 +149,17 @@ export async function loadRegistryHealthReport(filePath: string): Promise<Regist
   const validRecords: RecordEnvelope[] = [];
 
   for (const [index, raw] of rawRecords.entries()) {
+    const boundaryIssues = validatePublicationBoundary(raw);
+    if (boundaryIssues.length > 0) {
+      invalidRecords.push({ index, reason: boundaryIssues.map((issue) => issue.reason).join('; ') });
+      continue;
+    }
     const parsed = recordEnvelopeSchema.safeParse(raw);
-    if (parsed.success) validRecords.push(parsed.data);
-    else invalidRecords.push({ index, reason: formatIssues(parsed.error) });
+    if (!parsed.success) {
+      invalidRecords.push({ index, reason: formatIssues(parsed.error) });
+      continue;
+    }
+    validRecords.push(parsed.data);
   }
 
   const directoryRecords = validRecords
