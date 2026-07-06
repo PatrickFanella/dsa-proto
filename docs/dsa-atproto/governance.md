@@ -1,6 +1,6 @@
 # Governance
 
-The technical system only works if legitimacy, safety, and change management are explicit. AT Protocol can publish signed claims, but DSA needs governance to decide which claims are official, verified, disputed, revoked, archived, community-submitted, or merely self-declared.
+The technical system only works if legitimacy, safety, and change management are explicit. AT Protocol can publish signed claims, but DSA needs governance to decide which claims are official, verified, community-submitted, uncertain, disputed, revoked, archived, or merely self-declared.
 
 ## Core questions
 
@@ -51,7 +51,7 @@ Examples:
 - A member self-declares an affiliation.
 - An app labels a source as community-submitted or uncertain.
 
-Suggested trust labels:
+Canonical trust labels:
 
 ```text
 official
@@ -62,10 +62,9 @@ self-declared
 community-submitted
 secondary-source
 uncertain
-disputed
-revoked
-archived
 ```
+
+`disputed`, `revoked`, and `archived` are lifecycle or authority states, not trust labels.
 
 Local demo note: `org.dsa.verification.assertion` models how public verification, dispute, revocation, and self-declaration assertions could work. In production, these records need a trust root, issuer authorization checks, key custody, recovery, rotation, revocation, dispute handling, and audit policy before apps treat them as official legitimacy.
 
@@ -103,11 +102,12 @@ Statuses:
 ```text
 active
 inactive
-merged
-dissolved
+superseded
+deprecated
 disputed
 revoked
 archived
+tombstoned
 ```
 
 ## Caucus legitimacy

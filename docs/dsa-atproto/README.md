@@ -87,6 +87,7 @@ Use a hybrid architecture:
 - [authority-chain-validation.md](authority-chain-validation.md): trust root, delegation validation, key custody, revocation, and audit design
 - [lexicons.md](lexicons.md): proposed record namespaces and example schemas
 - [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
+- [../reference/foundation-read-contract-v1.md](../reference/foundation-read-contract-v1.md): frozen app-facing read contract for prototype apps
 - [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
 - [answers.md](answers.md): answered requirements interview
 - [current-state.md](current-state.md): current implementation baseline and recommended next lanes

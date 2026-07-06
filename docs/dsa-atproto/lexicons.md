@@ -17,8 +17,8 @@ Do not overload one field with every legitimacy concept. Foundation records sepa
 | Concept | Field | Allowed values | Meaning |
 | --- | --- | --- | --- |
 | Trust label | `trustLabel` | `official`, `verified-by-national`, `verified-by-chapter`, `verified-by-caucus`, `self-declared`, `community-submitted`, `secondary-source`, `uncertain` | How much institutional confidence the indexer assigns to the record publisher or claim. |
-| Lifecycle status | `status` | `active`, `inactive`, `superseded`, `revoked`, `archived`, `disputed` | Whether the record should be treated as current. |
-| Authority validity | `authorityStatus` | `valid`, `expired`, `revoked`, `disputed`, `unresolved` | Whether the issuer currently has authority for this claim. |
+| Lifecycle status | `status` | `active`, `inactive`, `superseded`, `deprecated`, `revoked`, `disputed`, `archived`, `tombstoned` | Whether the record should be treated as current. |
+| Authority validity | `authorityStatus` | `valid`, `expired`, `unresolved`, or a canonical lifecycle state when that state controls current interpretation | Whether the issuer currently has authority for this claim. |
 | Fixture authority note | `caveat` | free text | What the curated fixture set is asserting for prototype readers. |
 
 ## Foundation record families
@@ -140,10 +140,7 @@ Represents a public chapter identity.
     "country": "US"
   },
   "website": "https://socialists.nyc/",
-  "contactUrl": "https://socialists.nyc/contact",
-  "parentOrg": "did:plc:dsausa",
-  "status": "active",
-  "sources": ["at://did:plc:nycdsa/org.dsa.source.citation/example"]
+  "status": "active"
 }
 ```
 
@@ -158,8 +155,7 @@ Represents a caucus, tendency, or organized political formation.
   "scope": "national",
   "website": "https://example.org",
   "description": "Public caucus description.",
-  "verificationStatus": "verified-by-national",
-  "sources": []
+  "verificationStatus": "verified-by-national"
 }
 ```
 
