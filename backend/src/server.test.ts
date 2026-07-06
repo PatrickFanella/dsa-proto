@@ -90,4 +90,40 @@ describe('API responses', () => {
     expect(json.data.caveats[0]).toContain('fixture source of truth');
     expect(json.data.authorityRecords).toBeDefined();
   });
+
+  it('surfaces lifecycle and conflict context for disputed, revoked, archived, and superseded records', async () => {
+    server = createApp(createMemoryRepository(), { DEMO_READ_ONLY: true });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const dispute = await fetch(`http://127.0.0.1:${address.port}/api/records/resolve?uri=${encodeURIComponent(caucusSeedRecords[0].uri)}`).then((res) => res.json() as Promise<{ data: { status: string; activeDisputes: unknown[]; lifecycleState?: string } }>);
+    const revoked = await fetch(`http://127.0.0.1:${address.port}/api/records/resolve?uri=${encodeURIComponent(chapterSeedRecords[0].uri)}`).then((res) => res.json() as Promise<{ data: { status: string; activeRevocations: unknown[]; trustLabel?: string } }>);
+    const archived = await fetch(`http://127.0.0.1:${address.port}/api/records/resolve?uri=${encodeURIComponent('at://did:plc:demleft/org.dsa.profile.orgUnit/self')}`).then((res) => res.json() as Promise<{ data: { archiveMarkers: unknown[]; status: string } }>);
+    const superseded = await fetch(`http://127.0.0.1:${address.port}/api/records/resolve?uri=${encodeURIComponent(identityContinuitySeedRecords[2].uri)}`).then((res) => res.json() as Promise<{ data: { lifecycleState?: string; status: string } }>);
+
+    expect(dispute.data.status).toBe('disputed');
+    expect(dispute.data.activeDisputes.length).toBeGreaterThan(0);
+    expect(revoked.data.status).toBe('revoked');
+    expect(revoked.data.activeRevocations.length).toBeGreaterThan(0);
+    expect(archived.data.archiveMarkers.length).toBeGreaterThan(0);
+    expect(archived.data.status).toBe('archived');
+    expect(superseded.data.lifecycleState).toBe('superseded');
+    expect(superseded.data.status).toBe('superseded');
+  });
+
+  it('keeps active records valid while exposing the shared resolver contract for public records', async () => {
+    server = createApp(createMemoryRepository(), { DEMO_READ_ONLY: true });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/records/resolve?uri=${encodeURIComponent(publicStatementSeedRecords[0].uri)}`);
+    const json = await response.json() as { data: { status: string; trustLabel?: string; supportingAuthorityRecords: unknown[]; fixtureSourceOfTruthCaveat: string } };
+    expect(response.status).toBe(200);
+    expect(json.data.status).toBe('valid');
+    expect(json.data.trustLabel).toBeDefined();
+    expect(json.data.supportingAuthorityRecords).toBeDefined();
+    expect(json.data.fixtureSourceOfTruthCaveat).toContain('fixture source of truth');
+  });
 });

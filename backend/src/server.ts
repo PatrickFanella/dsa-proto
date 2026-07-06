@@ -521,10 +521,15 @@ function resolveRecordAuthorityFromRecords(uri: string, revisions: RecordEnvelop
   const sortedRevisions = revisions.filter((revision) => revision.uri === uri).sort((a, b) => a.indexedAt.localeCompare(b.indexedAt));
   const visibleRevisions = sortedRevisions.filter((revision) => !asOf || revision.indexedAt <= asOf.toISOString());
   const current = visibleRevisions.at(-1);
+  const fixtureSourceOfTruthCaveat = 'fixture source of truth; no external source chain';
   if (!current) {
-    return { uri, revisions: sortedRevisions, authorityRecords: [], status: 'unresolved', caveats: ['fixture source of truth; no external source chain'] };
+    return { uri, revisions: sortedRevisions, authorityRecords: [], supportingAuthorityRecords: [], activeDisputes: [], activeRevocations: [], archiveMarkers: [], status: 'unresolved', caveats: [fixtureSourceOfTruthCaveat], fixtureSourceOfTruthCaveat };
   }
   const authorityRecords = latestRecordsByUri(visibleRecords.filter((record) => record.uri !== uri && isAuthorityRecordForTarget(record, uri)));
+  const activeDisputes = authorityRecords.filter((record) => record.collection === 'org.dsa.authority.dispute' && authorityDisputeRecordSchema.safeParse(record.record).success && authorityDisputeRecordSchema.parse(record.record).status === 'active');
+  const activeRevocations = authorityRecords.filter((record) => record.collection === 'org.dsa.authority.revocation' && authorityRevocationRecordSchema.safeParse(record.record).success && authorityRevocationRecordSchema.parse(record.record).status === 'active');
+  const archiveMarkers = authorityRecords.filter((record) => record.collection === 'org.dsa.record.archive' && recordArchiveRecordSchema.safeParse(record.record).success && recordArchiveRecordSchema.parse(record.record).status === 'active');
+  const supportingAuthorityRecords = authorityRecords.filter((record) => !activeDisputes.includes(record) && !activeRevocations.includes(record) && !archiveMarkers.includes(record));
   const disputed = authorityRecords.some((record) => {
     const parsed = authorityDisputeRecordSchema.safeParse(record.record);
     return record.collection === 'org.dsa.authority.dispute' && parsed.success && parsed.data.subjectUri === uri && parsed.data.status === 'active';
@@ -538,8 +543,21 @@ function resolveRecordAuthorityFromRecords(uri: string, revisions: RecordEnvelop
     return record.collection === 'org.dsa.record.archive' && parsed.success && parsed.data.subjectUri === uri && parsed.data.status === 'active';
   });
   const expired = [current, ...authorityRecords].some((record) => isExpiredForTarget(record, uri, asOf));
-  const status: AuthorityResolverStatus = revoked ? 'revoked' : disputed ? 'disputed' : archived || expired ? 'expired' : 'valid';
-  return { uri, record: current, revisions: sortedRevisions, authorityRecords, status, caveats: ['fixture source of truth; no external source chain'] };
+  const rawLifecycleState = typeof (current.record as { status?: unknown }).status === 'string'
+    ? (current.record as { status: string }).status
+    : undefined;
+  const lifecycleState = rawLifecycleState === 'active'
+    || rawLifecycleState === 'inactive'
+    || rawLifecycleState === 'superseded'
+    || rawLifecycleState === 'deprecated'
+    || rawLifecycleState === 'revoked'
+    || rawLifecycleState === 'disputed'
+    || rawLifecycleState === 'archived'
+    || rawLifecycleState === 'tombstoned'
+    ? rawLifecycleState
+    : undefined;
+  const status: AuthorityResolverStatus = revoked ? 'revoked' : disputed ? 'disputed' : archived ? 'archived' : expired ? 'expired' : lifecycleState && lifecycleState !== 'active' ? lifecycleState : 'valid';
+  return { uri, record: current, revisions: sortedRevisions, authorityRecords, lifecycleState, trustLabel: current.trustLabel, supportingAuthorityRecords, activeDisputes, activeRevocations, archiveMarkers, status, caveats: [fixtureSourceOfTruthCaveat], fixtureSourceOfTruthCaveat };
 }
 
 function latestRecordsByUri(records: RecordEnvelope[]) {

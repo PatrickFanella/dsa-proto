@@ -246,14 +246,22 @@ export const recordEnvelopeSchema = z.object({
 });
 
 export type RecordEnvelope = z.infer<typeof recordEnvelopeSchema>;
-export type AuthorityResolverStatus = 'valid' | 'disputed' | 'revoked' | 'expired' | 'unresolved';
+export type LifecycleStatus = z.infer<typeof lifecycleStatusSchema>;
+export type AuthorityResolverStatus = 'valid' | 'expired' | 'unresolved' | LifecycleStatus;
 export type ResolvedRecordAuthority = {
   uri: string;
   record?: RecordEnvelope;
   revisions: RecordEnvelope[];
   authorityRecords: RecordEnvelope[];
+  lifecycleState?: LifecycleStatus;
+  trustLabel?: z.infer<typeof trustLabelSchema>;
+  supportingAuthorityRecords: RecordEnvelope[];
+  activeDisputes: RecordEnvelope[];
+  activeRevocations: RecordEnvelope[];
+  archiveMarkers: RecordEnvelope[];
   status: AuthorityResolverStatus;
   caveats: string[];
+  fixtureSourceOfTruthCaveat: string;
 };
 export type ChapterRecord = z.infer<typeof chapterRecordSchema>;
 export type CaucusRecord = z.infer<typeof caucusRecordSchema>;
@@ -707,6 +715,40 @@ export const authoritySeedRecords: RecordEnvelope[] = [
       subjectUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
       raisedByUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
       summary: 'Local prototype notes a dispute over whether the climate caucus is operating as a formal caucus or an informal organizing project.',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:nycdsa/org.dsa.authority.revocation/nyc-chapter-review',
+    cid: 'bafy-mock-authority-revocation-nyc',
+    did: 'did:plc:nycdsa',
+    handle: 'nyc.dsausa.org',
+    collection: 'org.dsa.authority.revocation',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'community-submitted',
+    record: {
+      $type: 'org.dsa.authority.revocation',
+      subjectUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      revokedByUri: 'at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self',
+      reason: 'Prototype revocation marker used to exercise resolver precedence.',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      status: 'active',
+    },
+  },
+  {
+    uri: 'at://did:plc:npc/org.dsa.record.archive/demleft-archive-marker',
+    cid: 'bafy-mock-record-archive-demleft',
+    did: 'did:plc:npc',
+    handle: 'dsausa.org',
+    collection: 'org.dsa.record.archive',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'official',
+    record: {
+      $type: 'org.dsa.record.archive',
+      subjectUri: 'at://did:plc:demleft/org.dsa.profile.orgUnit/self',
+      archivedByUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self',
+      reason: 'Prototype archive marker used to exercise resolver context.',
       createdAt: '2026-07-01T00:00:00.000Z',
       status: 'active',
     },
