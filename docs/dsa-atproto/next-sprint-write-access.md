@@ -83,6 +83,8 @@ Runtime guardrails:
 
 Enable only public event writes for a registered staging app. Event writes remain constrained to public fields, scoped host entities, `community-submitted` or weaker trust treatment, and moderation rules from the app registry.
 
+Do not enable statements, articles, endorsements, foundation identity, authority, verification, org graph, archive, dispute, revocation, or member-affiliation writes in this slice.
+
 ### 8. Staging Deploy Flags and Docs
 
 Document the safe rollout model:

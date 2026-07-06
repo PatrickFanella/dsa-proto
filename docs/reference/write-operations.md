@@ -6,3 +6,4 @@
 - Dry-run requests validate headers, scope, and optimistic concurrency without mutating public records.
 - Review-required apps create private `pending_review` operations only.
 - Publish-eligible apps append public records only after optimistic-concurrency checks pass.
+- The first app-writable family is `org.dsa.event.public`; statements, articles, endorsements, identity, authority, verification, org graph, archive, dispute, revocation, and member-affiliation families remain closed to ordinary app writes.

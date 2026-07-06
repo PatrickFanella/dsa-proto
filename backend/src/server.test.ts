@@ -284,6 +284,36 @@ describe('API responses', () => {
     expect(response.status).toBe(409);
   });
 
+  it('keeps the first writable family limited to public events', async () => {
+    const store = new InMemoryWriteOperationStore();
+    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: true, writeOperationStore: store });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-statement-blocked', 'if-none-match': '*' },
+      body: JSON.stringify({
+        record: {
+          uri: 'at://did:plc:demo/org.dsa.statement.public/not-first-family',
+          cid: 'bafy-statement-blocked',
+          did: 'did:plc:demo',
+          handle: 'demo.example',
+          collection: 'org.dsa.statement.public',
+          indexedAt: '2026-07-01T00:00:00.000Z',
+          trustLabel: 'community-submitted',
+          record: { $type: 'org.dsa.statement.public', title: 'Not first writable family', summary: 'Statements are not enabled for app writes yet.', bodyMarkdown: 'Only public events are enabled for the first write slice.', issuerUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', issuerName: 'NYC DSA', publishedAt: '2026-07-01T00:00:00.000Z', topics: [], relatedEntityUris: [], status: 'published' },
+        },
+      }),
+    });
+    const json = await response.json() as { data: { status: string; errors: string[] } };
+
+    expect(response.status).toBe(422);
+    expect(json.data.status).toBe('rejected');
+    expect(json.data.errors.join(' ')).toContain('collection org.dsa.statement.public not allowed');
+  });
+
   it('stores rejected dry-runs for invalid host scope and exposes them to the same app only', async () => {
     const repository = createMemoryRepository();
     const store = new InMemoryWriteOperationStore();
