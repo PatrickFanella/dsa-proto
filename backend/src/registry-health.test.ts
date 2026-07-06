@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { authoritySeedRecords, chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords } from './domain.js';
+import { authoritySeedRecords, chapterSeedRecords, caucusSeedRecords, governanceRelationshipSeedRecords, memberAffiliationSeedRecords, orgChartSeedRecords, verificationAssertionSeedRecords } from './domain.js';
 import { loadRegistryHealthReport } from './registry-health.js';
 
 async function writeFixture(records: unknown[]) {
@@ -13,6 +13,8 @@ async function writeFixture(records: unknown[]) {
 }
 
 describe('registry health', () => {
+  const firstGovernanceRelationship = governanceRelationshipSeedRecords[0].record as { subjectUri: string; objectUri: string };
+
   it('accepts a healthy canonical fixture set and ignores non-directory duplicate checks', async () => {
     const file = await writeFixture([...chapterSeedRecords, ...caucusSeedRecords, ...authoritySeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords]);
     const report = await loadRegistryHealthReport(file);
@@ -76,5 +78,46 @@ describe('registry health', () => {
     expect(report.duplicates.did).toHaveLength(0);
     expect(report.duplicates.handle).toHaveLength(0);
     expect(report.duplicates.name).toHaveLength(0);
+  });
+
+  it('accepts a valid governance graph', async () => {
+    const file = await writeFixture([...orgChartSeedRecords, ...governanceRelationshipSeedRecords]);
+    const report = await loadRegistryHealthReport(file);
+
+    expect(report.invalidRecords).toHaveLength(0);
+  });
+
+  it('rejects governance relationships with missing references', async () => {
+    const file = await writeFixture([
+      ...orgChartSeedRecords,
+      { ...governanceRelationshipSeedRecords[0], record: { ...governanceRelationshipSeedRecords[0].record, objectUri: 'at://did:plc:missing/org.dsa.profile.orgUnit/self' } },
+    ]);
+    const report = await loadRegistryHealthReport(file);
+
+    expect(report.invalidRecords).toHaveLength(1);
+    expect(report.invalidRecords[0].reason).toContain('unknown source/target');
+  });
+
+  it('rejects invalid governance source/target pairs', async () => {
+    const file = await writeFixture([
+      ...orgChartSeedRecords,
+      { ...governanceRelationshipSeedRecords[0], record: { ...governanceRelationshipSeedRecords[0].record, relationship: 'appoints' } },
+    ]);
+    const report = await loadRegistryHealthReport(file);
+
+    expect(report.invalidRecords).toHaveLength(1);
+    expect(report.invalidRecords[0].reason).toContain('does not allow');
+  });
+
+  it('flags hierarchy cycles but allows non-hierarchical cross-affiliations', async () => {
+    const cycleRecords = [
+      governanceRelationshipSeedRecords[0],
+      { ...governanceRelationshipSeedRecords[0], uri: 'at://did:plc:npc/org.dsa.relationship.governance/cycle-back', record: { ...governanceRelationshipSeedRecords[0].record, subjectUri: firstGovernanceRelationship.objectUri, objectUri: firstGovernanceRelationship.subjectUri } },
+      governanceRelationshipSeedRecords[2],
+    ];
+    const file = await writeFixture([...orgChartSeedRecords, ...cycleRecords]);
+    const report = await loadRegistryHealthReport(file);
+
+    expect(report.invalidRecords.some((issue) => issue.reason.includes('cycle'))).toBe(true);
   });
 });
