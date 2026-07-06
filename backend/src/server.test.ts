@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, recordEnvelopeSchema } from './domain.js';
+import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, lifecycleStatusSchema, recordEnvelopeSchema, trustLabelSchema } from './domain.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 
 describe('getConfig', () => {
@@ -9,6 +9,12 @@ describe('getConfig', () => {
 });
 
 describe('record validation', () => {
+  it('keeps lifecycle and trust label vocabularies separate', () => {
+    expect(lifecycleStatusSchema.options).toEqual(expect.arrayContaining(['deprecated', 'tombstoned']));
+    expect(trustLabelSchema.options).toEqual(expect.arrayContaining(['official', 'uncertain']));
+    expect(trustLabelSchema.options).not.toEqual(expect.arrayContaining(['revoked', 'disputed', 'archived', 'unverified']));
+  });
+
   it('accepts core fixture records', () => {
     expect(recordEnvelopeSchema.parse(chapterSeedRecords[0]).collection).toBe('org.dsa.profile.chapter');
     expect(recordEnvelopeSchema.parse(caucusSeedRecords[0]).collection).toBe('org.dsa.profile.caucus');

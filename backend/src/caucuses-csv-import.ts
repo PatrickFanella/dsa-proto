@@ -78,7 +78,7 @@ function buildCaucusEnvelope(row: CsvRow): RecordEnvelope {
     handle,
     collection: record.$type,
     indexedAt: DEFAULT_INDEXED_AT,
-    trustLabel: (row['Trust Label'] ?? '').trim() || 'unverified',
+    trustLabel: (row['Trust Label'] ?? '').trim() || 'uncertain',
     record,
   });
 }

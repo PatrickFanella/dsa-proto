@@ -9,9 +9,20 @@ export const trustLabelSchema = z.enum([
   'community-submitted',
   'secondary-source',
   'uncertain',
-  'unverified',
 ]);
-export const lifecycleStatusSchema = z.enum(['active', 'inactive', 'superseded', 'revoked', 'archived', 'disputed']);
+export const lifecycleStatusSchema = z.enum(['active', 'inactive', 'superseded', 'deprecated', 'revoked', 'disputed', 'archived', 'tombstoned']);
+export const recordWorkflowStatusSchema = z.enum(['draft', 'published', 'withdrawn', 'cancelled', 'resolved']);
+
+export function mapWorkflowStatusToLifecycle(status: z.infer<typeof recordWorkflowStatusSchema>): z.infer<typeof lifecycleStatusSchema> | undefined {
+  const mapping: Partial<Record<z.infer<typeof recordWorkflowStatusSchema>, z.infer<typeof lifecycleStatusSchema>>> = {
+    published: 'active',
+    draft: 'inactive',
+    withdrawn: 'inactive',
+    cancelled: 'archived',
+    resolved: 'inactive',
+  };
+  return mapping[status];
+}
 export const verificationAssertionSchema = z.object({
   $type: z.literal('org.dsa.verification.assertion'),
   subjectUri: z.string().startsWith('at://'),
@@ -142,7 +153,7 @@ export const memberAffiliationRecordSchema = z.object({
   organizationDid: z.string().startsWith('did:'),
   organizationHandle: z.string().min(1),
   relationship: z.literal('self-declared-member'),
-  trustTag: z.enum(['self-declared', 'unverified', 'community-submitted']),
+  trustTag: z.enum(['self-declared', 'community-submitted', 'uncertain']),
   visibility: z.literal('public'),
   publicRole: z.string().min(1).optional(),
   interests: z.array(z.string().min(1)).default([]),
@@ -250,7 +261,7 @@ export type AuthorityRevocationRecord = z.infer<typeof authorityRevocationRecord
 export type AuthorityDisputeRecord = z.infer<typeof authorityDisputeRecordSchema>;
 export type RecordArchiveRecord = z.infer<typeof recordArchiveRecordSchema>;
 
-export type VerificationStatus = 'verified' | 'self-declared' | 'unverified' | 'disputed' | 'revoked' | 'community-submitted';
+export type VerificationStatus = 'verified' | 'self-declared' | 'uncertain' | 'disputed' | 'revoked' | 'community-submitted';
 
 export type DirectoryEntity = {
   id: string;
@@ -720,7 +731,7 @@ export const memberAffiliationSeedRecords: RecordEnvelope[] = [
     handle: 'member.beta.example',
     collection: 'org.dsa.affiliation.member',
     indexedAt: '2026-07-01T00:00:00.000Z',
-    trustLabel: 'unverified',
+    trustLabel: 'uncertain',
     record: {
       $type: 'org.dsa.affiliation.member',
       displayName: 'Jordan Kim',
@@ -729,7 +740,7 @@ export const memberAffiliationSeedRecords: RecordEnvelope[] = [
       organizationDid: 'did:plc:midsa',
       organizationHandle: 'michigan.socialists.org',
       relationship: 'self-declared-member',
-      trustTag: 'unverified',
+      trustTag: 'uncertain',
       visibility: 'public',
       publicRole: 'policy study circle participant',
       interests: ['labor', 'transit'],
@@ -1050,9 +1061,8 @@ export function computeVerificationMetadata(records: RecordEnvelope[], subjectUr
       'verified-by-caucus': 'verified',
       'self-declared': 'self-declared',
       'community-submitted': 'community-submitted',
-      'secondary-source': 'unverified',
-      uncertain: 'unverified',
-      unverified: 'unverified',
+      'secondary-source': 'uncertain',
+      uncertain: 'uncertain',
     };
     const verificationStatus = verificationStatusMap[currentTrustLabel];
     return { trustLabel: currentTrustLabel, verificationStatus };

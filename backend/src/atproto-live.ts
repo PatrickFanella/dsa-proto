@@ -60,7 +60,7 @@ export function mapLiveAtprotoEventToEnvelope(event: LiveAtprotoRecordEvent, now
     handle: event.handle ?? event.did,
     collection: event.collection,
     indexedAt: event.indexedAt ?? now().toISOString(),
-    trustLabel: 'unverified',
+    trustLabel: 'uncertain',
     record: event.record,
   };
 }

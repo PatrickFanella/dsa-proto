@@ -471,7 +471,7 @@ async function ensurePrototypeSchema(pool: Pool) {
       updated_at timestamptz not null default now()
     )
   `);
-  await pool.query(`alter table directory_entities add column if not exists verification_status text not null default 'unverified'`);
+  await pool.query(`alter table directory_entities add column if not exists verification_status text not null default 'uncertain'`);
   await pool.query(`alter table directory_entities add column if not exists verified_by text`);
   await pool.query(`alter table directory_entities add column if not exists verification_reason text`);
   await pool.query('create index if not exists directory_entities_entity_type_idx on directory_entities(entity_type)');

@@ -98,6 +98,8 @@ Use these lifecycle meanings consistently:
 | `archived` | Preserved as historical record. | Keep discoverable, not current. |
 | `tombstoned` | Identity or record intentionally removed from active use while preserving a marker. | Do not reuse silently. |
 
+Record-family workflow states such as `draft`, `published`, `withdrawn`, `cancelled`, and `resolved` stay app/record-family specific. If a consumer needs a projection into foundation lifecycle, it should use an explicit mapping helper rather than treating those workflow states as canonical lifecycle values.
+
 ### Lifecycle invariants
 
 - Current projections should be derivable from immutable records.

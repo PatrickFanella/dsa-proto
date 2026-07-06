@@ -6,7 +6,7 @@ describe('caucus CSV import', () => {
   it('parses quoted CSV rows, normalizes websites, and excludes extra columns', () => {
     const csv = [
       'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label,Source,Notes',
-      '"North Star Caucus","North Star","Organizational strategy","northstar.example.org,https://backup.example.org",active,,did:plc:dsa-caucus-north-star,unverified,article,public',
+      '"North Star Caucus","North Star","Organizational strategy","northstar.example.org,https://backup.example.org",active,,did:plc:dsa-caucus-north-star,uncertain,article,public',
       '"Mass","Mass","Political education",,active,dsa_mass,,community-submitted,article,commentary'
     ].join('\n');
 
@@ -31,13 +31,13 @@ describe('caucus CSV import', () => {
   });
 
   it('builds deterministic caucus envelopes with neutral fields', () => {
-    const csv = 'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label\nBread & Roses,B&R,Chapter organizing and labor strategy,https://breadandrosesdsa.org/,active,breadrosesDSA,did:plc:dsa-caucus-bread-and-roses,unverified';
+    const csv = 'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label\nBread & Roses,B&R,Chapter organizing and labor strategy,https://breadandrosesdsa.org/,active,breadrosesDSA,did:plc:dsa-caucus-bread-and-roses,uncertain';
     const { records } = importCaucusFixturesFromCsvText(csv, []);
 
     expect(records[0]).toMatchObject({
       uri: 'at://did:plc:dsa-caucus-bread-and-roses/org.dsa.profile.caucus/self',
       cid: 'bafy-dsa-caucus-bread-roses',
-      trustLabel: 'unverified',
+      trustLabel: 'uncertain',
       record: { $type: 'org.dsa.profile.caucus', name: 'Bread & Roses', shortName: 'B&R', focusArea: 'Chapter organizing and labor strategy' },
     });
   });
