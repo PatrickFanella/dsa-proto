@@ -65,6 +65,8 @@ Add a dedicated `/api/write/records` gateway behind fail-closed flags and protot
 
 Dry-run returns stable machine-readable validation and operation data without mutating public records.
 
+Gate it behind `ENABLE_WRITE_GATEWAY=false` by default, and keep it disabled whenever `DEMO_READ_ONLY=true`.
+
 ### 6. Append-Only Writes + Idempotency
 
 Enable persistent write operations with mandatory idempotency keys and optimistic concurrency. Accepted writes append immutable revisions and only update public current projections when the operation is allowed to publish. Same idempotency key plus same request returns the same operation; same key plus a different request returns conflict.

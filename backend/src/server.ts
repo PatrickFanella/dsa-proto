@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { allSeedRecords, authorityDisputeRecordSchema, authorityRevocationRecordSchema, recordArchiveRecordSchema, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type AuthorityResolverStatus, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type ResolvedRecordAuthority } from './domain.js';
 import { loadFixtureFile, type FixtureDatasetMetadata } from './fixture-files.js';
 import { replayFixtureRecords } from './fixture-replay.js';
+import { authenticateAppFromToken, validateRecordEnvelopeAgainstAppScope } from './app-registry.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
+import { InMemoryWriteOperationStore, writeOperationSchema, type WriteOperation } from './write-operations.js';
 
 const envFlagSchema = z.preprocess((value) => {
   if (typeof value === 'boolean') return value;
@@ -21,6 +23,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('*'),
   DEMO_READ_ONLY: envFlagSchema.default(false),
   ENABLE_ADMIN_INGEST: envFlagSchema.default(true),
+  ENABLE_WRITE_GATEWAY: envFlagSchema.default(false),
   AUTO_REPLAY_FIXTURES: envFlagSchema.default(true),
   REQUIRE_POSTGRES: envFlagSchema.default(false),
 });
@@ -68,12 +71,37 @@ function applyCors(req: IncomingMessage, res: ServerResponse<IncomingMessage>, c
     res.setHeader('access-control-allow-origin', corsOrigin);
     res.setHeader('vary', 'Origin');
   }
-  res.setHeader('access-control-allow-headers', 'content-type');
+  res.setHeader('access-control-allow-headers', 'content-type, authorization, x-dsa-app-token, idempotency-key, if-match, if-none-match');
   res.setHeader('access-control-allow-methods', allowedMethods);
 }
 
 function routeDisabled() {
   return { error: 'not_found' };
+}
+
+function getRequestHeader(req: IncomingMessage, name: string) {
+  const value = req.headers[name.toLowerCase() as keyof IncomingMessage['headers']];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getAppToken(req: IncomingMessage) {
+  const authorization = getRequestHeader(req, 'authorization');
+  if (authorization?.startsWith('Bearer ')) return authorization.slice('Bearer '.length).trim();
+  const token = getRequestHeader(req, 'x-dsa-app-token');
+  return typeof token === 'string' ? token.trim() : undefined;
+}
+
+function validateWriteHeaders(req: IncomingMessage) {
+  const idempotencyKey = getRequestHeader(req, 'idempotency-key');
+  if (!idempotencyKey) return ['missing Idempotency-Key'];
+  const ifNoneMatch = getRequestHeader(req, 'if-none-match');
+  const ifMatch = getRequestHeader(req, 'if-match');
+  if (ifNoneMatch === '*' || (typeof ifMatch === 'string' && ifMatch.trim().length > 0)) return [];
+  return ['missing optimistic concurrency header: use If-None-Match: * or If-Match: <cid>'];
+}
+
+function normalizeWriteOperation(operation: WriteOperation) {
+  return writeOperationSchema.parse(operation);
 }
 
 async function readJsonBody(req: IncomingMessage) {
@@ -594,10 +622,12 @@ function getSubjectUri(record: RecordEnvelope) {
   return undefined;
 }
 
-export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST'>> = {}) {
+export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST' | 'ENABLE_WRITE_GATEWAY'>> & { writeOperationStore?: InMemoryWriteOperationStore } = {}) {
   const corsOrigin = options.CORS_ORIGIN ?? '*';
   const demoReadOnly = options.DEMO_READ_ONLY ?? false;
   const enableAdminIngest = !demoReadOnly && (options.ENABLE_ADMIN_INGEST ?? true);
+  const enableWriteGateway = !demoReadOnly && (options.ENABLE_WRITE_GATEWAY ?? false);
+  const writeOperationStore = options.writeOperationStore ?? new InMemoryWriteOperationStore();
   const allowedMethods = demoReadOnly ? 'GET, OPTIONS' : 'GET, POST, OPTIONS';
   return createServer(async (req, res) => {
     applyCors(req, res, corsOrigin, allowedMethods);
@@ -627,6 +657,44 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
       if (!Array.isArray(records)) return toJson(res, 400, { error: 'invalid_request_body', expected: '{ records: unknown[] }' });
       const report = await replayFixtureRecords(records, repository);
       return toJson(res, 200, { prototype: true, acceptedCount: report.acceptedCount, ingestedCount: report.ingestedCount, rejected: report.rejected });
+    }
+    if (req.method === 'POST' && req.url === '/api/write/records') {
+      if (!enableWriteGateway) return toJson(res, 404, routeDisabled());
+      const appToken = getAppToken(req);
+      if (!appToken) return toJson(res, 401, { error: 'unauthorized' });
+      const auth = authenticateAppFromToken(appToken);
+      if (!auth) return toJson(res, 401, { error: 'unauthorized' });
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
+      if (!body || typeof body !== 'object' || (body as { dryRun?: unknown }).dryRun !== true) {
+        const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash: 'invalid-dry-run', status: 'rejected', reason: 'dry-run only', errors: ['dryRun must be true'], resolverSummary: 'dry-run validation rejected before record processing' });
+        return toJson(res, 422, { prototype: true, data: normalizeWriteOperation(op) });
+      }
+      const record = (body as { record?: unknown }).record;
+      const requestErrors = validateWriteHeaders(req);
+      const recordParse = recordEnvelopeSchema.safeParse(record);
+      const envelope = recordParse.success ? recordParse.data : undefined;
+      if (!envelope) requestErrors.push('invalid record envelope');
+      if (envelope) requestErrors.push(...validateRecordEnvelopeAgainstAppScope(envelope, auth.app).map((issue) => issue.reason));
+      if (envelope?.collection === 'org.dsa.event.public') {
+        const eventRecord = envelope.record as PublicEventRecord;
+        const hostEntity = await repository.getEntity(eventRecord.hostEntityUri);
+        if (!hostEntity) requestErrors.push(`host entity not found: ${eventRecord.hostEntityUri}`);
+      }
+      const resolverSummary = envelope ? `resolver: ${JSON.stringify(await repository.resolveRecordAuthority(envelope.uri)).slice(0, 512)}` : 'resolver unavailable';
+      const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash: `sha256:${envelope?.uri ?? 'invalid'}`, targetUri: envelope?.uri, collection: envelope?.collection, status: requestErrors.length ? 'rejected' : 'dry_run', reason: requestErrors.length ? 'validation failed' : 'dry-run accepted', errors: requestErrors, record: envelope, resolverSummary, idempotencyKey: getRequestHeader(req, 'idempotency-key') ?? undefined, idempotencyScope: envelope?.collection });
+      return toJson(res, requestErrors.length ? 422 : 200, { prototype: true, data: normalizeWriteOperation(op) });
+    }
+    if (req.method === 'GET' && req.url?.startsWith('/api/write/operations/')) {
+      if (!enableWriteGateway) return toJson(res, 404, routeDisabled());
+      const appToken = getAppToken(req);
+      if (!appToken) return toJson(res, 401, { error: 'unauthorized' });
+      const auth = authenticateAppFromToken(appToken);
+      if (!auth) return toJson(res, 401, { error: 'unauthorized' });
+      const operationId = decodeURIComponent(req.url.slice('/api/write/operations/'.length));
+      const operation = writeOperationStore.getOperation(operationId);
+      if (!operation || operation.appId !== auth.app.appId) return toJson(res, 404, { error: 'not_found' });
+      return toJson(res, 200, { prototype: true, data: normalizeWriteOperation(operation) });
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities')) {
       const url = new URL(req.url, 'http://localhost');
