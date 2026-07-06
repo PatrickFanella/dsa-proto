@@ -29,6 +29,7 @@ Turn the foundation contract from documentation into enforceable prototype behav
 **Acceptance criteria:**
 
 - A contract gap checklist exists in docs or as issues.
+- The gap checklist lives in [foundation-contract-gap-map.md](foundation-contract-gap-map.md) and stays aligned with this sprint.
 - Each gap maps to one of: schema, fixture, resolver, UI, test, or docs.
 - No gap requires voting, private data, or external source-chain records.
 

@@ -83,6 +83,7 @@ Use a hybrid architecture:
 - [architecture.md](architecture.md): system architecture and infrastructure layers
 - [foundation-layer.md](foundation-layer.md): identity, authority, fixture source-of-truth, publication matrix, and app-boundary baseline
 - [foundation-contracts.md](foundation-contracts.md): foundation-layer contracts and invariants every app should build against
+- [foundation-contract-gap-map.md](foundation-contract-gap-map.md): current implementation gaps against the foundation contracts
 - [authority-chain-validation.md](authority-chain-validation.md): trust root, delegation validation, key custody, revocation, and audit design
 - [lexicons.md](lexicons.md): proposed record namespaces and example schemas
 - [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
