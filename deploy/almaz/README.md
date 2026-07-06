@@ -18,10 +18,12 @@ This is repo-side deploy scaffolding only. Do not edit live Almaz Caddy, restart
 - API runs in fail-closed demo mode:
   - `DEMO_READ_ONLY=true`
   - `ENABLE_ADMIN_INGEST=false`
+  - `ENABLE_WRITE_GATEWAY=false`
+  - `ENABLE_WRITE_PUBLISH=false`
   - `AUTO_REPLAY_FIXTURES=false`
   - `REQUIRE_POSTGRES=true`
   - CORS allowlist comes from `CORS_ORIGIN`
-  - local admin routes return 404
+  - local admin and write routes return 404
 
 ## First-time setup
 
@@ -69,6 +71,7 @@ This is repo-side deploy scaffolding only. Do not edit live Almaz Caddy, restart
    - `/health`, `/ready`, and read-only GETs return `200`.
    - `/ready` reports a non-zero `entityCount`.
    - `/api/admin/fixtures/ingest` returns `404`.
+   - `/api/write/records` returns `404`.
    - web returns `200` and serves the React SPA shell. The automated web test verifies the read-only demo banner.
 
 ## Manual backup / restore / monitoring
@@ -105,6 +108,7 @@ All scripts read the existing compose env file, avoid printing secret values, an
 
 - Remove or comment the demo site block from Caddy and reload.
 - Remove/disable the Cloudflare DNS record.
+- If testing a private staging write lane, disable write flags first: `ENABLE_WRITE_GATEWAY=false` and `ENABLE_WRITE_PUBLISH=false`.
 - Stop the stack:
 
   ```bash

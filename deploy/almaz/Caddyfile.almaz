@@ -9,7 +9,7 @@ http://dsaslate.us {
 http://{$DSA_PROTO_DEMO_HOST:demo.dsaslate.us} {
   encode zstd gzip
 
-  @blocked path /api/admin*
+  @blocked path /api/admin* /api/write*
   respond @blocked 404
 
   @api path /api* /health /ready

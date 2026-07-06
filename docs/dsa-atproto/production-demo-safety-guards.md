@@ -52,6 +52,8 @@ Rules:
 | `GET /api/activity` | public civic activity | enabled | read-only |
 | `GET /api/registry/health` | fixture registry summary | enabled or restricted | no private data; verify file-path leakage is safe |
 | `POST /api/admin/fixtures/ingest` | local fixture publisher | disabled | 404 |
+| `POST /api/write/records` | private staging write gateway | disabled | 404 |
+| `GET /api/write/operations/:id` | private staging write operation lookup | disabled | 404 |
 
 ## UI guard matrix
 
@@ -70,6 +72,7 @@ Implemented in the Almaz demo stack:
 - [x] Config parser fields exist for local admin, fixture replay, memory fallback, and live ingestion.
 - [x] Local admin defaults to disabled in the Almaz demo.
 - [x] `POST /api/admin/fixtures/ingest` is gated off in demo mode.
+- [x] `/api/write/*` is gated off in demo mode and blocked by the Almaz Caddy snippet.
 - [x] Tests prove demo mode blocks these routes.
 - [x] Demo mode still supports local development when enabled there.
 - [x] In-memory fallback is not used in the demo deployment.
@@ -116,4 +119,5 @@ curl -fsS "$BASE_URL/api/activity" >/dev/null
 
 # Local mutation routes are blocked
 curl -i -X POST "$BASE_URL/api/admin/fixtures/ingest" | grep -E "403|404"
+curl -i -X POST "$BASE_URL/api/write/records" | grep -E "403|404"
 ```

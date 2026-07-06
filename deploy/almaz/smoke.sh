@@ -62,6 +62,7 @@ expect_status GET "$api_local/health" 200
 expect_ready_with_entities "$api_local/ready"
 expect_json_nonempty_entities "$api_local/api/entities"
 expect_status POST "$api_local/api/admin/fixtures/ingest" 404
+expect_status POST "$api_local/api/write/records" 404
 expect_spa_shell "$web_local/"
 
 if [ "${CHECK_PUBLIC_URL:-false}" = "true" ]; then
@@ -69,6 +70,7 @@ if [ "${CHECK_PUBLIC_URL:-false}" = "true" ]; then
   expect_ready_with_entities "$public_base/ready"
   expect_json_nonempty_entities "$public_base/api/entities"
   expect_status POST "$public_base/api/admin/fixtures/ingest" 404
+  expect_status POST "$public_base/api/write/records" 404
   expect_spa_shell "$public_base/"
 fi
 

@@ -91,6 +91,7 @@ Document the safe rollout model:
 
 - Almaz stays read-only;
 - writable mode requires explicit env flags;
+- public Almaz keeps `ENABLE_WRITE_GATEWAY=false` and `ENABLE_WRITE_PUBLISH=false`;
 - app tokens stay out of git;
 - staging deploys must run smoke tests;
 - rollback is disabling write flags before touching data.
