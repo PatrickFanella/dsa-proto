@@ -209,6 +209,18 @@ export const authorityDisputeRecordSchema = z.object({
   status: z.enum(['active', 'resolved', 'archived']),
 });
 
+export const identityContinuityRecordSchema = z.object({
+  $type: z.literal('org.dsa.identity.continuity'),
+  stableId: z.string().min(1),
+  subjectUri: z.string().startsWith('at://'),
+  displayName: z.string().min(1),
+  handle: z.string().min(1),
+  status: z.enum(['active', 'superseded', 'archived', 'tombstoned']),
+  successorUri: z.string().startsWith('at://').optional(),
+  supersedesUri: z.string().startsWith('at://').optional(),
+  archivedByUri: z.string().startsWith('at://').optional(),
+});
+
 export const recordArchiveRecordSchema = z.object({
   $type: z.literal('org.dsa.record.archive'),
   subjectUri: z.string().startsWith('at://'),
@@ -223,10 +235,10 @@ export const recordEnvelopeSchema = z.object({
   cid: z.string().min(1),
   did: z.string().startsWith('did:'),
   handle: z.string().min(1),
-  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article'), z.literal('org.dsa.endorsement.public'), z.literal('org.dsa.event.public'), z.literal('org.dsa.authority.delegation'), z.literal('org.dsa.authority.mandate'), z.literal('org.dsa.authority.charter'), z.literal('org.dsa.authority.revocation'), z.literal('org.dsa.authority.dispute'), z.literal('org.dsa.record.archive')]),
+  collection: z.union([z.literal('org.dsa.profile.chapter'), z.literal('org.dsa.profile.caucus'), z.literal('org.dsa.profile.orgUnit'), z.literal('org.dsa.relationship.governance'), z.literal('org.dsa.affiliation.member'), z.literal('org.dsa.verification.assertion'), z.literal('org.dsa.statement.public'), z.literal('org.dsa.publication.profile'), z.literal('org.dsa.publication.article'), z.literal('org.dsa.endorsement.public'), z.literal('org.dsa.event.public'), z.literal('org.dsa.authority.delegation'), z.literal('org.dsa.authority.mandate'), z.literal('org.dsa.authority.charter'), z.literal('org.dsa.authority.revocation'), z.literal('org.dsa.authority.dispute'), z.literal('org.dsa.record.archive'), z.literal('org.dsa.identity.continuity')]),
   indexedAt: z.string().datetime(),
   trustLabel: trustLabelSchema,
-  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema, endorsementPublicRecordSchema, publicEventRecordSchema, authorityDelegationRecordSchema, authorityMandateRecordSchema, authorityCharterRecordSchema, authorityRevocationRecordSchema, authorityDisputeRecordSchema, recordArchiveRecordSchema]),
+  record: z.union([chapterRecordSchema, caucusRecordSchema, orgUnitRecordSchema, governanceRelationshipRecordSchema, memberAffiliationRecordSchema, verificationAssertionSchema, publicStatementRecordSchema, publicationProfileRecordSchema, publicationArticleRecordSchema, endorsementPublicRecordSchema, publicEventRecordSchema, authorityDelegationRecordSchema, authorityMandateRecordSchema, authorityCharterRecordSchema, authorityRevocationRecordSchema, authorityDisputeRecordSchema, recordArchiveRecordSchema, identityContinuityRecordSchema]),
 }).superRefine((value, ctx) => {
   if (value.collection !== value.record.$type) {
     ctx.addIssue({ code: 'custom', message: 'collection must match record $type', path: ['collection'] });
@@ -260,6 +272,7 @@ export type AuthorityCharterRecord = z.infer<typeof authorityCharterRecordSchema
 export type AuthorityRevocationRecord = z.infer<typeof authorityRevocationRecordSchema>;
 export type AuthorityDisputeRecord = z.infer<typeof authorityDisputeRecordSchema>;
 export type RecordArchiveRecord = z.infer<typeof recordArchiveRecordSchema>;
+export type IdentityContinuityRecord = z.infer<typeof identityContinuityRecordSchema>;
 
 export type VerificationStatus = 'verified' | 'self-declared' | 'uncertain' | 'disputed' | 'revoked' | 'community-submitted';
 
@@ -1039,7 +1052,83 @@ export const publicEventSeedRecords: RecordEnvelope[] = [
   },
 ];
 
-export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...authoritySeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords];
+export const identityContinuitySeedRecords: RecordEnvelope[] = [
+  {
+    uri: 'at://did:plc:climatecaucus/org.dsa.identity.continuity/rename-marker',
+    cid: 'bafy-mock-identity-rename',
+    did: 'did:plc:climatecaucus',
+    handle: 'climate.dsausa.org',
+    collection: 'org.dsa.identity.continuity',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'community-submitted',
+    record: {
+      $type: 'org.dsa.identity.continuity',
+      stableId: 'caucus:climate-justice',
+      subjectUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self',
+      displayName: 'DSA Climate Caucus',
+      handle: 'climate.dsausa.org',
+      status: 'active',
+      supersedesUri: 'at://did:plc:climateproject/org.dsa.profile.caucus/self',
+    },
+  },
+  {
+    uri: 'at://did:plc:metrodsa/org.dsa.profile.orgUnit/self',
+    cid: 'bafy-mock-orgunit-archived-metrodsa',
+    did: 'did:plc:metrodsa',
+    handle: 'metrodsa.example',
+    collection: 'org.dsa.profile.orgUnit',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'self-declared',
+    record: {
+      $type: 'org.dsa.profile.orgUnit',
+      name: 'Metro DSA',
+      shortName: 'Metro DSA',
+      kind: 'chapter-network',
+      description: 'Archived dissolved unit preserved for historical lookup.',
+      website: 'https://example.org/metro-dsa',
+      status: 'inactive',
+    },
+  },
+  {
+    uri: 'at://did:plc:metrodsa/org.dsa.identity.continuity/supersession',
+    cid: 'bafy-mock-identity-supersession',
+    did: 'did:plc:metrodsa',
+    handle: 'metrodsa.example',
+    collection: 'org.dsa.identity.continuity',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'self-declared',
+    record: {
+      $type: 'org.dsa.identity.continuity',
+      stableId: 'org-unit:metro-dsa',
+      subjectUri: 'at://did:plc:metrodsa/org.dsa.profile.orgUnit/self',
+      displayName: 'Metro DSA',
+      handle: 'metrodsa.example',
+      status: 'superseded',
+      successorUri: 'at://did:plc:metrodsa-east/org.dsa.profile.orgUnit/self',
+      supersedesUri: 'at://did:plc:metrodsa/org.dsa.profile.orgUnit/self',
+    },
+  },
+  {
+    uri: 'at://did:plc:metrodsa-east/org.dsa.identity.continuity/tombstone',
+    cid: 'bafy-mock-identity-tombstone',
+    did: 'did:plc:metrodsa-east',
+    handle: 'metrodsa-east.example',
+    collection: 'org.dsa.identity.continuity',
+    indexedAt: '2026-07-01T00:00:00.000Z',
+    trustLabel: 'official',
+    record: {
+      $type: 'org.dsa.identity.continuity',
+      stableId: 'org-unit:metro-dsa-east',
+      subjectUri: 'at://did:plc:metrodsa-east/org.dsa.profile.orgUnit/self',
+      displayName: 'Metro DSA East',
+      handle: 'metrodsa-east.example',
+      status: 'tombstoned',
+      archivedByUri: 'at://did:plc:metrodsa/org.dsa.profile.orgUnit/self',
+    },
+  },
+];
+
+export const allSeedRecords: RecordEnvelope[] = [...chapterSeedRecords, ...caucusSeedRecords, ...orgChartSeedRecords, ...governanceRelationshipSeedRecords, ...authoritySeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords, ...publicStatementSeedRecords, ...publicationSeedRecords, ...endorsementSeedRecords, ...publicEventSeedRecords, ...identityContinuitySeedRecords];
 
 export type DirectoryRecordEnvelope = RecordEnvelope & { collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member' };
 
@@ -1175,4 +1264,25 @@ export function matchesDirectoryEntity(entity: DirectoryEntity, filters: Directo
   if (jurisdictionTypeFilter && entity.jurisdictionType?.toLowerCase() !== jurisdictionTypeFilter) return false;
   if (!normalizedSearch) return true;
   return entity.searchText.includes(normalizedSearch);
+}
+
+export function projectCurrentIdentity(records: RecordEnvelope[], stableId: string) {
+  const history = records
+    .filter((record): record is RecordEnvelope & { record: IdentityContinuityRecord } => record.collection === 'org.dsa.identity.continuity' && identityContinuityRecordSchema.safeParse(record.record).success)
+    .filter((record) => record.record.stableId === stableId)
+    .sort((a, b) => a.indexedAt.localeCompare(b.indexedAt));
+  const current = history.at(-1);
+  if (!current) return undefined;
+  return {
+    stableId,
+    subjectUri: current.record.subjectUri,
+    displayName: current.record.displayName,
+    handle: current.record.handle,
+    recordUri: current.uri,
+    status: current.record.status,
+    successorUri: current.record.successorUri,
+    supersedesUri: current.record.supersedesUri,
+    archivedByUri: current.record.archivedByUri,
+    history,
+  };
 }

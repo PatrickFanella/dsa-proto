@@ -5506,5 +5506,78 @@
       "createdAt": "2026-07-01T00:00:00.000Z",
       "status": "active"
     }
+  },
+  {
+    "uri": "at://did:plc:climatecaucus/org.dsa.identity.continuity/rename-marker",
+    "cid": "bafy-mock-identity-rename",
+    "did": "did:plc:climatecaucus",
+    "handle": "climate.dsausa.org",
+    "collection": "org.dsa.identity.continuity",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "community-submitted",
+    "record": {
+      "$type": "org.dsa.identity.continuity",
+      "stableId": "caucus:climate-justice",
+      "subjectUri": "at://did:plc:climatecaucus/org.dsa.profile.caucus/self",
+      "displayName": "DSA Climate Caucus",
+      "handle": "climate.dsausa.org",
+      "status": "active",
+      "supersedesUri": "at://did:plc:climateproject/org.dsa.profile.caucus/self"
+    }
+  },
+  {
+    "uri": "at://did:plc:metrodsa/org.dsa.profile.orgUnit/self",
+    "cid": "bafy-mock-orgunit-archived-metrodsa",
+    "did": "did:plc:metrodsa",
+    "handle": "metrodsa.example",
+    "collection": "org.dsa.profile.orgUnit",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.profile.orgUnit",
+      "name": "Metro DSA",
+      "shortName": "Metro DSA",
+      "kind": "chapter-network",
+      "description": "Archived dissolved unit preserved for historical lookup.",
+      "website": "https://example.org/metro-dsa",
+      "status": "inactive"
+    }
+  },
+  {
+    "uri": "at://did:plc:metrodsa/org.dsa.identity.continuity/supersession",
+    "cid": "bafy-mock-identity-supersession",
+    "did": "did:plc:metrodsa",
+    "handle": "metrodsa.example",
+    "collection": "org.dsa.identity.continuity",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "self-declared",
+    "record": {
+      "$type": "org.dsa.identity.continuity",
+      "stableId": "org-unit:metro-dsa",
+      "subjectUri": "at://did:plc:metrodsa/org.dsa.profile.orgUnit/self",
+      "displayName": "Metro DSA",
+      "handle": "metrodsa.example",
+      "status": "superseded",
+      "successorUri": "at://did:plc:metrodsa-east/org.dsa.profile.orgUnit/self",
+      "supersedesUri": "at://did:plc:metrodsa/org.dsa.profile.orgUnit/self"
+    }
+  },
+  {
+    "uri": "at://did:plc:metrodsa-east/org.dsa.identity.continuity/tombstone",
+    "cid": "bafy-mock-identity-tombstone",
+    "did": "did:plc:metrodsa-east",
+    "handle": "metrodsa-east.example",
+    "collection": "org.dsa.identity.continuity",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.identity.continuity",
+      "stableId": "org-unit:metro-dsa-east",
+      "subjectUri": "at://did:plc:metrodsa-east/org.dsa.profile.orgUnit/self",
+      "displayName": "Metro DSA East",
+      "handle": "metrodsa-east.example",
+      "status": "tombstoned",
+      "archivedByUri": "at://did:plc:metrodsa/org.dsa.profile.orgUnit/self"
+    }
   }
 ]

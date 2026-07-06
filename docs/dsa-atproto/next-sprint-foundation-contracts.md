@@ -61,7 +61,11 @@ Turn the foundation contract from documentation into enforceable prototype behav
   - dissolved or archived unit;
   - successor relationship;
   - tombstoned identity marker.
-- Define how stable identifiers, handles, display names, and record URIs behave across those cases.
+- Define how stable identifiers, handles, display names, and record URIs behave across those cases:
+  - stable identifiers stay fixed for the conceptual entity;
+  - handles and display names may change and are treated as mutable display fields;
+  - record URIs identify the specific continuity marker / revision, not the identity itself;
+  - superseded, archived, and tombstoned records remain discoverable but must not replace the current identity silently.
 - Add tests for resolver/current-projection behavior around those fixtures.
 
 **Acceptance criteria:**

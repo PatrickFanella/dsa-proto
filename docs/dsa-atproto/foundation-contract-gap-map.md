@@ -34,7 +34,7 @@ Gaps:
 
 - No representative fixtures for rename, successor, dissolution, archive, supersession, or tombstone cases.
 - Apps cannot yet follow identity continuity without special-case local logic.
-- Handles and display names are not yet tested as mutable display fields rather than identity anchors.
+- Handles and display names are not yet consistently tested as mutable display fields rather than identity anchors.
 
 Follow-up slice: **Slice 3: Identity continuity fixtures**.
 

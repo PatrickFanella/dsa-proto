@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, lifecycleStatusSchema, recordEnvelopeSchema, trustLabelSchema } from './domain.js';
+import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, lifecycleStatusSchema, recordEnvelopeSchema, trustLabelSchema, identityContinuitySeedRecords, projectCurrentIdentity } from './domain.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 
 describe('getConfig', () => {
@@ -26,6 +26,7 @@ describe('record validation', () => {
     expect(recordEnvelopeSchema.parse(publicEventSeedRecords[0]).collection).toBe('org.dsa.event.public');
     expect(recordEnvelopeSchema.parse(orgChartSeedRecords[0]).collection).toBe('org.dsa.profile.orgUnit');
     expect(recordEnvelopeSchema.parse(governanceRelationshipSeedRecords[0]).collection).toBe('org.dsa.relationship.governance');
+    expect(recordEnvelopeSchema.parse(identityContinuitySeedRecords[0]).collection).toBe('org.dsa.identity.continuity');
   });
 
   it('accepts authority records without source URIs', () => {
@@ -48,6 +49,18 @@ describe('record validation', () => {
         status: 'active',
       },
     })).toMatchObject({ collection: 'org.dsa.authority.delegation' });
+  });
+
+  it('projects identity continuity without replacing the stable identity', () => {
+    const rename = projectCurrentIdentity(identityContinuitySeedRecords, 'caucus:climate-justice');
+    const superseded = projectCurrentIdentity(identityContinuitySeedRecords, 'org-unit:metro-dsa');
+    const tombstoned = projectCurrentIdentity(identityContinuitySeedRecords, 'org-unit:metro-dsa-east');
+
+    expect(rename).toMatchObject({ stableId: 'caucus:climate-justice', displayName: 'DSA Climate Caucus', handle: 'climate.dsausa.org', status: 'active' });
+    expect(rename?.recordUri).toBe('at://did:plc:climatecaucus/org.dsa.identity.continuity/rename-marker');
+    expect(superseded).toMatchObject({ stableId: 'org-unit:metro-dsa', displayName: 'Metro DSA', handle: 'metrodsa.example', status: 'superseded', successorUri: 'at://did:plc:metrodsa-east/org.dsa.profile.orgUnit/self' });
+    expect(tombstoned).toMatchObject({ stableId: 'org-unit:metro-dsa-east', displayName: 'Metro DSA East', handle: 'metrodsa-east.example', status: 'tombstoned', archivedByUri: 'at://did:plc:metrodsa/org.dsa.profile.orgUnit/self' });
+    expect(rename?.subjectUri).not.toBe(rename?.recordUri);
   });
 });
 
