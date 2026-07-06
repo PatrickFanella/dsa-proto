@@ -24,7 +24,7 @@ Delivered:
 - Denormalized `directory_entities` read model.
 - Chapter, caucus, and opt-in member-affiliation records.
 - Search, type filters, state filters, and chapter-kind filters.
-- Entity detail/provenance panel.
+- Entity authority/status detail panel.
 - Local fixture replay with rejected-record reporting.
 - Chapter CSV import from `docs/dsa-chapters.csv`.
 - Caucus CSV import from `docs/dsa-caucuses.csv`.
@@ -32,7 +32,7 @@ Delivered:
 
 Remaining hardening:
 
-- Better source/provenance metadata for imported records.
+- Better fixture caveat metadata for imported records.
 - Demo reset and seed-state clarity.
 - UI polish for large directories.
 
@@ -95,25 +95,27 @@ Remaining hardening:
 - Better relationship vocabulary.
 - Clear distinction between chart summaries and bylaws-level governance.
 
-## Phase 4: Source and provenance model
+## Phase 4: Fixture authority/status model
 
 Status: recommended next lane.
 
-Goal: make imported and derived records explain where they came from.
+Goal: make imported and derived records explicit about fixture authorship, status, and caveats.
+
+The next sprint should harden this phase through the app-facing contracts in [foundation-contracts.md](foundation-contracts.md). See [next-sprint-foundation-contracts.md](next-sprint-foundation-contracts.md) for the concrete sprint plan.
 
 Candidate work:
 
-- Add source/citation fields or a separate source record type.
-- Attach source metadata to CSV-imported chapter/caucus records.
-- Attach source metadata to org-chart units and relationships.
-- Display source/caveat metadata in the directory and org-chart UI.
+- Add fixture caveat fields where needed.
+- Attach authoring caveats to CSV-imported chapter/caucus records.
+- Attach authoring caveats to org-chart units and relationships.
+- Display fixture caveat metadata in the directory and org-chart UI.
 - Document what is official, curated, user-authored, mock, or opinion-derived.
 
 Exit criteria:
 
-- Every non-hand-authored dataset has a visible source and caveat.
+- Every non-hand-authored dataset has a visible fixture caveat.
 - UI can distinguish imported public data from mock/demo data.
-- Replaying fixtures preserves provenance.
+- Replaying fixtures preserves authority/status caveats.
 
 ## Phase 5: Expanded civic records
 

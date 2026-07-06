@@ -1,9 +1,14 @@
 import { renderToString } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
-import App from './App';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import App, { fetchResolvedAuthority, type ResolvedRecordAuthority } from './App';
 import { buildChapterFixtureEnvelope, buildVerificationFixtureEnvelope, createDefaultChapterDraft, createDefaultVerificationDraft } from './publisher';
 
 describe('App', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
   it('renders mixed directory entities and labels member prototype data', () => {
     const html = renderToString(<App initialEntities={[{
       id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
@@ -14,8 +19,8 @@ describe('App', () => {
       handle: 'nyc.dsausa.org',
       did: 'did:plc:nycdsa',
       jurisdiction: 'New York City, NY',
-      trustLabel: 'mock-official',
-      verificationStatus: 'mock-verified',
+      trustLabel: 'official',
+      verificationStatus: 'verified',
       verifiedBy: 'dsausa.org',
       verificationReason: 'Prototype national verification assertion for the NYC chapter example.',
       status: 'active',
@@ -29,7 +34,7 @@ describe('App', () => {
       handle: 'climate.dsausa.org',
       did: 'did:plc:climatecaucus',
       jurisdiction: 'climate justice organizing',
-      trustLabel: 'experimental',
+      trustLabel: 'community-submitted',
       verificationStatus: 'disputed',
       verifiedBy: 'nyc.dsausa.org',
       verificationReason: 'Experimental caucus status is shown as disputed for prototype trust-state coverage.',
@@ -52,12 +57,12 @@ describe('App', () => {
       record: { record: { $type: 'org.dsa.affiliation.member', displayName: 'Alex Rivera' } },
     }]} />);
     expect(html).toContain('Directory entities');
-    expect(html).toContain('Mocked public chapter, caucus, member-affiliation, and verification assertion records');
+    expect(html).toContain('Foundation-first local workbench for DSA-shaped identity, authority, verification, roles, and organizational graph records');
     expect(html).toContain('prototype trust metadata only');
     expect(html).toContain('org.dsa.profile.caucus');
     expect(html).toContain('Verification status:');
     expect(html).toContain('Public prototype member affiliation record; not verified membership.');
-    expect(html).toContain('Protocol provenance');
+    expect(html).toContain('Fixture authority');
     expect(html).toContain('Collection:');
     expect(html).toContain('AT URI:');
     expect(html).toContain('Trust label:');
@@ -77,6 +82,18 @@ describe('App', () => {
     expect(html).toContain('Prototype candidate endorsement sample');
     expect(html).toContain('Public events');
     expect(html).toContain('NYC DSA public orientation');
+  });
+
+  it('hides publisher controls in the read-only public demo', () => {
+    vi.stubEnv('VITE_DEMO_READ_ONLY', 'true');
+
+    const html = renderToString(<App />);
+
+    expect(html).toContain('Read-only public demo');
+    expect(html).toContain('Publisher controls are disabled for the public demo');
+    expect(html).not.toContain('Local prototype publisher');
+    expect(html).not.toContain('Local verification assertion publisher');
+    expect(html).not.toContain('/api/admin/fixtures/ingest');
   });
 
   it('renders the org chart section with source and relationships', () => {
@@ -106,29 +123,6 @@ describe('App', () => {
     expect(html).toContain('Last checked from fixture file');
   });
 
-  it('renders the public voting registry section with private-voting caveat', () => {
-    const html = renderToString(<App initialEntities={[]} />);
-    expect(html).toContain('Public voting registry');
-    expect(html).toContain('Public election, proposal, and choice metadata only. Voting itself is private and not implemented in this slice.');
-    expect(html).toContain('2026 Annual Convention votes');
-    expect(html).toContain('Convention priorities platform');
-    expect(html).toContain('Approve');
-    expect(html).toContain('Reject');
-  });
-
-  it('renders the local voting prototype caveats and labels', () => {
-    const html = renderToString(<App initialEntities={[]} />);
-    expect(html).toContain('Local voting prototype');
-    expect(html).toContain('Local-only non-production prototype. No real auth, no binding, no cryptographic secrecy, and no revoting.');
-    expect(html).toContain('Two-phase flow');
-    expect(html).toContain('Eligible voters:');
-    expect(html).toContain('member-alpha');
-    expect(html).toContain('member-beta');
-    expect(html).toContain('member-gamma');
-    expect(html).toContain('Request credential');
-    expect(html).toContain('Cast anonymous ballot');
-  });
-
   it('renders focused org unit details and relationship directions', () => {
     const html = renderToString(<App initialEntities={[]} initialOrgChart={{ prototype: true, sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', updatedLabel: 'Last updated June 2020', units: [{ uri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', name: 'National Political Committee', shortName: 'NPC', kind: 'national-committee', description: 'National governing committee elected by chapter delegates at convention.', status: 'active', website: 'https://www.dsausa.org/' }, { uri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', name: 'Chapter Delegates', shortName: 'Chapter Delegates', kind: 'delegate-body', description: 'Delegates elected by membership to convention who elect the NPC.', status: 'active' }], relationships: [{ uri: 'at://did:plc:chapterdelegates/org.dsa.relationship.governance/npc-elects', subjectUri: 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self', relationship: 'elects', objectUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', description: 'Chapter delegates elect the National Political Committee at convention.', sourceUrl: 'https://www.dsausa.org/files/2020/07/National-DSA-Organization-Chart.jpg', status: 'active', createdAt: '2026-07-01T00:00:00.000Z' }] }} />);
     expect(html).toContain('National Political Committee');
@@ -151,8 +145,8 @@ describe('App', () => {
       handle: 'nyc.dsausa.org',
       did: 'did:plc:nycdsa',
       jurisdiction: 'New York City, NY',
-      trustLabel: 'mock-official',
-      verificationStatus: 'mock-verified',
+      trustLabel: 'official',
+      verificationStatus: 'verified',
       status: 'active',
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
     }, {
@@ -207,8 +201,8 @@ describe('App', () => {
       handle: 'nyc.dsausa.org',
       did: 'did:plc:nycdsa',
       jurisdiction: 'New York City, NY',
-      trustLabel: 'mock-official',
-      verificationStatus: 'mock-verified',
+      trustLabel: 'official',
+      verificationStatus: 'verified',
       status: 'active',
       record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
     }, {
@@ -260,12 +254,122 @@ describe('App', () => {
     const preview = buildVerificationFixtureEnvelope(createDefaultVerificationDraft());
     expect(preview).toMatchObject({
       collection: 'org.dsa.verification.assertion',
-      trustLabel: 'mock-official',
+      trustLabel: 'official',
       record: {
         $type: 'org.dsa.verification.assertion',
         assertion: 'verified',
       },
     });
     expect(preview.uri).toContain(preview.record.subjectUri);
+  });
+
+  it('fetches record authority from the configured API base', async () => {
+    const resolverData: ResolvedRecordAuthority = {
+      status: 'valid',
+      record: { uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', collection: 'org.dsa.profile.chapter', trustLabel: 'official', record: {} },
+      revisions: [{ uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', cid: 'bafy-test', indexedAt: '2026-07-01T00:00:00.000Z' }],
+      authorityRecords: [{ uri: 'at://did:plc:nationaldsa/org.dsa.authority.charter/nyc-charter', collection: 'org.dsa.authority.charter', record: {} }],
+      caveats: ['fixture source of truth; no external source chain'],
+    };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ data: resolverData }) } as Response);
+
+    await expect(fetchResolvedAuthority('http://localhost:8080', resolverData.record!.uri)).resolves.toEqual(resolverData);
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:8080/api/records/resolve?uri=at%3A%2F%2Fdid%3Aplc%3Anycdsa%2Forg.dsa.profile.chapter%2Fself');
+  });
+
+  it('renders the authority and status panel with full resolver data', () => {
+    const resolvedAuthority: ResolvedRecordAuthority = {
+      status: 'valid',
+      record: { uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', collection: 'org.dsa.profile.chapter', trustLabel: 'official', record: {} },
+      revisions: [
+        { uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', cid: 'bafyrei123', indexedAt: '2026-07-01T00:00:00.000Z' },
+        { uri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', cid: 'bafyrei456', indexedAt: '2026-06-15T00:00:00.000Z' },
+      ],
+      authorityRecords: [
+        { uri: 'at://did:plc:nationaldsa/org.dsa.authority.charter/nyc-charter', collection: 'org.dsa.authority.charter', record: {} },
+        { uri: 'at://did:plc:npc/org.dsa.authority.delegate/npc-delegate', collection: 'org.dsa.authority.delegate', record: {} },
+      ],
+      caveats: ['fixture source of truth; no external source chain', 'prototype only'],
+    };
+    const html = renderToString(<App initialEntities={[{
+      id: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self',
+      name: 'New York City DSA',
+      shortName: 'NYC-DSA',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'nyc.dsausa.org',
+      did: 'did:plc:nycdsa',
+      jurisdiction: 'New York City, NY',
+      trustLabel: 'official',
+      verificationStatus: 'verified',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter', name: 'New York City DSA' } },
+    }]} initialResolvedAuthority={resolvedAuthority} />);
+
+    expect(html).toContain('Authority and status');
+    expect(html).toContain('Authority status');
+    expect(html).toContain('valid');
+    expect(html).toContain('Current record');
+    expect(html).toContain('at://did:plc:nycdsa/org.dsa.profile.chapter/self');
+    expect(html).toContain('org.dsa.profile.chapter');
+    expect(html).toContain('Immutable revisions');
+    expect(html).toContain('bafyrei123');
+    expect(html).toContain('bafyrei456');
+    expect(html).toContain('Authority records');
+    expect(html).toContain('2');
+    expect(html).toContain('org.dsa.authority.charter');
+    expect(html).toContain('org.dsa.authority.delegate');
+    expect(html).toContain('Caveats');
+    expect(html).toContain('fixture source of truth; no external source chain');
+    expect(html).toContain('prototype only');
+    expect(html).toContain('Drill down');
+  });
+
+  it('renders authority panel with different status values', () => {
+    const expiredAuthority: ResolvedRecordAuthority = {
+      status: 'expired',
+      record: { uri: 'at://did:plc:test/org.dsa.profile.chapter/old', collection: 'org.dsa.profile.chapter', trustLabel: 'self-declared', record: {} },
+      revisions: [],
+      authorityRecords: [],
+      caveats: ['record has expired'],
+    };
+    const html = renderToString(<App initialEntities={[{
+      id: 'at://did:plc:test/org.dsa.profile.chapter/old',
+      name: 'Old Chapter',
+      shortName: 'Old',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'old.example.org',
+      did: 'did:plc:test',
+      jurisdiction: 'Old Location',
+      trustLabel: 'self-declared',
+      verificationStatus: 'self-declared',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter' } },
+    }]} initialResolvedAuthority={expiredAuthority} />);
+
+    expect(html).toContain('expired');
+    expect(html).toContain('record has expired');
+    expect(html).toContain('Current record');
+  });
+
+  it('renders authority panel with no resolver data', () => {
+    const html = renderToString(<App initialEntities={[{
+      id: 'at://did:plc:new/org.dsa.profile.chapter/new',
+      name: 'New Chapter',
+      shortName: 'New',
+      type: 'chapter',
+      collection: 'org.dsa.profile.chapter',
+      handle: 'new.example.org',
+      did: 'did:plc:new',
+      jurisdiction: 'New Location',
+      trustLabel: 'official',
+      verificationStatus: 'verified',
+      status: 'active',
+      record: { record: { $type: 'org.dsa.profile.chapter' } },
+    }]} initialResolvedAuthority={null} />);
+
+    expect(html).toContain('Authority and status');
+    expect(html).toContain('No resolver data loaded for this record');
   });
 });

@@ -2,7 +2,7 @@
 
 ## Architecture summary
 
-The current prototype implements a local civic data workbench around ATProto-shaped public record envelopes.
+The current prototype implements a local workbench around ATProto-shaped public record envelopes. The intended foundation is identity, authority, verification, roles, curated fixture authority, and the organizational graph; app-specific civic records should sit on top of that base.
 
 ```text
 CSV files / fixture JSON / browser publisher / optional live firehose
@@ -36,7 +36,7 @@ All records pass through a shared `RecordEnvelope` shape:
 ```json
 {
   "uri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
-  "cid": "bafy...mock",
+  "cid": "bafy...fixture",
   "did": "did:plc:nycdsa",
   "handle": "nyc.dsausa.org",
   "collection": "org.dsa.profile.chapter",
@@ -56,6 +56,7 @@ Supported payload collections:
 - `org.dsa.verification.assertion`
 - `org.dsa.profile.orgUnit`
 - `org.dsa.relationship.governance`
+- app-layer public statement, publication, endorsement, and event records used by the current prototype
 
 Validation rejects mismatched envelope collection and record `$type` values.
 
@@ -148,7 +149,7 @@ GET /api/org-chart?kind=&unit=
 POST /api/admin/fixtures/ingest
 ```
 
-`GET /api/entities` returns normalized directory entities with provenance metadata. Detail responses include the raw record payload.
+`GET /api/entities` returns normalized directory entities with authority, verification, and trust metadata. Detail responses include the raw record payload.
 
 `GET /api/org-chart` returns source-linked org units and governance relationships. Optional filters can narrow by unit kind or focus around a single unit AT URI.
 
@@ -158,17 +159,17 @@ The React app currently includes:
 
 - directory search and filters
 - large chapter-list browsing controls
-- entity cards and protocol provenance detail panel
+- entity cards and authority/status detail panel
 - verification/trust display
 - local chapter publisher
 - local verification assertion publisher
 - DSA org-chart explorer grouped by unit kind
 
-The UI should continue to state clearly that records are mock, curated, imported, or local prototype data unless/until a production source and verification model exists.
+The UI should continue to state clearly that records are fixture, curated, imported, or local prototype data unless/until a production trust root, authority-chain validation, key custody, recovery, and revocation model exists.
 
 ## Trust and verification handling
 
-Trust fields are prototype metadata.
+Trust fields use the governance vocabulary. Local/demo status is caveat metadata, not a `mock-*` trust label.
 
 Directory responses can expose:
 
@@ -177,19 +178,19 @@ Directory responses can expose:
 - `verifiedBy`
 - `verificationReason`
 
-`org.dsa.verification.assertion` records can mark a subject as verified, disputed, revoked, or self-declared. This is useful for modeling behavior, but it is not a production legitimacy process.
+`org.dsa.verification.assertion` records can mark a subject as verified, disputed, revoked, or self-declared. This is useful for modeling behavior, but production legitimacy also requires issuer authorization, delegation rules, key custody, recovery, rotation, revocation, and dispute handling.
 
-## Source/provenance gap
+## Authority/status gap
 
-The next architectural gap is source/citation metadata.
+The next architectural gap is first-class authority/status metadata backed by the curated fixture set.
 
-Current imports and org-chart records are source-informed, but the record model does not yet make source provenance first-class for every imported record.
+Current imports and org-chart records are fixture-authored; the record model now focuses on issuer, authority path, effective dates, supersession, revocation, and disputes without external source-chain records.
 
 Recommended next architecture slice:
 
-- Add source/citation metadata to imported records or a separate source record type.
-- Surface source/caveat data in directory and org-chart details.
-- Preserve source metadata through fixture replay, CSV import, browser publishing, and future live ingestion.
+- Keep authority/status metadata explicit in imported records and authority record types.
+- Surface issuer, authority path, fixture caveats, and supersession/revocation status in directory and org-chart details.
+- Preserve authority/status metadata through fixture replay, CSV import, browser publishing, and future live ingestion.
 
 ## Deployment posture
 
@@ -200,7 +201,7 @@ Local correctness comes first. Before any public deployment:
 - Keep `docker compose` working.
 - Disable or protect local admin/publisher endpoints.
 - Keep live ingestion opt-in.
-- Make prototype/mock/curated labels visible.
+- Make fixture/prototype/curated caveats visible without weakening trust-label semantics.
 - Do not expose private or sensitive organizing data.
 
 ## Verification

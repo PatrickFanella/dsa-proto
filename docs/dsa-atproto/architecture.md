@@ -2,21 +2,21 @@
 
 ## Design principle
 
-Build a shared AT Protocol data layer, not a single monolithic DSA application.
+Build the shared AT Protocol foundation layer first, not a single monolithic DSA application.
 
-AT Protocol should provide public identity, signed records, common schemas, and synchronization. Apps should be separate views and workflows that consume the same underlying records.
+AT Protocol should provide public identity, authority, verification, signed records, common schemas, and synchronization. Apps should be separate views and workflows that consume the same underlying records.
 
 ```text
-ATProto = write/publication layer
-Indexer = normalization and trust layer
+ATProto = identity, authority, and public-record layer
+Indexer = normalization, graph, and trust layer
 APIs = developer convenience layer
 Apps = interchangeable user-facing views
-Private systems = membership, permissions, voting, and sensitive workflows
+Private systems = membership, permissions, and sensitive workflows
 ```
 
 ## Identity layer
 
-AT Protocol identities can represent organizations, chapters, caucuses, committees, campaigns, publications, and individuals.
+AT Protocol identities can represent organizations, chapters, caucuses, committees, campaigns, publications, and individuals. For the base layer, identities and their authority relationships are more important than any single app built on top.
 
 Example handles:
 
@@ -42,7 +42,7 @@ Important distinctions:
 ```text
 Handle = human-readable identity
 DID = durable cryptographic identity
-Record = signed public data
+Record = signed public data with fixture-authored authority/status context
 App = one interpretation of the data
 ```
 
@@ -113,7 +113,7 @@ Apps: consume from all, but label trust clearly
 
 AT Protocol apps interoperate through Lexicons: schemas for record types.
 
-DSA would define `org.dsa.*` record types for public organizational and civic data. These schemas let different apps read and write compatible records.
+DSA would define `org.dsa.*` record types for public organizational and civic data. These schemas let different apps read and write compatible records. The first stable schemas should describe identity, authority, verification, lifecycle state, and the organizational graph before app-specific records.
 
 Examples:
 
@@ -123,18 +123,20 @@ org.dsa.profile.caucus
 org.dsa.profile.committee
 org.dsa.affiliation.member
 org.dsa.affiliation.chapter
+org.dsa.relationship.governance
+org.dsa.verification.assertion
+org.dsa.authority.delegation
+org.dsa.authority.mandate
 org.dsa.endorsement.candidate
 org.dsa.event.meeting
 org.dsa.event.canvass
 org.dsa.statement.public
-org.dsa.source.citation
 org.dsa.guide.electoral
-org.dsa.vote.recommendation
 ```
 
 ## Organizational graph
 
-The system should model explicit relationships:
+The foundation layer should model explicit relationships before app workflows:
 
 - Chapter belongs to national organization
 - Member publicly affiliates with chapter
@@ -142,19 +144,17 @@ The system should model explicit relationships:
 - Committee belongs to chapter
 - Campaign is supported by chapter
 - Candidate appears in election
-- Event is hosted by committee or chapter
-- Statement is issued by caucus
-- Guide is compiled by chapter
-- Record cites public source
+- Officer role is held under a public mandate or appointment
+- Public record has fixture-authored authority/status context
 
 This enables app queries like:
 
 - Which chapters are active in this state?
-- What endorsements has this chapter made?
-- Which caucuses have published statements about housing?
-- What events are happening near me?
-- Which voter guides cite official chapter sources?
-- Which candidates are endorsed by multiple chapters?
+- Which DID is the current official identity for this chapter?
+- Which body can verify this committee or caucus?
+- Which public roles or mandates are active?
+- Which records were revoked, disputed, archived, or superseded?
+- Which apps can safely consume this authority graph?
 
 ## Indexing layer
 
@@ -191,15 +191,17 @@ Publication does not equal legitimacy. Anyone can publish a claim. Apps need a s
 Trust records should support labels such as:
 
 ```text
-Official
-Verified by national
-Verified by chapter
-Verified by caucus
-Self-declared
-Community-submitted
-Disputed
-Revoked
-Archived
+official
+verified-by-national
+verified-by-chapter
+verified-by-caucus
+self-declared
+community-submitted
+secondary-source
+uncertain
+disputed
+revoked
+archived
 ```
 
 Examples:
@@ -221,12 +223,11 @@ Example REST endpoints:
 
 ```http
 GET /api/chapters
-GET /api/chapters/:id/endorsements
-GET /api/elections/:id/guides
-GET /api/candidates/:id/positions
-GET /api/events?near=11215
-GET /api/caucuses/:id/statements
-GET /api/records/:uri/sources
+GET /api/org-chart
+GET /api/records/:uri/authority
+GET /api/records/:uri/disputes
+GET /api/chapters/:id/roles
+GET /api/chapters/:id/delegations
 ```
 
 Example GraphQL query:
@@ -240,13 +241,15 @@ chapter(handle: "nyc.dsausa.org") {
       name
       race
     }
-    sources {
-      url
-      confidence
-    }
   }
 }
 ```
+
+## Fixture source-of-truth boundary
+
+For this prototype, the curated fixture set is the source of truth. The system does not model external source records, citation chains, or production authority-chain proof.
+
+Records should expose enough fixture-authored authority/status context for demos: the DID/handle, public identity type, trust label, lifecycle state, and whether a record is disputed, revoked, archived, or superseded. External sources may inform fixture authorship, but they are not represented as protocol records.
 
 ## Privacy boundary
 
@@ -255,12 +258,10 @@ Draw a hard boundary between the public protocol layer and private organizing sy
 Public ATProto layer:
 
 - Chapter profiles
-- Public events
-- Public endorsements
-- Public statements
-- Public guides
-- Public caucus pages
-- Public source citations
+- Public organizational unit profiles
+- Public governance relationships
+- Public role, mandate, charter, appointment, delegation, dispute, revocation, and archive records
+- Public caucus identities
 - Optional public member profiles
 
 Private internal systems:
@@ -271,7 +272,7 @@ Private internal systems:
 - Internal membership rosters
 - Disciplinary records
 - Sensitive organizing plans
-- Internal votes
+- Voting systems, ballots, credentials, receipts, tallies, recount internals, and voter eligibility state
 - Committee deliberation
 - Personal contact information
 

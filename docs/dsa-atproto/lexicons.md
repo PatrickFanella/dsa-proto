@@ -10,6 +10,118 @@ org.dsa.*
 
 These examples are conceptual. They are not complete formal Lexicon JSON definitions yet.
 
+## Foundation status matrix
+
+Do not overload one field with every legitimacy concept. Foundation records separate these concepts:
+
+| Concept | Field | Allowed values | Meaning |
+| --- | --- | --- | --- |
+| Trust label | `trustLabel` | `official`, `verified-by-national`, `verified-by-chapter`, `verified-by-caucus`, `self-declared`, `community-submitted`, `secondary-source`, `uncertain` | How much institutional confidence the indexer assigns to the record publisher or claim. |
+| Lifecycle status | `status` | `active`, `inactive`, `superseded`, `revoked`, `archived`, `disputed` | Whether the record should be treated as current. |
+| Authority validity | `authorityStatus` | `valid`, `expired`, `revoked`, `disputed`, `unresolved` | Whether the issuer currently has authority for this claim. |
+| Fixture authority note | `caveat` | free text | What the curated fixture set is asserting for prototype readers. |
+
+## Foundation record families
+
+The foundation layer should stabilize these record types before app-layer records expand:
+
+- `org.dsa.profile.chapter`
+- `org.dsa.profile.caucus`
+- `org.dsa.profile.orgUnit`
+- `org.dsa.relationship.governance`
+- `org.dsa.verification.assertion`
+- `org.dsa.authority.delegation`
+- `org.dsa.authority.mandate`
+- `org.dsa.authority.charter`
+- `org.dsa.authority.revocation`
+- `org.dsa.authority.dispute`
+- `org.dsa.record.archive`
+
+App-layer records such as public statements, publications, endorsements, and events may continue to exist, but they consume the foundation rather than define it.
+
+## Foundation record examples
+
+### `org.dsa.authority.delegation`
+
+```json
+{
+  "$type": "org.dsa.authority.delegation",
+  "subjectUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+  "delegatedToUri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+  "scope": "chapter-public-records",
+  "authority": "publish and verify public chapter records",
+  "effectiveFrom": "2026-07-01T00:00:00.000Z",
+  "effectiveUntil": "2027-07-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
+### `org.dsa.authority.mandate`
+
+```json
+{
+  "$type": "org.dsa.authority.mandate",
+  "subjectUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+  "roleName": "National Political Committee",
+  "mandate": "primary political leadership body between conventions",
+  "effectiveFrom": "2026-07-01T00:00:00.000Z",
+  "effectiveUntil": "2027-07-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
+### `org.dsa.authority.charter`
+
+```json
+{
+  "$type": "org.dsa.authority.charter",
+  "subjectUri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+  "charteredByUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+  "jurisdiction": "New York City, NY",
+  "effectiveFrom": "2026-07-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
+### `org.dsa.authority.revocation`
+
+```json
+{
+  "$type": "org.dsa.authority.revocation",
+  "subjectUri": "at://did:plc:nycdsa/org.dsa.authority.delegation/public-records-2026",
+  "revokedByUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+  "reason": "superseded by updated delegation",
+  "createdAt": "2026-08-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
+### `org.dsa.authority.dispute`
+
+```json
+{
+  "$type": "org.dsa.authority.dispute",
+  "subjectUri": "at://did:plc:climatecaucus/org.dsa.profile.caucus/self",
+  "raisedByUri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+  "summary": "Recognition status is contested in this fixture",
+  "createdAt": "2026-07-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
+### `org.dsa.record.archive`
+
+```json
+{
+  "$type": "org.dsa.record.archive",
+  "subjectUri": "at://did:plc:oldchapter/org.dsa.profile.chapter/self",
+  "archivedByUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+  "reason": "chapter merged into a successor body",
+  "createdAt": "2026-07-01T00:00:00.000Z",
+  "status": "active"
+}
+```
+
 ## Profiles
 
 ### `org.dsa.profile.chapter`

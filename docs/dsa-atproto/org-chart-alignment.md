@@ -40,7 +40,7 @@ This prototype maps a small, public slice of the 2020 DSA national organization 
 
 - `kind` groups chart entities into coarse public categories like `national-committee`, `steering-committee`, `publication`, and `membership-body`.
 - `relationship` captures only visible chart relationships, not hidden org logic.
-- `sourceUrl` points to the 2020 organization chart image for provenance.
+- `sourceUrl` points to the 2020 organization chart image as a fixture authoring note.
 - These records are intentionally kept out of ordinary chapter/caucus/member directory cards and are exposed through `/api/org-chart`.
 - The UI renders them as an explorer: units are grouped by kind, users can focus a unit, and the focused view shows connected incoming/outgoing relationships.
 - `/api/org-chart?kind=<kind>` filters the units by kind while keeping only relationships that connect to the remaining units.

@@ -5183,7 +5183,7 @@
     "handle": "dsamass.org",
     "collection": "org.dsa.profile.caucus",
     "indexedAt": "2026-07-01T00:00:00.000Z",
-    "trustLabel": "experimental",
+    "trustLabel": "community-submitted",
     "record": {
       "$type": "org.dsa.profile.caucus",
       "name": "Mass",
@@ -5360,6 +5360,150 @@
       "shortName": "Red Labor",
       "focusArea": "Marxist program development and worker organizing",
       "website": "https://redlaborcaucus.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+    "cid": "bafy-mock-nyc",
+    "did": "did:plc:nycdsa",
+    "handle": "nyc.dsausa.org",
+    "collection": "org.dsa.profile.chapter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.profile.chapter",
+      "name": "New York City DSA",
+      "shortName": "NYC-DSA",
+      "jurisdiction": {
+        "type": "city",
+        "name": "New York City",
+        "state": "NY",
+        "country": "US"
+      },
+      "website": "https://socialists.nyc/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:climatecaucus/org.dsa.profile.caucus/self",
+    "cid": "bafy-mock-climate-caucus",
+    "did": "did:plc:climatecaucus",
+    "handle": "climate.dsausa.org",
+    "collection": "org.dsa.profile.caucus",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "community-submitted",
+    "record": {
+      "$type": "org.dsa.profile.caucus",
+      "name": "DSA Climate Caucus",
+      "shortName": "Climate Caucus",
+      "focusArea": "climate justice organizing",
+      "website": "https://dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self",
+    "cid": "bafy-mock-orgunit-national-dsa",
+    "did": "did:plc:nationaldsa",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.orgUnit",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.profile.orgUnit",
+      "name": "Democratic Socialists of America",
+      "shortName": "DSA",
+      "kind": "national-committee",
+      "description": "National organization that members join through the public join flow.",
+      "website": "https://www.dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+    "cid": "bafy-mock-orgunit-npc",
+    "did": "did:plc:npc",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.profile.orgUnit",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.profile.orgUnit",
+      "name": "National Political Committee",
+      "shortName": "NPC",
+      "kind": "national-committee",
+      "description": "National governing committee elected by chapter delegates at convention.",
+      "website": "https://www.dsausa.org/",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nationaldsa/org.dsa.authority.mandate/national-membership-mandate",
+    "cid": "bafy-mock-authority-mandate-national",
+    "did": "did:plc:nationaldsa",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.authority.mandate",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.authority.mandate",
+      "subjectUri": "at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self",
+      "roleName": "national membership body",
+      "mandate": "National DSA provides the primary membership path, national coordination, and shared organizational support for local chapters and caucuses.",
+      "effectiveFrom": "2026-07-01T00:00:00.000Z",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nationaldsa/org.dsa.authority.charter/nyc-charter",
+    "cid": "bafy-mock-authority-charter-nyc",
+    "did": "did:plc:nationaldsa",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.authority.charter",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.authority.charter",
+      "subjectUri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+      "charteredByUri": "at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self",
+      "jurisdiction": "New York City, NY, US",
+      "effectiveFrom": "2026-07-01T00:00:00.000Z",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nationaldsa/org.dsa.authority.delegation/npc-charter-delegation",
+    "cid": "bafy-mock-authority-delegation-npc",
+    "did": "did:plc:nationaldsa",
+    "handle": "dsausa.org",
+    "collection": "org.dsa.authority.delegation",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "official",
+    "record": {
+      "$type": "org.dsa.authority.delegation",
+      "subjectUri": "at://did:plc:nationaldsa/org.dsa.profile.orgUnit/self",
+      "delegatedToUri": "at://did:plc:npc/org.dsa.profile.orgUnit/self",
+      "scope": "charter local chapters and steward national organizational priorities",
+      "authority": "National Political Committee authority delegated through national governance structure",
+      "effectiveFrom": "2026-07-01T00:00:00.000Z",
+      "status": "active"
+    }
+  },
+  {
+    "uri": "at://did:plc:nycdsa/org.dsa.authority.dispute/climate-caucus-status",
+    "cid": "bafy-mock-authority-dispute-climate",
+    "did": "did:plc:nycdsa",
+    "handle": "nyc.dsausa.org",
+    "collection": "org.dsa.authority.dispute",
+    "indexedAt": "2026-07-01T00:00:00.000Z",
+    "trustLabel": "community-submitted",
+    "record": {
+      "$type": "org.dsa.authority.dispute",
+      "subjectUri": "at://did:plc:climatecaucus/org.dsa.profile.caucus/self",
+      "raisedByUri": "at://did:plc:nycdsa/org.dsa.profile.chapter/self",
+      "summary": "Local prototype notes a dispute over whether the climate caucus is operating as a formal caucus or an informal organizing project.",
+      "createdAt": "2026-07-01T00:00:00.000Z",
       "status": "active"
     }
   }

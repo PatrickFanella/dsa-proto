@@ -2,7 +2,7 @@
 
 ## Current purpose
 
-`dsa-proto` is now a local civic data workbench for exploring how AT Protocol-shaped public records could support DSA-adjacent directories, provenance, trust labels, fixture publishing, and public governance structure browsing.
+`dsa-proto` is now a local civic data workbench for exploring how AT Protocol-shaped public records could support DSA-adjacent directories, authority/status labels, fixture publishing, and public governance structure browsing.
 
 The original Milestone 1 was a small chapter/caucus/member directory. That core is complete, and the prototype has intentionally expanded into nearby experimental lanes:
 
@@ -22,7 +22,7 @@ A local Docker Compose app where a user can:
 1. Open a public prototype UI.
 2. Browse chapter, caucus/working group, and opt-in member-affiliation records.
 3. Search and filter records by type, state, chapter kind, and text.
-4. View protocol provenance: DID, handle, collection, record type, AT URI, trust label, verification status, and raw record JSON.
+4. View authority/status details: DID, handle, collection, record type, AT URI, trust label, verification status, and raw record JSON.
 5. Import chapter and caucus fixture records from CSV files.
 6. Author local chapter and verification assertion fixtures from the browser or CLI.
 7. Replay fixture records into Postgres with accepted/rejected reporting.
@@ -39,7 +39,7 @@ Secondary audience: developers evaluating whether the transport-neutral record e
 
 The prototype currently has three user-facing areas:
 
-- Directory: searchable chapter/caucus/member-affiliation cards with provenance detail.
+- Directory: searchable chapter/caucus/member-affiliation cards with authority/status detail.
 - Local publisher: browser forms for chapter fixtures and mock verification/dispute assertions.
 - Org chart explorer: source-linked public governance units and relationships from the DSA org chart.
 
@@ -91,16 +91,18 @@ Current local sources include:
 
 ## Verification and trust
 
-The app distinguishes prototype trust/verification states such as:
+The app distinguishes governance trust/verification states such as:
 
-- `mock-verified`
+- `verified`
+- `verified-by-national`
+- `verified-by-chapter`
 - `self-declared`
 - `unverified`
 - `disputed`
 - `revoked`
-- `experimental`
+- `community-submitted`
 
-These states are display metadata for the prototype. They do not establish real official status, verified membership, or DSA endorsement.
+These states model the intended governance vocabulary. Local fixtures still do not establish real official status, verified membership, or DSA endorsement until production authority-chain validation exists.
 
 ## Explicit safety boundary
 
@@ -124,7 +126,7 @@ The prototype is healthy when:
 - `docker compose up --build` starts Postgres, backend, and web.
 - `make chapters-import`, `make caucuses-import`, and `make fixture-replay` work locally.
 - The UI can browse imported chapters/caucuses and built-in member-affiliation examples.
-- Entity detail pages show protocol provenance and verification metadata.
+- Entity detail pages show authority/status and verification metadata.
 - The browser publisher can create local chapter fixtures and verification assertions.
 - `/api/org-chart` and the UI org-chart explorer show source-linked governance units and relationships.
 - Docs clearly distinguish local prototype behavior from production ATProto/PDS behavior.

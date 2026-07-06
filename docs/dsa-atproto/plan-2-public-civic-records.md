@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Plan 1 built the local registry/workbench foundation: canonical chapter and caucus records, fixture import/replay, registry health, provenance display, prototype verification, local publishing, org-chart exploration, and an opt-in ATProto ingestion spike.
+Plan 1 built the local registry/workbench foundation: canonical chapter and caucus records, fixture import/replay, registry health, authority/status display, prototype verification, local publishing, org-chart exploration, and an opt-in ATProto ingestion spike.
 
 Plan 2 moves from **who exists** to **what public civic information is published**.
 
@@ -148,7 +148,7 @@ Add public statement records end-to-end: schema, fixture examples, ingestion, AP
 
 - Show a statements section in the UI.
 - Link statements to issuer/related directory entities by AT URI.
-- Display protocol provenance and prototype caveats.
+- Display authority/status and prototype caveats.
 - Add tests for schema validation, API response, and UI rendering.
 
 ### Acceptance criteria

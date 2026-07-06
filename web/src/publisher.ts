@@ -84,7 +84,7 @@ export function buildVerificationFixtureEnvelope(draft: VerificationDraft) {
     handle: issuerHandle,
     collection: 'org.dsa.verification.assertion' as const,
     indexedAt: '2026-07-01T00:00:00.000Z',
-    trustLabel: 'mock-official' as const,
+    trustLabel: 'official' as const,
     record: {
       $type: 'org.dsa.verification.assertion' as const,
       subjectUri,

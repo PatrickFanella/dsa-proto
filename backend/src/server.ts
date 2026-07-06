@@ -2,15 +2,29 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
-import { allSeedRecords, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, voteChoiceRecordSchema, voteElectionRecordSchema, voteProposalRecordSchema, normalizeDirectoryEntity, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type VoteChoiceRecord, type VoteElectionRecord, type VoteProposalRecord } from './domain.js';
+import { allSeedRecords, authorityDisputeRecordSchema, authorityRevocationRecordSchema, recordArchiveRecordSchema, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type AuthorityResolverStatus, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type ResolvedRecordAuthority } from './domain.js';
 import { replayFixtureRecords } from './fixture-replay.js';
-import { createLocalVotingService } from './local-voting.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
+
+const envFlagSchema = z.preprocess((value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  if (['1', 'true', 'yes', 'on'].includes(value.toLowerCase())) return true;
+  if (['0', 'false', 'no', 'off'].includes(value.toLowerCase())) return false;
+  return value;
+}, z.boolean());
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
   DATABASE_URL: z.string().default('postgres://dsa_proto:change-me@localhost:5432/dsa_proto?sslmode=disable'),
+  CORS_ORIGIN: z.string().default('*'),
+  DEMO_READ_ONLY: envFlagSchema.default(false),
+  ENABLE_ADMIN_INGEST: envFlagSchema.default(true),
+  AUTO_REPLAY_FIXTURES: envFlagSchema.default(true),
+  REQUIRE_POSTGRES: envFlagSchema.default(false),
 });
+
+export type AppConfig = z.infer<typeof envSchema>;
 
 export type DirectoryRepository = {
   listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
@@ -25,15 +39,11 @@ export type DirectoryRepository = {
   getEndorsement(id: string): Promise<ReturnType<typeof normalizeEndorsementEnvelope> | undefined>;
   listEvents(entityUri?: string, status?: PublicEventRecord['status']): Promise<Array<ReturnType<typeof normalizeEventEnvelope>>>;
   getEvent(id: string): Promise<ReturnType<typeof normalizeEventEnvelope> | undefined>;
-  listVoteElections(): Promise<Array<ReturnType<typeof normalizeVoteElectionEnvelope>>>;
-  getVoteElection(id: string): Promise<ReturnType<typeof normalizeVoteElectionEnvelope> | undefined>;
-  listVoteProposals(electionUri?: string): Promise<Array<ReturnType<typeof normalizeVoteProposalEnvelope>>>;
-  getVoteProposal(id: string): Promise<ReturnType<typeof normalizeVoteProposalEnvelope> | undefined>;
-  listVoteChoices(proposalUri?: string): Promise<Array<ReturnType<typeof normalizeVoteChoiceEnvelope>>>;
-  getVoteChoice(id: string): Promise<ReturnType<typeof normalizeVoteChoiceEnvelope> | undefined>;
   listActivity(filters?: { entityUri?: string; type?: ActivityType }): Promise<Array<ReturnType<typeof normalizeActivityEnvelope>>>;
   ingestRecordEnvelopes(records: RecordEnvelope[]): Promise<void>;
   getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
+  listRecordRevisions(uri: string): Promise<RecordEnvelope[]>;
+  resolveRecordAuthority(uri: string, options?: { asOf?: string; depth?: number }): Promise<ResolvedRecordAuthority>;
 };
 
 export type ActivityType = 'statement' | 'article' | 'endorsement' | 'event';
@@ -45,10 +55,23 @@ export function getConfig(env: NodeJS.ProcessEnv = process.env) {
 function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: unknown) {
   res.writeHead(statusCode, {
     'content-type': 'application/json',
-    'access-control-allow-origin': '*',
-    'access-control-allow-headers': 'content-type',
   });
   res.end(JSON.stringify(body));
+}
+
+function applyCors(req: IncomingMessage, res: ServerResponse<IncomingMessage>, corsOrigin: string, allowedMethods: string) {
+  if (corsOrigin === '*') {
+    res.setHeader('access-control-allow-origin', '*');
+  } else if (req.headers.origin === corsOrigin) {
+    res.setHeader('access-control-allow-origin', corsOrigin);
+    res.setHeader('vary', 'Origin');
+  }
+  res.setHeader('access-control-allow-headers', 'content-type');
+  res.setHeader('access-control-allow-methods', allowedMethods);
+}
+
+function routeDisabled() {
+  return { error: 'not_found' };
 }
 
 async function readJsonBody(req: IncomingMessage) {
@@ -66,6 +89,7 @@ async function readJsonBody(req: IncomingMessage) {
 export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords): DirectoryRepository {
   const rawRecords = seed.map((record) => recordEnvelopeSchema.parse(record));
   const records = dedupeEntities(rawRecords);
+  const recordRevisions = dedupeRecordRevisions(rawRecords);
   return {
     async listEntities(filters: DirectoryEntityFilters = {}) {
       const limited = records.filter((entity) => matchesDirectoryEntity(entity, filters));
@@ -88,21 +112,30 @@ export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords):
     async getEndorsement(id: string) { return listEndorsementEnvelopes(rawRecords).find((record) => record.uri === id); },
     async listEvents(entityUri?: string, status?: PublicEventRecord['status']) { return listEventEnvelopes(rawRecords, entityUri, status); },
     async getEvent(id: string) { return listEventEnvelopes(rawRecords).find((record) => record.uri === id); },
-    async listVoteElections() { return listVoteElectionEnvelopes(rawRecords); },
-    async getVoteElection(id: string) { return listVoteElectionEnvelopes(rawRecords).find((record) => record.uri === id); },
-    async listVoteProposals(electionUri?: string) { return listVoteProposalEnvelopes(rawRecords, electionUri); },
-    async getVoteProposal(id: string) { return listVoteProposalEnvelopes(rawRecords).find((record) => record.uri === id); },
-    async listVoteChoices(proposalUri?: string) { return listVoteChoiceEnvelopes(rawRecords, proposalUri); },
-    async getVoteChoice(id: string) { return listVoteChoiceEnvelopes(rawRecords).find((record) => record.uri === id); },
     async listActivity(filters = {}) { return listActivityEnvelopes(rawRecords, filters); },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
-      rawRecords.push(...parsed);
+      for (const record of parsed) {
+        const existingRevision = recordRevisions.find((item) => item.uri === record.uri && item.cid === record.cid);
+        if (existingRevision && !sameImmutableRecord(existingRevision, record)) {
+          throw new Error(`refusing to overwrite immutable record contents for ${record.uri} with same cid ${record.cid}`);
+        }
+        if (!existingRevision) recordRevisions.push(record);
+        const existingCurrentIndex = rawRecords.findIndex((item) => item.uri === record.uri);
+        if (existingCurrentIndex >= 0) rawRecords[existingCurrentIndex] = record;
+        else rawRecords.push(record);
+      }
       const nextDirectoryRecords = dedupeEntities(rawRecords);
       records.splice(0, records.length, ...nextDirectoryRecords);
     },
     async getOrgChart(filters = {}) {
       return buildOrgChartFromRecords(rawRecords, filters);
+    },
+    async listRecordRevisions(uri: string) {
+      return recordRevisions.filter((record) => record.uri === uri).sort((a, b) => a.indexedAt.localeCompare(b.indexedAt));
+    },
+    async resolveRecordAuthority(uri: string, options?: { asOf?: string; depth?: number }) {
+      return resolveRecordAuthorityFromRecords(uri, recordRevisions, options);
     },
   };
 }
@@ -253,73 +286,91 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
     },
     async listStatements(entityUri?: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.statement.public' order by indexed_at desc`);
-      return listStatementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), entityUri);
+      return listStatementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri);
     },
     async getStatement(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.statement.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+      return normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
     },
     async listPublications() {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.profile' order by indexed_at desc`);
-      return listPublicationProfileEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)));
+      return listPublicationProfileEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)));
     },
     async getPublication(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.profile' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizePublicationProfileEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+      return normalizePublicationProfileEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
     },
     async listArticles(publicationUri?: string, entityUri?: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.article' order by indexed_at desc`);
-      return listPublicationArticleEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), publicationUri, entityUri);
+      return listPublicationArticleEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), publicationUri, entityUri);
     },
     async getArticle(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.article' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizePublicationArticleEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+      return normalizePublicationArticleEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
     },
     async listEndorsements(entityUri?: string, status?: EndorsementPublicRecord['status']) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.endorsement.public' order by indexed_at desc`);
-      return listEndorsementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), entityUri, status);
+      return listEndorsementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri, status);
     },
     async getEndorsement(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.endorsement.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeEndorsementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+      return normalizeEndorsementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
     },
     async listEvents(entityUri?: string, status?: PublicEventRecord['status']) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.event.public' order by indexed_at desc`);
-      return listEventEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), entityUri, status);
+      return listEventEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri, status);
     },
     async getEvent(id: string) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.event.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeEventEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record });
+      return normalizeEventEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
     },
-    async listVoteElections() { return listVoteElectionEnvelopes(await loadVoteRecords(pool, 'org.dsa.vote.election')); },
-    async getVoteElection(id: string) { const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.vote.election' limit 1`, [id]); const row = result.rows[0]; if (!row) return undefined; return normalizeVoteElectionEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record }); },
-    async listVoteProposals(electionUri?: string) { return listVoteProposalEnvelopes(await loadVoteRecords(pool, 'org.dsa.vote.proposal'), electionUri); },
-    async getVoteProposal(id: string) { const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.vote.proposal' limit 1`, [id]); const row = result.rows[0]; if (!row) return undefined; return normalizeVoteProposalEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record }); },
-    async listVoteChoices(proposalUri?: string) { return listVoteChoiceEnvelopes(await loadVoteRecords(pool, 'org.dsa.vote.choice'), proposalUri); },
-    async getVoteChoice(id: string) { const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.vote.choice' limit 1`, [id]); const row = result.rows[0]; if (!row) return undefined; return normalizeVoteChoiceEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record }); },
     async listActivity(filters = {}) {
       const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection in ('org.dsa.statement.public', 'org.dsa.publication.article', 'org.dsa.endorsement.public', 'org.dsa.event.public') order by indexed_at desc`);
-      return listActivityEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), filters);
+      return listActivityEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), filters);
     },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
       for (const rawRecord of parsed) {
-        await pool.query(
-          `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
-           values ($1, $2, $3, $4, $5, $6, $7)
-           on conflict (uri) do update set cid = excluded.cid, did = excluded.did, handle = excluded.handle, collection = excluded.collection, record = excluded.record, indexed_at = excluded.indexed_at`,
-          [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.indexedAt],
-        );
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          await client.query(
+            `insert into atproto_record_revisions (uri, cid, did, handle, collection, record, trust_label, indexed_at)
+             values ($1, $2, $3, $4, $5, $6, $7, $8)
+             on conflict (uri, cid) do nothing`,
+            [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.trustLabel, rawRecord.indexedAt],
+          );
+          const existing = await client.query(
+            `select cid, did, handle, collection, record, trust_label, indexed_at from atproto_record_revisions where uri = $1 and cid = $2 limit 1`,
+            [rawRecord.uri, rawRecord.cid],
+          );
+          const existingRow = existing.rows[0] as { cid: string; did: string; handle: string; collection: string; record: unknown; trust_label: string; indexed_at: Date | string } | undefined;
+          if (!existingRow || !sameImmutableRecord(rowToRevisionEnvelope(rawRecord.uri, existingRow), rawRecord)) {
+            throw new Error(`refusing to overwrite immutable record contents for ${rawRecord.uri} with same cid ${rawRecord.cid}`);
+          }
+          await client.query(
+            `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
+             values ($1, $2, $3, $4, $5, $6, $7)
+             on conflict (uri) do update set cid = excluded.cid, did = excluded.did, handle = excluded.handle, collection = excluded.collection, record = excluded.record, indexed_at = excluded.indexed_at`,
+            [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.indexedAt],
+          );
+          await client.query('commit');
+        } catch (error) {
+          await client.query('rollback');
+          throw error;
+        } finally {
+          client.release();
+        }
       }
       const nextDirectoryRecords = parsed.filter(isDirectoryEntityRecord).map((item) => normalizeDirectoryEntity(item, parsed)).filter((record): record is DirectoryEntity => Boolean(record));
       for (const record of nextDirectoryRecords) {
@@ -355,7 +406,16 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
     },
     async getOrgChart(filters = {}) {
       const result = await pool.query(`select uri, record, collection, indexed_at from atproto_records where collection in ('org.dsa.profile.orgUnit', 'org.dsa.relationship.governance') order by indexed_at asc`);
-      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: 'db', did: 'did:plc:db', handle: 'dsausa.org', collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope)), filters);
+      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: 'db', did: 'did:plc:db', handle: 'dsausa.org', collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), filters);
+    },
+    async listRecordRevisions(uri: string) {
+      const result = await pool.query(`select id, uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_record_revisions where uri = $1 order by indexed_at asc, id asc`, [uri]);
+      return result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope));
+    },
+    async resolveRecordAuthority(uri: string, options?: { asOf?: string; depth?: number }) {
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_record_revisions order by indexed_at asc, id asc`);
+      const revisions = result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope));
+      return resolveRecordAuthorityFromRecords(uri, revisions, options);
     },
   };
 }
@@ -372,6 +432,26 @@ async function ensurePrototypeSchema(pool: Pool) {
       indexed_at timestamptz not null
     )
   `);
+  await pool.query(`
+    create table if not exists atproto_record_revisions (
+      id bigserial primary key,
+      uri text not null,
+      cid text not null,
+      did text not null,
+      handle text not null,
+      collection text not null,
+      record jsonb not null,
+      trust_label text not null,
+      indexed_at timestamptz not null,
+      observed_at timestamptz not null default now(),
+      unique (uri, cid)
+    )
+  `);
+  await pool.query('create index if not exists atproto_record_revisions_uri_indexed_at_id_idx on atproto_record_revisions(uri, indexed_at, id)');
+  await pool.query('create index if not exists atproto_record_revisions_uri_idx on atproto_record_revisions(uri)');
+  await pool.query('create index if not exists atproto_record_revisions_collection_idx on atproto_record_revisions(collection)');
+  await pool.query('create index if not exists atproto_record_revisions_indexed_at_idx on atproto_record_revisions(indexed_at)');
+  await pool.query(`insert into atproto_record_revisions (uri, cid, did, handle, collection, record, trust_label, indexed_at) select uri, cid, did, handle, collection, record, 'official', indexed_at from atproto_records on conflict (uri, cid) do nothing`);
   await pool.query(`
     create table if not exists directory_entities (
       id text primary key,
@@ -398,21 +478,128 @@ async function ensurePrototypeSchema(pool: Pool) {
   await pool.query('create index if not exists directory_entities_search_text_idx on directory_entities(search_text)');
 }
 
-export function createApp(repository: DirectoryRepository) {
-  const localVoting = createLocalVotingService(repository);
+function dedupeRecordRevisions(records: RecordEnvelope[]) {
+  return records.filter((record, index, self) => self.findIndex((item) => item.uri === record.uri && item.cid === record.cid) === index).map((record) => record);
+}
+
+function stableJson(value: unknown) {
+  return JSON.stringify(sortJsonValue(value));
+}
+
+function sortJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => sortJsonValue(item));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key, item]) => [key, sortJsonValue(item)]));
+  }
+  return value;
+}
+
+function sameImmutableRecord(left: RecordEnvelope, right: RecordEnvelope) {
+  return left.uri === right.uri
+    && left.cid === right.cid
+    && left.did === right.did
+    && left.collection === right.collection
+    && stableJson(left.record) === stableJson(right.record);
+}
+
+function rowToRevisionEnvelope(uri: string, row: { cid: string; did: string; handle: string; collection: string; record: unknown; trust_label: string; indexed_at: Date | string }): RecordEnvelope {
+  return recordEnvelopeSchema.parse({
+    uri,
+    cid: row.cid,
+    did: row.did,
+    handle: row.handle,
+    collection: row.collection,
+    indexedAt: new Date(row.indexed_at).toISOString(),
+    trustLabel: row.trust_label,
+    record: row.record,
+  });
+}
+
+function resolveRecordAuthorityFromRecords(uri: string, revisions: RecordEnvelope[], options?: { asOf?: string; depth?: number }): ResolvedRecordAuthority {
+  const asOf = options?.asOf ? new Date(options.asOf) : undefined;
+  const visibleRecords = revisions.filter((revision) => !asOf || revision.indexedAt <= asOf.toISOString());
+  const sortedRevisions = revisions.filter((revision) => revision.uri === uri).sort((a, b) => a.indexedAt.localeCompare(b.indexedAt));
+  const visibleRevisions = sortedRevisions.filter((revision) => !asOf || revision.indexedAt <= asOf.toISOString());
+  const current = visibleRevisions.at(-1);
+  if (!current) {
+    return { uri, revisions: sortedRevisions, authorityRecords: [], status: 'unresolved', caveats: ['fixture source of truth; no external source chain'] };
+  }
+  const authorityRecords = latestRecordsByUri(visibleRecords.filter((record) => record.uri !== uri && isAuthorityRecordForTarget(record, uri)));
+  const disputed = authorityRecords.some((record) => {
+    const parsed = authorityDisputeRecordSchema.safeParse(record.record);
+    return record.collection === 'org.dsa.authority.dispute' && parsed.success && parsed.data.subjectUri === uri && parsed.data.status === 'active';
+  });
+  const revoked = authorityRecords.some((record) => {
+    const parsed = authorityRevocationRecordSchema.safeParse(record.record);
+    return record.collection === 'org.dsa.authority.revocation' && parsed.success && parsed.data.subjectUri === uri && parsed.data.status === 'active';
+  });
+  const archived = authorityRecords.some((record) => {
+    const parsed = recordArchiveRecordSchema.safeParse(record.record);
+    return record.collection === 'org.dsa.record.archive' && parsed.success && parsed.data.subjectUri === uri && parsed.data.status === 'active';
+  });
+  const expired = [current, ...authorityRecords].some((record) => isExpiredForTarget(record, uri, asOf));
+  const status: AuthorityResolverStatus = revoked ? 'revoked' : disputed ? 'disputed' : archived || expired ? 'expired' : 'valid';
+  return { uri, record: current, revisions: sortedRevisions, authorityRecords, status, caveats: ['fixture source of truth; no external source chain'] };
+}
+
+function latestRecordsByUri(records: RecordEnvelope[]) {
+  return records.reduce<RecordEnvelope[]>((acc, record) => {
+    const existingIndex = acc.findIndex((entry) => entry.uri === record.uri);
+    if (existingIndex < 0) return [...acc, record];
+    const existing = acc[existingIndex];
+    if (record.indexedAt.localeCompare(existing.indexedAt) >= 0) acc[existingIndex] = record;
+    return acc;
+  }, []);
+}
+
+function isAuthorityRecordForTarget(record: RecordEnvelope, targetUri: string) {
+  if (record.collection === 'org.dsa.authority.delegation' && record.record.$type === 'org.dsa.authority.delegation') return record.record.subjectUri === targetUri || record.record.delegatedToUri === targetUri;
+  if (record.collection === 'org.dsa.authority.mandate' && record.record.$type === 'org.dsa.authority.mandate') return record.record.subjectUri === targetUri;
+  if (record.collection === 'org.dsa.authority.charter' && record.record.$type === 'org.dsa.authority.charter') return record.record.subjectUri === targetUri || record.record.charteredByUri === targetUri;
+  if (record.collection === 'org.dsa.authority.revocation' && record.record.$type === 'org.dsa.authority.revocation') return record.record.subjectUri === targetUri || record.record.revokedByUri === targetUri;
+  if (record.collection === 'org.dsa.authority.dispute' && record.record.$type === 'org.dsa.authority.dispute') return record.record.subjectUri === targetUri || record.record.raisedByUri === targetUri;
+  if (record.collection === 'org.dsa.record.archive' && record.record.$type === 'org.dsa.record.archive') return record.record.subjectUri === targetUri || record.record.archivedByUri === targetUri;
+  return false;
+}
+
+function isExpiredForTarget(record: RecordEnvelope, targetUri: string, asOf?: Date) {
+  if (record.uri !== targetUri && getSubjectUri(record) !== targetUri) return false;
+  if ('effectiveUntil' in record.record && record.record.effectiveUntil) return new Date(record.record.effectiveUntil) <= (asOf ?? new Date());
+  return false;
+}
+
+function getSubjectUri(record: RecordEnvelope) {
+  if ('subjectUri' in record.record && typeof record.record.subjectUri === 'string') return record.record.subjectUri;
+  return undefined;
+}
+
+export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST'>> = {}) {
+  const corsOrigin = options.CORS_ORIGIN ?? '*';
+  const demoReadOnly = options.DEMO_READ_ONLY ?? false;
+  const enableAdminIngest = !demoReadOnly && (options.ENABLE_ADMIN_INGEST ?? true);
+  const allowedMethods = demoReadOnly ? 'GET, OPTIONS' : 'GET, POST, OPTIONS';
   return createServer(async (req, res) => {
-    res.setHeader('access-control-allow-origin', '*');
+    applyCors(req, res, corsOrigin, allowedMethods);
     if (req.method === 'OPTIONS') {
-      res.writeHead(204, { 'access-control-allow-headers': 'content-type' });
+      res.writeHead(204);
       res.end();
       return;
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
+    if (req.url === '/ready') {
+      try {
+        const entities = await repository.listEntities();
+        return toJson(res, 200, { status: 'ready', entityCount: entities.length });
+      } catch {
+        return toJson(res, 503, { status: 'not_ready', error: 'repository_unavailable' });
+      }
+    }
     if (req.method === 'GET' && req.url === '/api/registry/health') {
       const report = await loadRegistryHealthReport(resolve('fixtures/records.json'));
       return toJson(res, 200, { prototype: true, ...getRegistryHealthSummary(report) });
     }
     if (req.method === 'POST' && req.url === '/api/admin/fixtures/ingest') {
+      if (!enableAdminIngest) return toJson(res, 404, routeDisabled());
       const body = await readJsonBody(req);
       if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
       const records = Array.isArray(body) ? body : body && typeof body === 'object' && 'records' in body ? (body as { records?: unknown }).records : undefined;
@@ -435,6 +622,21 @@ export function createApp(repository: DirectoryRepository) {
     if (req.method === 'GET' && req.url?.startsWith('/api/org-chart')) {
       const url = new URL(req.url, 'http://localhost');
       return toJson(res, 200, await repository.getOrgChart({ kind: url.searchParams.get('kind') as OrgUnitRecord['kind'] | undefined, unit: url.searchParams.get('unit') ?? undefined }));
+    }
+    if (req.method === 'GET' && req.url?.startsWith('/api/records/resolve')) {
+      const url = new URL(req.url, 'http://localhost');
+      const uri = url.searchParams.get('uri');
+      if (!uri) return toJson(res, 400, { error: 'invalid_request_query', expected: 'uri is required' });
+      const asOf = url.searchParams.get('asOf') ?? undefined;
+      if (asOf && Number.isNaN(Date.parse(asOf))) return toJson(res, 400, { error: 'invalid_request_query', expected: 'asOf must be an ISO timestamp' });
+      const depthParam = url.searchParams.get('depth');
+      let depth: number | undefined;
+      if (depthParam) {
+        const parsedDepth = Number(depthParam);
+        if (!Number.isInteger(parsedDepth) || parsedDepth < 0) return toJson(res, 400, { error: 'invalid_request_query', expected: 'depth must be a non-negative integer' });
+        depth = parsedDepth;
+      }
+      return toJson(res, 200, { prototype: true, data: await repository.resolveRecordAuthority(uri, { asOf, depth }) });
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/entities/')) {
       const id = decodeURIComponent(req.url.slice('/api/entities/'.length));
@@ -481,40 +683,6 @@ export function createApp(repository: DirectoryRepository) {
       const event = await repository.getEvent(id);
       if (!event) return toJson(res, 404, { error: 'not_found' });
       return toJson(res, 200, { prototype: true, data: event });
-    }
-    if (req.method === 'GET' && req.url?.startsWith('/api/votes')) {
-      const url = new URL(req.url, 'http://localhost');
-      if (url.pathname === '/api/votes/elections') return toJson(res, 200, { prototype: true, data: await repository.listVoteElections() });
-      if (url.pathname.startsWith('/api/votes/elections/')) { const id = decodeURIComponent(url.pathname.slice('/api/votes/elections/'.length)); const item = await repository.getVoteElection(id); if (!item) return toJson(res, 404, { error: 'not_found' }); return toJson(res, 200, { prototype: true, data: item }); }
-      if (url.pathname === '/api/votes/proposals') return toJson(res, 200, { prototype: true, data: await repository.listVoteProposals(url.searchParams.get('election') ?? undefined) });
-      if (url.pathname.startsWith('/api/votes/proposals/')) { const id = decodeURIComponent(url.pathname.slice('/api/votes/proposals/'.length)); const item = await repository.getVoteProposal(id); if (!item) return toJson(res, 404, { error: 'not_found' }); return toJson(res, 200, { prototype: true, data: item }); }
-      if (url.pathname === '/api/votes/choices') return toJson(res, 200, { prototype: true, data: await repository.listVoteChoices(url.searchParams.get('proposal') ?? undefined) });
-      if (url.pathname.startsWith('/api/votes/choices/')) { const id = decodeURIComponent(url.pathname.slice('/api/votes/choices/'.length)); const item = await repository.getVoteChoice(id); if (!item) return toJson(res, 404, { error: 'not_found' }); return toJson(res, 200, { prototype: true, data: item }); }
-    }
-    if (req.method === 'GET' && req.url?.startsWith('/api/local-voting/status')) {
-      const url = new URL(req.url, 'http://localhost');
-      return toJson(res, 200, await localVoting.getStatus(url.searchParams.get('voter') ?? undefined, url.searchParams.get('proposal') ?? undefined));
-    }
-    if (req.method === 'POST' && req.url === '/api/local-voting/credentials') {
-      const body = await readJsonBody(req);
-      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
-      const voterKey = z.string().min(1).safeParse((body as { voterKey?: unknown } | undefined)?.voterKey);
-      const proposalUri = z.string().startsWith('at://').safeParse((body as { proposalUri?: unknown } | undefined)?.proposalUri);
-      if (!voterKey.success || !proposalUri.success) return toJson(res, 400, { error: 'invalid_request_body' });
-      const result = await localVoting.issueCredential(voterKey.data, proposalUri.data);
-      if ('error' in result) return toJson(res, 403, result);
-      return toJson(res, 200, { prototype: true, ...result });
-    }
-    if (req.method === 'POST' && req.url === '/api/local-voting/ballots') {
-      const body = await readJsonBody(req);
-      if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
-      const credential = z.string().min(1).safeParse((body as { credential?: unknown } | undefined)?.credential);
-      const proposalUri = z.string().startsWith('at://').safeParse((body as { proposalUri?: unknown } | undefined)?.proposalUri);
-      const choiceUri = z.string().startsWith('at://').safeParse((body as { choiceUri?: unknown } | undefined)?.choiceUri);
-      if (!credential.success || !proposalUri.success || !choiceUri.success) return toJson(res, 400, { error: 'invalid_request_body' });
-      const result = await localVoting.submitBallot(credential.data, proposalUri.data, choiceUri.data);
-      if ('error' in result) return toJson(res, 409, result);
-      return toJson(res, 200, { prototype: true, ...result });
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/activity')) {
       const url = new URL(req.url, 'http://localhost');
@@ -583,18 +751,6 @@ function normalizeEndorsementEnvelope(record: RecordEnvelope & { record: Endorse
 
 function normalizeEventEnvelope(record: RecordEnvelope & { record: PublicEventRecord }) {
   return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, title: record.record.title, hostEntityUri: record.record.hostEntityUri, hostEntityName: record.record.hostEntityName, startsAt: record.record.startsAt, endsAt: record.record.endsAt, mode: record.record.mode, publicUrl: record.record.publicUrl, locationLabel: record.record.locationLabel, status: record.record.status, topics: record.record.topics, relatedEntityUris: record.record.relatedEntityUris };
-}
-
-function normalizeVoteElectionEnvelope(record: RecordEnvelope & { record: VoteElectionRecord }) {
-  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, title: record.record.title, summary: record.record.summary, bodyMarkdown: record.record.bodyMarkdown, sponsorEntityUri: record.record.sponsorEntityUri, sponsorEntityName: record.record.sponsorEntityName, opensAt: record.record.opensAt, closesAt: record.record.closesAt, status: record.record.status, eligibilityDescription: record.record.eligibilityDescription, votingSystemUrl: record.record.votingSystemUrl, prototypeCaveat: record.record.prototypeCaveat, relatedEntityUris: record.record.relatedEntityUris };
-}
-
-function normalizeVoteProposalEnvelope(record: RecordEnvelope & { record: VoteProposalRecord }) {
-  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, electionUri: record.record.electionUri, title: record.record.title, summary: record.record.summary, bodyMarkdown: record.record.bodyMarkdown, sponsorEntityUri: record.record.sponsorEntityUri, status: record.record.status, prototypeCaveat: record.record.prototypeCaveat, relatedEntityUris: record.record.relatedEntityUris };
-}
-
-function normalizeVoteChoiceEnvelope(record: RecordEnvelope & { record: VoteChoiceRecord }) {
-  return { uri: record.uri, did: record.did, handle: record.handle, collection: record.collection, indexedAt: record.indexedAt, trustLabel: record.trustLabel, record: record.record, proposalUri: record.record.proposalUri, label: record.record.label, description: record.record.description, sortOrder: record.record.sortOrder, prototypeCaveat: record.record.prototypeCaveat };
 }
 
 function normalizeActivityEnvelope(record: { uri: string; type: ActivityType; title: string; summary: string; actorName: string; actorUri?: string; date: string; status: string; topics: string[]; relatedEntityUris: string[]; collection: string; trustLabel: string }) {
@@ -667,37 +823,13 @@ function listEventEnvelopes(records: RecordEnvelope[], entityUri?: string, statu
   }).map(normalizeEventEnvelope);
 }
 
-function listVoteElectionEnvelopes(records: RecordEnvelope[]) {
-  return records.filter((record): record is RecordEnvelope & { record: VoteElectionRecord } => record.collection === 'org.dsa.vote.election' && voteElectionRecordSchema.safeParse(record.record).success).map(normalizeVoteElectionEnvelope);
-}
-
-function listVoteProposalEnvelopes(records: RecordEnvelope[], electionUri?: string) {
-  return records.filter((record): record is RecordEnvelope & { record: VoteProposalRecord } => {
-    if (record.collection !== 'org.dsa.vote.proposal') return false;
-    const parsed = voteProposalRecordSchema.safeParse(record.record);
-    return parsed.success && (!electionUri || parsed.data.electionUri === electionUri);
-  }).map(normalizeVoteProposalEnvelope);
-}
-
-function listVoteChoiceEnvelopes(records: RecordEnvelope[], proposalUri?: string) {
-  return records.filter((record): record is RecordEnvelope & { record: VoteChoiceRecord } => {
-    if (record.collection !== 'org.dsa.vote.choice') return false;
-    const parsed = voteChoiceRecordSchema.safeParse(record.record);
-    return parsed.success && (!proposalUri || parsed.data.proposalUri === proposalUri);
-  }).map(normalizeVoteChoiceEnvelope);
-}
-
-async function loadVoteRecords(pool: Pool, collection: 'org.dsa.vote.election' | 'org.dsa.vote.proposal' | 'org.dsa.vote.choice') {
-  const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = $1 order by indexed_at desc`, [collection]);
-  return result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'mock-official', record: row.record } as RecordEnvelope));
-}
-
-export async function bootstrapRepository(databaseUrl: string) {
+export async function bootstrapRepository(databaseUrl: string, options: Partial<Pick<AppConfig, 'AUTO_REPLAY_FIXTURES' | 'REQUIRE_POSTGRES'>> = {}) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    await replayFixtureRecords(allSeedRecords, repo);
+    if (options.AUTO_REPLAY_FIXTURES ?? true) await replayFixtureRecords(allSeedRecords, repo);
     return repo;
-  } catch {
+  } catch (error) {
+    if (options.REQUIRE_POSTGRES) throw error;
     return createMemoryRepository();
   }
 }
@@ -714,7 +846,7 @@ async function loadVerificationAssertions(pool: Pool) {
     const record = row.record as { subjectUri?: string; assertion?: string; issuerHandle?: string; reason?: string };
     if (!record.subjectUri) continue;
     assertions.set(record.subjectUri, {
-      verificationStatus: record.assertion === 'verified' ? 'mock-verified' : record.assertion === 'disputed' ? 'disputed' : record.assertion === 'revoked' ? 'revoked' : 'self-declared',
+      verificationStatus: record.assertion === 'verified' ? 'verified' : record.assertion === 'disputed' ? 'disputed' : record.assertion === 'revoked' ? 'revoked' : 'self-declared',
       verifiedBy: record.issuerHandle,
       verificationReason: record.reason,
     });

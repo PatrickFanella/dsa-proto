@@ -8,6 +8,17 @@ function isConnectionRefused(error: unknown) {
   return false;
 }
 
+function redactConnectionString(connectionString: string) {
+  try {
+    const url = new URL(connectionString);
+    if (url.password) url.password = 'REDACTED';
+    if (url.username) url.username = url.username ? 'REDACTED' : '';
+    return url.toString();
+  } catch {
+    return '<redacted database url>';
+  }
+}
+
 async function main() {
   const files = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
   const fixtureFiles = files.length > 0 ? files : ['fixtures/records.json'];
@@ -18,7 +29,7 @@ async function main() {
     repository = await createPostgresRepository(config.DATABASE_URL);
   } catch (error) {
     if (isConnectionRefused(error)) {
-      console.error(`Could not connect to Postgres at ${config.DATABASE_URL}. Start it with \`make compose-db\` or run \`make fixture-replay\`.`);
+      console.error(`Could not connect to Postgres at ${redactConnectionString(config.DATABASE_URL)}. Start it with \`make compose-db\` or run \`make fixture-replay\`.`);
       process.exitCode = 1;
       return;
     }

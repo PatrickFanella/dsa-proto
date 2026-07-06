@@ -111,7 +111,7 @@ type IngestibleRecordEnvelope = {
   handle: string;
   collection: 'org.dsa.profile.chapter' | 'org.dsa.profile.caucus' | 'org.dsa.affiliation.member';
   indexedAt: string;
-  trustLabel: 'mock-official' | 'self-declared' | 'unverified' | 'experimental';
+  trustLabel: 'official' | 'verified-by-national' | 'verified-by-chapter' | 'verified-by-caucus' | 'self-declared' | 'community-submitted' | 'secondary-source' | 'uncertain' | 'unverified' | 'disputed' | 'revoked' | 'archived';
   record: Record<string, unknown>;
 };
 

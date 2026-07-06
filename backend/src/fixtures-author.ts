@@ -83,7 +83,7 @@ export function buildAuthorFixtureRecord(options: AuthorOptions): RecordEnvelope
       handle: issuerHandle,
       collection: record.$type,
       indexedAt,
-      trustLabel: 'mock-official',
+      trustLabel: 'official',
       record,
     });
   }

@@ -1,6 +1,6 @@
 # Local Demo and Reseed Workflow
 
-This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, public voting registry, and local voting prototype UI.
+This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, public civic records, and fixture-authoring UI.
 
 The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
 
@@ -28,12 +28,6 @@ Then open:
 - Public statements API: <http://localhost:8080/api/statements>
 - Public endorsements API: <http://localhost:8080/api/endorsements>
 - Public events API: <http://localhost:8080/api/events>
-- Public elections API: <http://localhost:8080/api/votes/elections>
-- Public proposals API: <http://localhost:8080/api/votes/proposals>
-- Public choices API: <http://localhost:8080/api/votes/choices>
-- Local voting status API: <http://localhost:8080/api/local-voting/status?voter=member-alpha&proposal=at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities>
-- Local voting credential API: `POST /api/local-voting/credentials`
-- Local voting ballot API: `POST /api/local-voting/ballots`
 
 The Compose stack starts:
 
@@ -53,16 +47,13 @@ On backend startup, `bootstrapRepository` connects to Postgres, ensures the prot
 - `org.dsa.relationship.governance`
 - `org.dsa.endorsement.public`
 - `org.dsa.event.public`
-- `org.dsa.vote.election`
-- `org.dsa.vote.proposal`
-- `org.dsa.vote.choice`
 
 The backend upserts both:
 
 - raw ATProto-shaped envelopes into `atproto_records`
 - normalized searchable directory rows into `directory_entities`
 
-Verification, org-unit, governance-relationship, public endorsement, public event, and public voting registry records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
+Verification, org-unit, governance-relationship, public endorsement, and public event records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
 
 If Postgres is unavailable, the backend falls back to an in-memory repository so local tests and development can still run.
 
@@ -93,7 +84,7 @@ Use the destructive reset only when you intentionally want to discard local Post
    - opt-in member-affiliation examples
 4. Use the search box to find records by name, handle, DID, jurisdiction, focus area, or affiliated organization.
 5. Use the type filter to switch between all records, chapters, caucuses, and member affiliations.
-6. Click a card and review the protocol provenance panel:
+6. Click a card and review the authority/status panel:
    - entity type
    - DID
    - handle
@@ -108,10 +99,8 @@ Use the destructive reset only when you intentionally want to discard local Post
 11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
 12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
 13. Open the public events section to show non-directory event records linked back to hosts and related entities.
-14. Open the public voting registry section to show election, proposal, and choice metadata only; call out that voting itself is private and not implemented here.
-15. Open the local voting prototype section to show the synthetic voter selection, credential issuance, anonymous ballot submission, and opaque receipt; call out that it is local-only and does not bind identity to choice.
-16. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
-17. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
+14. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
+15. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
 17. Optionally try query filters:
 
    ```text
@@ -122,9 +111,6 @@ Use the destructive reset only when you intentionally want to discard local Post
    http://localhost:8080/api/statements
    http://localhost:8080/api/publications
    http://localhost:8080/api/articles
-   http://localhost:8080/api/votes/elections
-   http://localhost:8080/api/votes/proposals?election=at://did:plc:npc/org.dsa.vote.election/2026-annual-convention
-   http://localhost:8080/api/votes/choices?proposal=at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities
    http://localhost:8080/api/activity?entity=at://did:plc:nycdsa/org.dsa.profile.chapter/self
    http://localhost:8080/api/endorsements
    ```
@@ -206,36 +192,17 @@ The web UI also includes a local-only prototype publisher panel for quick chapte
    POST /api/admin/fixtures/ingest
    ```
 
-7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the related subject for provenance review when possible.
+7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the related subject for authority/status review when possible.
 
 This browser flow is intentionally limited to safe local fixture records. It is not authenticated, is not production admin tooling, and should remain local prototype-only until a real security model exists.
-
-## Local voting prototype
-
-The local voting prototype is separate from the public voting registry and uses only `/api/local-voting/*`.
-
-1. Choose a synthetic voter such as `member-alpha`, `member-beta`, or `member-gamma`.
-2. Request a credential for a proposal.
-3. Submit an anonymous ballot with `{ credential, proposalUri, choiceUri }`.
-4. Show the opaque receipt only.
-
-Important caveats:
-
-- local-only / non-production
-- no real auth
-- no binding identity to ballot choice
-- no cryptographic secrecy claim
-- no revoting
-- ballots, credentials, and receipts stay out of `atproto_records`
 
 ## What the prototype proves
 
 - ATProto-shaped public records can be normalized into a simple civic directory.
-- The app can preserve protocol provenance alongside user-readable fields.
+- The app can preserve authority/status context alongside user-readable fields.
 - Search and type filters work over a Postgres-backed read model.
 - Trust assertions and org-chart relationship records can be modeled without becoming ordinary directory cards.
 - The fixture ingestion boundary can be supplemented by real ATProto transport without changing the UI concept.
-- Public election/proposal/choice registry metadata can be served without publishing ballots or eligibility data.
 
 ## Safety boundary
 
@@ -245,11 +212,11 @@ The seed data and future demo data must exclude:
 
 - private member rosters
 - dues or payment status
-- internal votes
+- voting systems, ballots, eligibility proofs, credentials, receipts, and tallies
 - casework
 - disciplinary records
 - private deliberation
 - high-risk organizing logistics
 - personal contact information that was not explicitly published for the demo
 
-Trust labels such as `mock-official`, `self-declared`, `unverified`, and `experimental` are prototype labels only. They are not real DSA verification decisions.
+Trust labels such as `official`, `verified-by-national`, `self-declared`, `unverified`, and `community-submitted` use the governance vocabulary. In this local demo they are fixture labels only, not real DSA verification decisions.

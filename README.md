@@ -1,8 +1,10 @@
 # dsa-proto
 
-dsa-proto is a prototype for exploring how Democratic Socialists of America chapters, caucuses, committees, campaigns, and publications could use AT Protocol as a shared public civic data layer.
+dsa-proto is a prototype for exploring how Democratic Socialists of America infrastructure could use AT Protocol as an official organizational identity, authority, verification, and public civic data layer.
 
 The first project notes live in [`docs/dsa-atproto/`](docs/dsa-atproto/). This repository uses a TypeScript Node backend, Vite React TypeScript frontend, Postgres, Docker Compose, and Open Pilot conventions.
+
+Demo status: the public read-only Almaz demo is live at <https://demo.dsaslate.us>. It is a demo, not production.
 
 ## Quick start
 
@@ -21,6 +23,8 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 ## Current planning docs
 
 - [`docs/dsa-atproto/README.md`](docs/dsa-atproto/README.md) — concept overview
+- [`docs/why-at-proto.md`](docs/why-at-proto.md) — rationale for AT Protocol as DSA-shaped infrastructure
+- [`docs/dsa-atproto/foundation-layer.md`](docs/dsa-atproto/foundation-layer.md) — identity, authority, fixture source-of-truth, publication matrix, and app-boundary baseline
 - [`docs/dsa-atproto/architecture.md`](docs/dsa-atproto/architecture.md) — infrastructure layers
 - [`docs/dsa-atproto/lexicons.md`](docs/dsa-atproto/lexicons.md) — proposed record namespaces and schemas
 - [`docs/dsa-atproto/governance.md`](docs/dsa-atproto/governance.md) — verification, disputes, schema evolution, and safety
@@ -35,17 +39,12 @@ Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/d
 - [`docs/dsa-atproto/atproto-ingestion-spike.md`](docs/dsa-atproto/atproto-ingestion-spike.md) — real ATProto ingestion adapter spike
 - [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
 - [`docs/dsa-atproto/plan-2-public-civic-records.md`](docs/dsa-atproto/plan-2-public-civic-records.md) — next-phase civic records plan
-- [`docs/dsa-atproto/plan-3-internal-voting.md`](docs/dsa-atproto/plan-3-internal-voting.md) — internal voting architecture and safety boundary
-- [`docs/dsa-atproto/plan-4-production-voting.md`](docs/dsa-atproto/plan-4-production-voting.md) — production voting and auditability roadmap
-- [`docs/dsa-atproto/production-voting-architecture-plan.md`](docs/dsa-atproto/production-voting-architecture-plan.md) — production internal voting blockers, security architecture, auditability, and phase order
-- [`docs/dsa-atproto/production-voting-governance-gate.md`](docs/dsa-atproto/production-voting-governance-gate.md) — Phase 0 production voting governance/protocol gate and role matrix
-- [`docs/dsa-atproto/production-voting-implementation-backlog.md`](docs/dsa-atproto/production-voting-implementation-backlog.md) — issue-ready production voting implementation backlog
+- [`docs/superpowers/plans/2026-07-05-foundation-layer-completion.md`](docs/superpowers/plans/2026-07-05-foundation-layer-completion.md) — issue-sized plan to finish the foundation layer
 - [`docs/dsa-atproto/production-demo-safety-guards.md`](docs/dsa-atproto/production-demo-safety-guards.md) — production demo route/UI/deploy guard plan
-- [`docs/dsa-atproto/private-voting-service-design.md`](docs/dsa-atproto/private-voting-service-design.md) — private voting service boundary and data model
-- [`docs/dsa-atproto/production-internal-voting-data-architecture.md`](docs/dsa-atproto/production-internal-voting-data-architecture.md) — production-oriented private voting data architecture plan
-- [`docs/dsa-atproto/voting-protocol-requirements.md`](docs/dsa-atproto/voting-protocol-requirements.md) — required protocol decisions before ballot-casting code
-- [`docs/dsa-atproto/voting-local-protocol-profile.md`](docs/dsa-atproto/voting-local-protocol-profile.md) — local-only non-production voting profile
+- [`deploy/almaz/README.md`](deploy/almaz/README.md) — Almaz demo deploy notes, backup/restore, and monitoring scripts
 - [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
+
+Voting systems and external source-chain records have been removed from current prototype scope. The maintained fixture set is the source of truth for the demo; see the publication matrix in [`docs/dsa-atproto/foundation-layer.md`](docs/dsa-atproto/foundation-layer.md).
 
 ## Open Pilot
 

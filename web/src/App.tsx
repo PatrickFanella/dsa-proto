@@ -139,10 +139,6 @@ export type PublicEventCard = {
   record: { record: Record<string, unknown> };
 };
 
-export type PublicVoteElectionCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; sponsorEntityName: string; opensAt: string; closesAt: string; status: string; eligibilityDescription: string; votingSystemUrl?: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
-export type PublicVoteProposalCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; electionUri: string; title: string; summary: string; bodyMarkdown: string; sponsorEntityUri: string; status: string; prototypeCaveat: string; relatedEntityUris: string[]; record: { record: Record<string, unknown> } };
-export type PublicVoteChoiceCard = { uri: string; did: string; handle: string; collection: string; indexedAt: string; trustLabel: string; proposalUri: string; label: string; description: string; sortOrder: number; prototypeCaveat: string; record: { record: Record<string, unknown> } };
-export type LocalVotingStatus = { prototype: boolean; nonProduction: boolean; eligible: boolean; credentialAvailable: boolean; credentialIssued: boolean; caveat: string };
 
 export type CivicActivityCard = {
   uri: string;
@@ -158,6 +154,23 @@ export type CivicActivityCard = {
   collection: string;
   trustLabel: string;
 };
+
+export type ResolvedRecordAuthority = {
+  record?: { uri: string; collection: string; trustLabel: string; record: Record<string, unknown> };
+  revisions: Array<{ uri: string; cid: string; indexedAt: string }>;
+  status: 'valid' | 'expired' | 'revoked' | 'disputed' | 'unresolved';
+  authorityRecords: Array<{ uri: string; collection: string; record: Record<string, unknown> }>;
+  caveats: string[];
+};
+
+export async function fetchResolvedAuthority(apiBase: string, recordUri: string) {
+  const url = new URL(`${apiBase}/api/records/resolve`);
+  url.searchParams.set('uri', recordUri);
+  const response = await fetch(url.toString());
+  if (!response.ok) return null;
+  const payload = await response.json() as { data?: ResolvedRecordAuthority };
+  return payload.data ?? null;
+}
 
 const orgChartKindLabels: Record<string, string> = {
   'national-committee': 'National committees',
@@ -184,8 +197,8 @@ const fallbackEntities: DirectoryCard[] = [
     handle: 'nyc.dsausa.org',
     did: 'did:plc:nycdsa',
     jurisdiction: 'New York City, NY',
-    trustLabel: 'mock-official',
-    verificationStatus: 'mock-verified',
+    trustLabel: 'official',
+    verificationStatus: 'verified',
     verifiedBy: 'dsausa.org',
     verificationReason: 'Prototype national verification assertion for the NYC chapter example.',
     status: 'active',
@@ -200,7 +213,7 @@ const fallbackEntities: DirectoryCard[] = [
     handle: 'climate.dsausa.org',
     did: 'did:plc:climatecaucus',
     jurisdiction: 'climate justice organizing',
-    trustLabel: 'experimental',
+    trustLabel: 'community-submitted',
     verificationStatus: 'disputed',
     verifiedBy: 'nyc.dsausa.org',
     verificationReason: 'Experimental caucus status is shown as disputed for prototype trust-state coverage.',
@@ -251,35 +264,30 @@ const fallbackRegistryHealth: RegistryHealthPayload = {
 };
 
 const fallbackStatements: PublicStatementCard[] = [
-  { uri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'Welcome to the prototype chapter feed', summary: 'A safe sample statement for the local demo.', bodyMarkdown: 'This prototype statement shows how a chapter post can point back to the registry.', issuerUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', issuerName: 'New York City DSA', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'directory'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
-  { uri: 'at://did:plc:climatecaucus/org.dsa.statement.public/community-note', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'experimental', title: 'Climate caucus demo update', summary: 'Prototype caucus note linking back to the public directory.', bodyMarkdown: 'This is a short demo statement about public-facing organizing and education.', issuerUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', issuerName: 'DSA Climate Caucus', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['climate', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
-  { uri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'Public governance demo note', summary: 'A short org-unit statement for the prototype feed.', bodyMarkdown: 'Public prototype note for governance and publication examples only.', issuerUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', issuerName: 'National Political Committee', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['governance', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+  { uri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', title: 'Welcome to the prototype chapter feed', summary: 'A safe sample statement for the local demo.', bodyMarkdown: 'This prototype statement shows how a chapter post can point back to the registry.', issuerUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', issuerName: 'New York City DSA', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'directory'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+  { uri: 'at://did:plc:climatecaucus/org.dsa.statement.public/community-note', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', title: 'Climate caucus demo update', summary: 'Prototype caucus note linking back to the public directory.', bodyMarkdown: 'This is a short demo statement about public-facing organizing and education.', issuerUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', issuerName: 'DSA Climate Caucus', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['climate', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
+  { uri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.statement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', title: 'Public governance demo note', summary: 'A short org-unit statement for the prototype feed.', bodyMarkdown: 'Public prototype note for governance and publication examples only.', issuerUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', issuerName: 'National Political Committee', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['governance', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], status: 'published', record: { record: { $type: 'org.dsa.statement.public' } } },
 ];
 
 const fallbackPublications: PublicationProfileCard[] = [
-  { uri: 'at://did:plc:demleft/org.dsa.publication.profile/self', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.profile', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', name: 'Democratic Left', shortName: 'Dem Left', publisherUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', publisherName: 'National Political Committee', website: 'https://www.dsausa.org/democratic-left/', status: 'active', record: { record: { $type: 'org.dsa.publication.profile' } } },
+  { uri: 'at://did:plc:demleft/org.dsa.publication.profile/self', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.profile', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', name: 'Democratic Left', shortName: 'Dem Left', publisherUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', publisherName: 'National Political Committee', website: 'https://www.dsausa.org/democratic-left/', status: 'active', record: { record: { $type: 'org.dsa.publication.profile' } } },
 ];
 
 const fallbackArticles: PublicationArticleCard[] = [
-  { uri: 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.article', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', publicationUri: 'at://did:plc:demleft/org.dsa.publication.profile/self', publicationName: 'Democratic Left', title: 'A public demo article for the prototype', summary: 'Example article showing publication/article records end-to-end.', bodyMarkdown: 'This prototype article links the publication layer back to a chapter and the org chart.', authorName: 'DSA editorial collective', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.publication.article' } } },
+  { uri: 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece', did: 'did:plc:demleft', handle: 'dsausa.org', collection: 'org.dsa.publication.article', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', publicationUri: 'at://did:plc:demleft/org.dsa.publication.profile/self', publicationName: 'Democratic Left', title: 'A public demo article for the prototype', summary: 'Example article showing publication/article records end-to-end.', bodyMarkdown: 'This prototype article links the publication layer back to a chapter and the org chart.', authorName: 'DSA editorial collective', publishedAt: '2026-07-01T00:00:00.000Z', topics: ['prototype', 'publication'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:nycdsa/org.dsa.profile.chapter/self'], status: 'published', record: { record: { $type: 'org.dsa.publication.article' } } },
 ];
 
 const fallbackEndorsements: PublicEndorsementCard[] = [
-  { uri: 'at://did:plc:nycdsa/org.dsa.endorsement.public/mock-nyc-city-council', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.endorsement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', endorsingEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', endorsingEntityName: 'New York City DSA', candidateOrMeasureName: 'Prototype candidate endorsement sample', officeOrMeasure: 'City Council District 1', jurisdiction: 'New York City, NY', electionDate: '2026-11-03', status: 'active', statementUri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note', sourceUrl: 'https://example.org/public-prototype/endorsements/nyc-city-council', topics: ['prototype', 'elections', 'municipal'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self', 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note'], record: { record: { $type: 'org.dsa.endorsement.public' } } },
-  { uri: 'at://did:plc:npc/org.dsa.endorsement.public/mock-proposal-measure', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.endorsement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', endorsingEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', endorsingEntityName: 'National Political Committee', candidateOrMeasureName: 'Prototype ballot measure sample', officeOrMeasure: 'Housing and tenant protections measure', jurisdiction: 'National / prototype', electionDate: '2026-11-03', status: 'archived', statementUri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', sourceUrl: 'https://example.org/public-prototype/endorsements/npc-measure', topics: ['prototype', 'ballot-measure', 'housing'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece'], record: { record: { $type: 'org.dsa.endorsement.public' } } },
+  { uri: 'at://did:plc:nycdsa/org.dsa.endorsement.public/mock-nyc-city-council', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.endorsement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', endorsingEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', endorsingEntityName: 'New York City DSA', candidateOrMeasureName: 'Prototype candidate endorsement sample', officeOrMeasure: 'City Council District 1', jurisdiction: 'New York City, NY', electionDate: '2026-11-03', status: 'active', statementUri: 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note', sourceUrl: 'https://example.org/public-prototype/endorsements/nyc-city-council', topics: ['prototype', 'elections', 'municipal'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self', 'at://did:plc:nycdsa/org.dsa.statement.public/welcome-note'], record: { record: { $type: 'org.dsa.endorsement.public' } } },
+  { uri: 'at://did:plc:npc/org.dsa.endorsement.public/mock-proposal-measure', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.endorsement.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', endorsingEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', endorsingEntityName: 'National Political Committee', candidateOrMeasureName: 'Prototype public campaign endorsement sample', officeOrMeasure: 'Housing and tenant protections measure', jurisdiction: 'National / prototype', electionDate: '2026-11-03', status: 'archived', statementUri: 'at://did:plc:npc/org.dsa.statement.public/governance-note', sourceUrl: 'https://example.org/public-prototype/endorsements/npc-measure', topics: ['prototype', 'campaign', 'housing'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.publication.article/welcome-piece'], record: { record: { $type: 'org.dsa.endorsement.public' } } },
 ];
 
 const fallbackEvents: PublicEventCard[] = [
-  { uri: 'at://did:plc:nycdsa/org.dsa.event.public/orientation', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NYC DSA public orientation', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'New York City DSA', startsAt: '2026-07-15T18:00:00.000Z', mode: 'online', publicUrl: 'https://example.org/public-prototype/events/nyc-orientation', status: 'scheduled', topics: ['welcome', 'membership', 'prototype'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], record: { record: { $type: 'org.dsa.event.public' } } },
-  { uri: 'at://did:plc:climatecaucus/org.dsa.event.public/briefing', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'experimental', title: 'Climate caucus public briefing', hostEntityUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', hostEntityName: 'DSA Climate Caucus', startsAt: '2026-07-20T00:00:00.000Z', endsAt: '2026-07-20T01:00:00.000Z', mode: 'hybrid', publicUrl: 'https://example.org/public-prototype/events/climate-briefing', locationLabel: 'Public demo location shared for the prototype only', status: 'scheduled', topics: ['climate', 'education', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], record: { record: { $type: 'org.dsa.event.public' } } },
-  { uri: 'at://did:plc:npc/org.dsa.event.public/governance-forum', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: 'NPC public governance forum', hostEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', hostEntityName: 'National Political Committee', startsAt: '2026-07-25T22:00:00.000Z', mode: 'in-person', locationLabel: 'Prototype public session room', status: 'archived', topics: ['governance', 'public process', 'prototype'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+  { uri: 'at://did:plc:nycdsa/org.dsa.event.public/orientation', did: 'did:plc:nycdsa', handle: 'nyc.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', title: 'NYC DSA public orientation', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'New York City DSA', startsAt: '2026-07-15T18:00:00.000Z', mode: 'online', publicUrl: 'https://example.org/public-prototype/events/nyc-orientation', status: 'scheduled', topics: ['welcome', 'membership', 'prototype'], relatedEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+  { uri: 'at://did:plc:climatecaucus/org.dsa.event.public/briefing', did: 'did:plc:climatecaucus', handle: 'climate.dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', title: 'Climate caucus public briefing', hostEntityUri: 'at://did:plc:climatecaucus/org.dsa.profile.caucus/self', hostEntityName: 'DSA Climate Caucus', startsAt: '2026-07-20T00:00:00.000Z', endsAt: '2026-07-20T01:00:00.000Z', mode: 'hybrid', publicUrl: 'https://example.org/public-prototype/events/climate-briefing', locationLabel: 'Public demo location shared for the prototype only', status: 'scheduled', topics: ['climate', 'education', 'prototype'], relatedEntityUris: ['at://did:plc:climatecaucus/org.dsa.profile.caucus/self'], record: { record: { $type: 'org.dsa.event.public' } } },
+  { uri: 'at://did:plc:npc/org.dsa.event.public/governance-forum', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'official', title: 'NPC public governance forum', hostEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', hostEntityName: 'National Political Committee', startsAt: '2026-07-25T22:00:00.000Z', mode: 'in-person', locationLabel: 'Prototype public session room', status: 'archived', topics: ['governance', 'public process', 'prototype'], relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.event.public' } } },
 ];
 
-const fallbackVoteElections: PublicVoteElectionCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.election/2026-annual-convention', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.election', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', title: '2026 Annual Convention votes', summary: 'Prototype public notice for convention motions and resolutions.', bodyMarkdown: 'Public metadata only. Voting itself is handled in a private system and is not implemented in this slice.', sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', sponsorEntityName: 'National Political Committee', opensAt: '2026-08-01T00:00:00.000Z', closesAt: '2026-08-15T00:00:00.000Z', status: 'scheduled', eligibilityDescription: 'Eligibility is determined privately and is not published here.', votingSystemUrl: 'https://example.org/public-prototype/voting-registry', prototypeCaveat: 'Prototype/public metadata only; no ballots, rosters, eligibility proofs, or vote results.', relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:chapterdelegates/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.vote.election' } } }];
-const fallbackVoteProposals: PublicVoteProposalCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.proposal/2026-convention-priorities', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.proposal', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', electionUri: fallbackVoteElections[0].uri, title: 'Convention priorities platform', summary: 'Public proposal metadata for a convention vote item.', bodyMarkdown: 'This proposal record only describes the public question text and metadata. It does not contain ballots or tallying.', sponsorEntityUri: 'at://did:plc:npc/org.dsa.profile.orgUnit/self', status: 'active', prototypeCaveat: 'Public proposal metadata only; private voting service will hold ballots later.', relatedEntityUris: ['at://did:plc:npc/org.dsa.profile.orgUnit/self', 'at://did:plc:demleft/org.dsa.profile.orgUnit/self'], record: { record: { $type: 'org.dsa.vote.proposal' } } }];
-const fallbackVoteChoices: PublicVoteChoiceCard[] = [{ uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-yes', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Approve', description: 'Support the proposal.', sortOrder: 1, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }, { uri: 'at://did:plc:npc/org.dsa.vote.choice/2026-convention-priorities-no', did: 'did:plc:npc', handle: 'dsausa.org', collection: 'org.dsa.vote.choice', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'mock-official', proposalUri: fallbackVoteProposals[0].uri, label: 'Reject', description: 'Do not support the proposal.', sortOrder: 2, prototypeCaveat: 'Public choice label only; does not record any vote.', record: { record: { $type: 'org.dsa.vote.choice' } } }];
-
-const syntheticVoters = ['member-alpha', 'member-beta', 'member-gamma'];
 
 const fallbackActivity: CivicActivityCard[] = [
   { uri: fallbackStatements[0].uri, type: 'statement', title: fallbackStatements[0].title, summary: fallbackStatements[0].summary, actorName: fallbackStatements[0].issuerName, actorUri: fallbackStatements[0].issuerUri, date: fallbackStatements[0].publishedAt, status: fallbackStatements[0].status, topics: fallbackStatements[0].topics, relatedEntityUris: fallbackStatements[0].relatedEntityUris, collection: fallbackStatements[0].collection, trustLabel: fallbackStatements[0].trustLabel },
@@ -288,7 +296,8 @@ const fallbackActivity: CivicActivityCard[] = [
   { uri: fallbackEvents[0].uri, type: 'event', title: fallbackEvents[0].title, summary: fallbackEvents[0].locationLabel ?? fallbackEvents[0].mode, actorName: fallbackEvents[0].hostEntityName, actorUri: fallbackEvents[0].hostEntityUri, date: fallbackEvents[0].startsAt, status: fallbackEvents[0].status, topics: fallbackEvents[0].topics, relatedEntityUris: fallbackEvents[0].relatedEntityUris, collection: fallbackEvents[0].collection, trustLabel: fallbackEvents[0].trustLabel },
 ];
 
-export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all' }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type'] }) {
+export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all', initialResolvedAuthority = null }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type']; initialResolvedAuthority?: ResolvedRecordAuthority | null }) {
+  const demoReadOnly = import.meta.env.VITE_DEMO_READ_ONLY === 'true';
   const [entities, setEntities] = useState(initialEntities);
   const [orgChart, setOrgChart] = useState(initialOrgChart);
   const [registryHealth, setRegistryHealth] = useState(initialRegistryHealth);
@@ -297,6 +306,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [stateFilter, setStateFilter] = useState('all');
   const [jurisdictionTypeFilter, setJurisdictionTypeFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
+  const [resolverTargetUri, setResolverTargetUri] = useState(initialEntities[0]?.id ?? '');
   const [orgChartKindFilter, setOrgChartKindFilter] = useState<string>('all');
   const [orgChartSelectedUnit, setOrgChartSelectedUnit] = useState<string>('');
   const [statements, setStatements] = useState(fallbackStatements);
@@ -304,29 +314,14 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [articles, setArticles] = useState(fallbackArticles);
   const [endorsements, setEndorsements] = useState(fallbackEndorsements);
   const [events, setEvents] = useState(fallbackEvents);
-  const [voteElections, setVoteElections] = useState(fallbackVoteElections);
-  const [voteProposals, setVoteProposals] = useState(fallbackVoteProposals);
-  const [voteChoices, setVoteChoices] = useState(fallbackVoteChoices);
-  const [localVotingVoter, setLocalVotingVoter] = useState(syntheticVoters[0]);
-  const [localVotingProposal, setLocalVotingProposal] = useState(fallbackVoteProposals[0].uri);
-  const [localVotingChoice, setLocalVotingChoice] = useState(fallbackVoteChoices[0].uri);
-  const [localVotingCredential, setLocalVotingCredential] = useState('');
-  const [localVotingReceipt, setLocalVotingReceipt] = useState('');
-  const [localVotingStatus, setLocalVotingStatus] = useState<LocalVotingStatus | null>(null);
-  const [localVotingMessage, setLocalVotingMessage] = useState('');
   const [activity, setActivity] = useState(fallbackActivity);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
+  const [resolvedAuthority, setResolvedAuthority] = useState<ResolvedRecordAuthority | null>(initialResolvedAuthority);
   const preview = useMemo(() => buildChapterFixtureEnvelope(draft), [draft]);
   const verificationPreview = useMemo(() => buildVerificationFixtureEnvelope(verificationDraft), [verificationDraft]);
-
-  useEffect(() => {
-    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/status`);
-    url.searchParams.set('voter', localVotingVoter);
-    url.searchParams.set('proposal', localVotingProposal);
-    fetch(url).then(async (response) => setLocalVotingStatus(await response.json() as LocalVotingStatus)).catch(() => setLocalVotingStatus(null));
-  }, [localVotingVoter, localVotingProposal]);
+  const appLayerExamplePill = <span className="rounded-full border border-zinc-700 px-2 py-1 text-xs uppercase tracking-wide text-zinc-500">app-layer example</span>;
 
   useEffect(() => {
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
@@ -345,8 +340,6 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
       .catch(() => setEntities(initialEntities));
   }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
-  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/elections`).then((r) => r.json()).then((p) => setVoteElections(p.data ?? fallbackVoteElections)).catch(() => setVoteElections(fallbackVoteElections)); fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/proposals`).then((r) => r.json()).then((p) => setVoteProposals(p.data ?? fallbackVoteProposals)).catch(() => setVoteProposals(fallbackVoteProposals)); fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/votes/choices`).then((r) => r.json()).then((p) => setVoteChoices(p.data ?? fallbackVoteChoices)).catch(() => setVoteChoices(fallbackVoteChoices)); }, []);
-
   useEffect(() => {
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`);
     if (orgChartKindFilter !== 'all') url.searchParams.set('kind', orgChartKindFilter);
@@ -357,6 +350,27 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/registry/health`).then((response) => response.json()).then((payload) => setRegistryHealth(payload)).catch(() => setRegistryHealth(initialRegistryHealth));
   }, [initialRegistryHealth]);
+
+  useEffect(() => {
+    if (selectedId) setResolverTargetUri(selectedId);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!resolverTargetUri) {
+      setResolvedAuthority(null);
+      return;
+    }
+    let cancelled = false;
+    const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+    fetchResolvedAuthority(apiBase, resolverTargetUri)
+      .then((payload) => {
+        if (!cancelled) setResolvedAuthority(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedAuthority(null);
+      });
+    return () => { cancelled = true; };
+  }, [resolverTargetUri]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/statements`).then((response) => response.json()).then((payload) => setStatements(payload.data ?? fallbackStatements)).catch(() => setStatements(fallbackStatements));
@@ -444,42 +458,14 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     }
   }
 
-  async function requestLocalVotingCredential(event: FormEvent) {
-    event.preventDefault();
-    setLocalVotingMessage('');
-    const response = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/credentials`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ voterKey: localVotingVoter, proposalUri: localVotingProposal }),
-    });
-    const json = await response.json() as { credential?: string; expiresAt?: string; error?: string };
-    if (!response.ok || !json.credential) return setLocalVotingMessage(json.error ?? 'credential request failed');
-    setLocalVotingCredential(json.credential);
-    setLocalVotingMessage(`Credential issued until ${json.expiresAt}`);
-  }
-
-  async function submitLocalVotingBallot(event: FormEvent) {
-    event.preventDefault();
-    setLocalVotingMessage('');
-    const response = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/local-voting/ballots`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ credential: localVotingCredential, proposalUri: localVotingProposal, choiceUri: localVotingChoice }),
-    });
-    const json = await response.json() as { receipt?: string; error?: string };
-    if (!response.ok || !json.receipt) return setLocalVotingMessage(json.error ?? 'ballot submission failed');
-    setLocalVotingReceipt(json.receipt);
-    setLocalVotingMessage('Ballot accepted.');
-  }
-
   return (
     <main className="min-h-screen bg-zinc-950 px-8 py-12 text-zinc-100">
       <section className="mx-auto max-w-6xl rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
         <p className="text-sm uppercase tracking-[0.3em] text-fuchsia-300">DSA ATProto prototype</p>
         <h1 className="mt-4 text-4xl font-bold">Directory entities</h1>
-        <p className="mt-4 text-zinc-300">Mocked public chapter, caucus, member-affiliation, and verification assertion records are shown below as prototype data.</p>
+        <p className="mt-4 text-zinc-300">Foundation-first local workbench for DSA-shaped identity, authority, verification, roles, and organizational graph records. Publications, events, and endorsements are app-layer examples built on top.</p>
         <p className="mt-2 text-sm text-amber-300">Verification labels are prototype trust metadata only, not real DSA legitimacy or membership proof.</p>
-        <p className="mt-2 text-sm text-cyan-300">Local prototype publishing only: these forms create safe fixture records for the mock backend, not real ATProto/PDS publishing or real DSA legitimacy.</p>
+        <p className="mt-2 text-sm text-cyan-300">{demoReadOnly ? 'Read-only public demo: publisher controls are disabled; this view only reads curated fixture records.' : 'Local prototype publishing only: these forms create safe fixture records for the local backend, not real ATProto/PDS publishing or real DSA legitimacy.'}</p>
         <section className="mt-8 rounded-xl border border-emerald-400/30 bg-zinc-950 p-5">
           <h2 className="text-2xl font-semibold">How DSA operates</h2>
           <p className="mt-2 text-sm text-zinc-300">Source-linked public organization chart slice.</p>
@@ -544,7 +530,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           )}
         </section>
         <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Public publications</h2>
+          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public publications</h2>{appLayerExamplePill}</div>
           <p className="mt-2 text-sm text-zinc-300">Publication profiles and articles are loaded from the prototype backend and kept out of directory entities.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {publications.map((publication) => (
@@ -575,7 +561,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           </div>
         </section>
         <section className="mt-8 rounded-xl border border-emerald-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Public endorsements</h2>
+          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public endorsements</h2>{appLayerExamplePill}</div>
           <p className="mt-2 text-sm text-zinc-300">Public endorsement records are loaded from the prototype backend and kept out of directory entities.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {endorsements.map((endorsement) => (
@@ -597,7 +583,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           </div>
         </section>
         <section className="mt-8 rounded-xl border border-amber-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Public events</h2>
+          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public events</h2>{appLayerExamplePill}</div>
           <p className="mt-2 text-sm text-zinc-300">Public event records are loaded from the prototype backend and kept out of directory entities.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             {events.map((event) => (
@@ -618,48 +604,8 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
             ))}
           </div>
         </section>
-        <section className="mt-8 rounded-xl border border-rose-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Public voting registry</h2>
-          <p className="mt-2 text-sm text-zinc-300">Public election, proposal, and choice metadata only. Voting itself is private and not implemented in this slice.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <div className="space-y-3">{voteElections.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-zinc-300">{item.summary}</p><p className="mt-1 text-zinc-400">{item.sponsorEntityName}</p><p className="mt-1 text-zinc-500">{item.status} · {item.opensAt} → {item.closesAt}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
-            <div className="space-y-3">{voteProposals.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-zinc-300">{item.summary}</p><p className="mt-1 text-zinc-500">Election: {item.electionUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
-            <div className="space-y-3">{voteChoices.map((item) => <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><h3 className="text-lg font-semibold">{item.label}</h3><p className="mt-2 text-zinc-300">{item.description}</p><p className="mt-1 text-zinc-500">Proposal: {item.proposalUri}</p><p className="mt-1 text-zinc-500">{item.prototypeCaveat}</p></article>)}</div>
-          </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-yellow-400/40 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Local voting prototype</h2>
-          <p className="mt-2 text-sm text-amber-300">Local-only non-production prototype. No real auth, no binding, no cryptographic secrecy, and no revoting.</p>
-          <p className="mt-2 text-sm text-zinc-300">Two-phase flow: request a credential with a synthetic voter, then submit an anonymous ballot with the credential only.</p>
-          <div className="mt-3 grid gap-2 text-sm text-zinc-300">
-            <p>Eligible voters: {syntheticVoters.join(', ')}</p>
-            <p>Status: {localVotingStatus ? `eligible=${String(localVotingStatus.eligible)} credentialIssued=${String(localVotingStatus.credentialIssued)}` : 'loading'}</p>
-            {localVotingStatus ? <p>{localVotingStatus.caveat}</p> : null}
-          </div>
-          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={requestLocalVotingCredential}>
-            <label className="grid gap-2 text-sm text-zinc-300">Synthetic voter
-              <select aria-label="Synthetic voter" value={localVotingVoter} onChange={(event) => setLocalVotingVoter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{syntheticVoters.map((voter) => <option key={voter} value={voter}>{voter}</option>)}</select>
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300">Proposal
-              <select aria-label="Proposal" value={localVotingProposal} onChange={(event) => setLocalVotingProposal(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{voteProposals.map((proposal) => <option key={proposal.uri} value={proposal.uri}>{proposal.title}</option>)}</select>
-            </label>
-            <button type="submit" className="rounded-lg border border-yellow-400/50 bg-yellow-500/20 px-4 py-2 text-sm font-semibold text-yellow-100 md:col-span-2">Request credential</button>
-          </form>
-          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitLocalVotingBallot}>
-            <label className="grid gap-2 text-sm text-zinc-300">Credential
-              <input aria-label="Credential" value={localVotingCredential} onChange={(event) => setLocalVotingCredential(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300">Choice
-              <select aria-label="Choice" value={localVotingChoice} onChange={(event) => setLocalVotingChoice(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">{voteChoices.filter((choice) => choice.proposalUri === localVotingProposal).map((choice) => <option key={choice.uri} value={choice.uri}>{choice.label}</option>)}</select>
-            </label>
-            <button type="submit" className="rounded-lg border border-yellow-400/50 bg-yellow-500/20 px-4 py-2 text-sm font-semibold text-yellow-100 md:col-span-2">Cast anonymous ballot</button>
-          </form>
-          <p className="mt-3 text-sm text-amber-300">Ballot submission uses the credential only. Anonymous ballot storage is private and not exposed in public records.</p>
-          {localVotingMessage ? <p className="mt-3 text-sm text-cyan-200">{localVotingMessage}</p> : null}
-          {localVotingReceipt ? <p className="mt-2 text-sm text-zinc-300">Opaque receipt: {localVotingReceipt}</p> : null}
-        </section>
         <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Civic activity</h2>
+          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Civic activity</h2>{appLayerExamplePill}</div>
           <p className="mt-2 text-sm text-zinc-300">Unified feed across public statements, articles, endorsements, and events.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {activity.map((item) => (
@@ -678,7 +624,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           </div>
         </section>
         <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Public statements</h2>
+          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public statements</h2>{appLayerExamplePill}</div>
           <p className="mt-2 text-sm text-zinc-300">Public statement records are loaded from the prototype backend and kept out of directory entities.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             {statements.map((statement) => (
@@ -728,47 +674,56 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           </label>
         </div>
         <p className="mt-4 text-sm text-zinc-300">Showing {visibleEntities.length} of {totalCount} records{typeFilter === 'chapter' ? ` · ${chapterCount} chapters total` : ''}</p>
-        <section className="mt-8 rounded-xl border border-fuchsia-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Local prototype publisher</h2>
-          <p className="mt-2 text-sm text-zinc-300">Create a chapter fixture and send it to <code>/api/admin/fixtures/ingest</code>.</p>
-          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishPrototypeChapter}>
-            {(['name', 'shortName', 'handle', 'did', 'website', 'jurisdictionName', 'jurisdictionState'] as const).map((field) => (
-              <label key={field} className="grid gap-2 text-sm text-zinc-300">
-                {field}
-                <input aria-label={field} value={draft[field]} onChange={(event) => setDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
-              </label>
-            ))}
-            <button type="submit" className="rounded-lg border border-fuchsia-400/50 bg-fuchsia-500/20 px-4 py-2 text-sm font-semibold text-fuchsia-100 md:col-span-2">Publish local fixture</button>
-          </form>
-          <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a chapter fixture.</p>
-          {submitState ? <p className="mt-3 text-sm text-cyan-200">{submitState}</p> : null}
-          <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(preview, null, 2)}</pre>
-        </section>
-        <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">Local verification assertion publisher</h2>
-          <p className="mt-2 text-sm text-zinc-300">Create a local mock verification/dispute assertion and send it to <code>/api/admin/fixtures/ingest</code>.</p>
-          <p className="mt-2 text-sm text-amber-300">This does not create real DSA legitimacy, membership proof, or real PDS records.</p>
-          <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishVerificationAssertion}>
-            {(['subjectUri', 'subjectDid', 'issuerDid', 'issuerHandle', 'reason'] as const).map((field) => (
-              <label key={field} className="grid gap-2 text-sm text-zinc-300">
-                {field}
-                <input aria-label={field} value={verificationDraft[field]} onChange={(event) => setVerificationDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
-              </label>
-            ))}
-            <label className="grid gap-2 text-sm text-zinc-300">
-              assertion
-              <select aria-label="assertion" value={verificationDraft.assertion} onChange={(event) => setVerificationDraft((current) => ({ ...current, assertion: event.target.value as VerificationDraft['assertion'] }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
-                <option value="verified">verified</option>
-                <option value="disputed">disputed</option>
-                <option value="revoked">revoked</option>
-                <option value="self-declared">self-declared</option>
-              </select>
-            </label>
-            <button type="submit" className="rounded-lg border border-cyan-400/50 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 md:col-span-2">Publish verification assertion</button>
-          </form>
-          <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a local verification assertion fixture.</p>
-          <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(verificationPreview, null, 2)}</pre>
-        </section>
+        {demoReadOnly ? (
+          <section className="mt-8 rounded-xl border border-amber-400/40 bg-zinc-950 p-5">
+            <h2 className="text-2xl font-semibold">Read-only public demo</h2>
+            <p className="mt-2 text-sm text-zinc-300">Publisher controls are disabled for the public demo. This view only reads curated fixture records.</p>
+          </section>
+        ) : (
+          <>
+            <section className="mt-8 rounded-xl border border-fuchsia-400/30 bg-zinc-950 p-5">
+              <h2 className="text-2xl font-semibold">Local prototype publisher</h2>
+              <p className="mt-2 text-sm text-zinc-300">Create a chapter fixture and send it to <code>/api/admin/fixtures/ingest</code>.</p>
+              <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishPrototypeChapter}>
+                {(['name', 'shortName', 'handle', 'did', 'website', 'jurisdictionName', 'jurisdictionState'] as const).map((field) => (
+                  <label key={field} className="grid gap-2 text-sm text-zinc-300">
+                    {field}
+                    <input aria-label={field} value={draft[field]} onChange={(event) => setDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
+                  </label>
+                ))}
+                <button type="submit" className="rounded-lg border border-fuchsia-400/50 bg-fuchsia-500/20 px-4 py-2 text-sm font-semibold text-fuchsia-100 md:col-span-2">Publish local fixture</button>
+              </form>
+              <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a chapter fixture.</p>
+              {submitState ? <p className="mt-3 text-sm text-cyan-200">{submitState}</p> : null}
+              <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(preview, null, 2)}</pre>
+            </section>
+            <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
+              <h2 className="text-2xl font-semibold">Local verification assertion publisher</h2>
+              <p className="mt-2 text-sm text-zinc-300">Create a local fixture verification/dispute assertion and send it to <code>/api/admin/fixtures/ingest</code>.</p>
+              <p className="mt-2 text-sm text-amber-300">This does not create real DSA legitimacy, membership proof, or real PDS records.</p>
+              <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishVerificationAssertion}>
+                {(['subjectUri', 'subjectDid', 'issuerDid', 'issuerHandle', 'reason'] as const).map((field) => (
+                  <label key={field} className="grid gap-2 text-sm text-zinc-300">
+                    {field}
+                    <input aria-label={field} value={verificationDraft[field]} onChange={(event) => setVerificationDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
+                  </label>
+                ))}
+                <label className="grid gap-2 text-sm text-zinc-300">
+                  assertion
+                  <select aria-label="assertion" value={verificationDraft.assertion} onChange={(event) => setVerificationDraft((current) => ({ ...current, assertion: event.target.value as VerificationDraft['assertion'] }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
+                    <option value="verified">verified</option>
+                    <option value="disputed">disputed</option>
+                    <option value="revoked">revoked</option>
+                    <option value="self-declared">self-declared</option>
+                  </select>
+                </label>
+                <button type="submit" className="rounded-lg border border-cyan-400/50 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 md:col-span-2">Publish verification assertion</button>
+              </form>
+              <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a local verification assertion fixture.</p>
+              <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(verificationPreview, null, 2)}</pre>
+            </section>
+          </>
+        )}
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
           <div className="grid gap-4">
             {visibleEntities.map((entity) => (
@@ -805,7 +760,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
           <aside className="rounded-xl border border-cyan-400/40 bg-zinc-950 p-5">
             {selectedEntity ? (
               <>
-                <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Protocol provenance</p>
+                <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Fixture authority</p>
                 <h2 className="mt-3 text-2xl font-semibold">{selectedEntity.name}</h2>
                 <dl className="mt-4 grid gap-2 text-sm text-zinc-300">
                   <div><dt className="inline text-zinc-500">Entity type:</dt> <dd className="inline">{selectedEntity.type}</dd></div>
@@ -818,8 +773,94 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   {selectedEntity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{selectedEntity.verifiedBy}</dd></div> : null}
                 </dl>
                 <p className="mt-4 text-sm text-amber-300">{selectedEntity.verificationReason ?? (selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.')}</p>
+                <section className="mt-4 rounded-lg border border-cyan-400/30 bg-zinc-950 p-4">
+                  <h3 className="text-lg font-semibold text-cyan-100">Authority and status</h3>
+                  {resolvedAuthority ? (
+                    <div className="mt-3 space-y-4 text-sm text-zinc-300">
+                      {/* Status */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-500">Authority status:</span>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-[0.2em] ${
+                          resolvedAuthority.status === 'valid' ? 'border-emerald-400/50 text-emerald-200' :
+                          resolvedAuthority.status === 'expired' ? 'border-amber-400/50 text-amber-200' :
+                          resolvedAuthority.status === 'revoked' ? 'border-rose-400/50 text-rose-200' :
+                          resolvedAuthority.status === 'disputed' ? 'border-orange-400/50 text-orange-200' :
+                          'border-zinc-500 text-zinc-400'
+                        }`}>{resolvedAuthority.status}</span>
+                      </div>
+
+                      {/* Current Record */}
+                      {resolvedAuthority.record && (
+                        <div>
+                          <h4 className="text-zinc-500 mb-1">Current record</h4>
+                          <div className="rounded border border-zinc-800 bg-zinc-900 p-2 space-y-1 text-xs">
+                            <div><span className="text-zinc-500">URI:</span> <code className="text-cyan-300">{resolvedAuthority.record.uri}</code></div>
+                            <div><span className="text-zinc-500">Collection:</span> {resolvedAuthority.record.collection}</div>
+                            <div><span className="text-zinc-500">Trust label:</span> {resolvedAuthority.record.trustLabel}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Revisions */}
+                      {resolvedAuthority.revisions.length > 0 && (
+                        <div>
+                          <h4 className="text-zinc-500 mb-1">Immutable revisions ({resolvedAuthority.revisions.length})</h4>
+                          <div className="space-y-1">
+                            {resolvedAuthority.revisions.map((revision) => (
+                              <div key={revision.cid} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
+                                <div><span className="text-zinc-500">CID:</span> <code className="text-amber-300">{revision.cid}</code></div>
+                                <div><span className="text-zinc-500">Indexed:</span> {new Date(revision.indexedAt).toISOString()}</div>
+                                <button
+                                  type="button"
+                                  onClick={() => setResolverTargetUri(revision.uri)}
+                                  className="mt-1 text-cyan-400 hover:text-cyan-300 underline"
+                                >
+                                  Drill down →
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Authority Records */}
+                      {resolvedAuthority.authorityRecords.length > 0 && (
+                        <div>
+                          <h4 className="text-zinc-500 mb-1">Authority records ({resolvedAuthority.authorityRecords.length})</h4>
+                          <div className="space-y-1">
+                            {resolvedAuthority.authorityRecords.map((authRecord) => (
+                              <div key={authRecord.uri} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
+                                <div><span className="text-zinc-500">URI:</span> <code className="text-cyan-300">{authRecord.uri}</code></div>
+                                <div><span className="text-zinc-500">Collection:</span> {authRecord.collection}</div>
+                                <button
+                                  type="button"
+                                  onClick={() => setResolverTargetUri(authRecord.uri)}
+                                  className="mt-1 text-cyan-400 hover:text-cyan-300 underline"
+                                >
+                                  Drill down →
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Caveats */}
+                      {resolvedAuthority.caveats.length > 0 && (
+                        <div>
+                          <h4 className="text-zinc-500 mb-1">Caveats</h4>
+                          {resolvedAuthority.caveats.map((caveat) => (
+                            <p key={caveat} className="text-amber-300 text-xs">{caveat}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-zinc-500">No resolver data loaded for this record.</p>
+                  )}
+                </section>
                 <section className="mt-5 rounded-lg border border-cyan-400/30 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">Related civic activity</h3>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related civic activity</h3>{appLayerExamplePill}</div>
                   {relatedActivity.length ? (
                     <div className="mt-3 grid gap-3">
                       {relatedActivity.map((item) => (
@@ -839,7 +880,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   ) : <p className="mt-3 text-sm text-zinc-400">No civic activity linked to this entity yet.</p>}
                 </section>
                 <section className="mt-5 rounded-lg border border-sky-400/30 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">Related public statements</h3>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public statements</h3>{appLayerExamplePill}</div>
                   {relatedStatements.length ? (
                     <div className="mt-3 grid gap-3">
                       {relatedStatements.map((statement) => (
@@ -859,7 +900,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   )}
                 </section>
                 <section className="mt-5 rounded-lg border border-violet-400/30 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">Related publication articles</h3>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related publication articles</h3>{appLayerExamplePill}</div>
                   {relatedArticles.length ? (
                     <div className="mt-3 grid gap-3">
                       {relatedArticles.map((article) => (
@@ -878,7 +919,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   )}
                 </section>
                 <section className="mt-5 rounded-lg border border-emerald-400/30 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">Related public endorsements</h3>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public endorsements</h3>{appLayerExamplePill}</div>
                   {relatedEndorsements.length ? (
                     <div className="mt-3 grid gap-3">
                       {relatedEndorsements.map((endorsement) => (
@@ -898,7 +939,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                   )}
                 </section>
                 <section className="mt-5 rounded-lg border border-amber-400/30 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">Related public events</h3>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public events</h3>{appLayerExamplePill}</div>
                   {relatedEvents.length ? (
                     <div className="mt-3 grid gap-3">
                       {relatedEvents.map((event) => (

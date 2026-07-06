@@ -1,0 +1,19 @@
+# Add this site block to the Almaz Caddyfile after confirming the hostname.
+# Current Almaz Caddyfile path from the Almaz runbook:
+# /opt/server/management/config/caddy/Caddyfile
+
+http://dsaslate.us {
+  redir https://demo.dsaslate.us{uri} 308
+}
+
+http://{$DSA_PROTO_DEMO_HOST:demo.dsaslate.us} {
+  encode zstd gzip
+
+  @blocked path /api/admin*
+  respond @blocked 404
+
+  @api path /api* /health /ready
+  reverse_proxy @api http://dsa-proto-demo-api:8080
+
+  reverse_proxy http://dsa-proto-demo-web:80
+}

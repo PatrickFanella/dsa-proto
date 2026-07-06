@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords } from './domain.js';
+import { authoritySeedRecords, chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords } from './domain.js';
 import { loadRegistryHealthReport } from './registry-health.js';
 
 async function writeFixture(records: unknown[]) {
@@ -14,9 +14,11 @@ async function writeFixture(records: unknown[]) {
 
 describe('registry health', () => {
   it('accepts a healthy canonical fixture set and ignores non-directory duplicate checks', async () => {
-    const file = await writeFixture([...chapterSeedRecords, ...caucusSeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords]);
+    const file = await writeFixture([...chapterSeedRecords, ...caucusSeedRecords, ...authoritySeedRecords, ...memberAffiliationSeedRecords, ...verificationAssertionSeedRecords]);
     const report = await loadRegistryHealthReport(file);
 
+    expect(report.totalRecords).toBeGreaterThan(0);
+    expect(report.validRecords).toBe(report.totalRecords);
     expect(report.invalidRecords).toHaveLength(0);
     expect(report.duplicates.uri).toHaveLength(0);
     expect(report.duplicates.did).toHaveLength(0);

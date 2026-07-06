@@ -1,6 +1,6 @@
 # Governance
 
-The technical system only works if legitimacy, safety, and change management are explicit. AT Protocol can publish signed claims, but DSA needs governance to decide which claims are official, verified, disputed, revoked, or merely self-declared.
+The technical system only works if legitimacy, safety, and change management are explicit. AT Protocol can publish signed claims, but DSA needs governance to decide which claims are official, verified, disputed, revoked, archived, community-submitted, or merely self-declared.
 
 ## Core questions
 
@@ -67,7 +67,22 @@ revoked
 archived
 ```
 
-Prototype note: `org.dsa.verification.assertion` is a safe mock record type used to annotate existing directory entities. It is public-only, additive, and intentionally does not imply real DSA legitimacy.
+Local demo note: `org.dsa.verification.assertion` models how public verification, dispute, revocation, and self-declaration assertions could work. In production, these records need a trust root, issuer authorization checks, key custody, recovery, rotation, revocation, dispute handling, and audit policy before apps treat them as official legitimacy.
+
+## Authority and status model
+
+For official infrastructure, record trust is primarily institutional authority, not just a link to an external source.
+
+Every official or verified record should identify:
+
+- issuing DID and current handle;
+- organizational unit or role represented by the issuer;
+- authority path that permits this issuer to publish this record type;
+- effective date and, when applicable, expiration date;
+- superseded, amended, revoked, archived, or disputed records;
+- public source URLs or evidence where useful for auditability.
+
+An official signature proves control of a key, not permanent legitimacy. Apps should evaluate the signature together with the authority graph, current revocation state, disputes, and safety policy.
 
 ## Chapter verification
 

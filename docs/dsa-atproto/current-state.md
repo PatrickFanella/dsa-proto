@@ -1,12 +1,14 @@
 # Current State
 
-Last regrouped after commit `afea99c Add public voting registry`.
+Last regrouped after removing voting and external source-chain records from the prototype scope.
 
 ## Summary
 
-`dsa-proto` is a local TypeScript/Postgres/React prototype that models public DSA-adjacent records as ATProto-shaped envelopes, indexes them into a read model, and displays them in a directory and org-chart explorer.
+`dsa-proto` is a local TypeScript/Postgres/React prototype for an official DSA-shaped AT Protocol infrastructure base. Its first priority is public identity, authority, verification, roles, and the organizational graph.
 
-It is not a production ATProto service, not an official DSA registry, and not a real PDS publishing workflow.
+It is not a production ATProto service, not an official DSA registry, and not a real PDS publishing workflow. The maintained fixture set is the prototype source of truth. The public demo deployment is live on Almaz at <https://demo.dsaslate.us>, but it remains a demo with explicit safety gates, not production.
+
+See `foundation-layer.md` for the intended foundation boundary and publication matrix.
 
 ## Implemented capabilities
 
@@ -24,12 +26,15 @@ The directory supports:
 - type filter
 - state filter for chapters
 - chapter-kind filter for chapters / organizing committees
-- detail/provenance panel
+- authority/status panel
 - verification status display
 - raw record JSON preview
 - registry health dashboard panel backed by the canonical fixture file
 
 ### Public civic records
+
+These records demonstrate apps that can sit on top of the base layer. They should not drive the architecture until the identity and authority foundation is strong.
+These sections remain useful regression coverage, but foundation work should not add new app-layer scope until the resolver and authority graph are complete.
 
 Implemented Plan 2 civic record types:
 
@@ -45,22 +50,6 @@ The unified civic activity feed is served through `/api/activity` and powers the
 
 Selected entity detail panels also show related public statements, related publication articles, related public endorsements, related public events, and the merged civic activity timeline when the linked URIs point back to the entity.
 
-### Public voting registry
-
-Implemented Slice 1 of Plan 3 as public metadata only:
-
-- `org.dsa.vote.election`
-- `org.dsa.vote.proposal`
-- `org.dsa.vote.choice`
-
-These records are served through `/api/votes/elections`, `/api/votes/proposals`, and `/api/votes/choices`. They render in the UI as a public voting registry section and are intentionally excluded from ordinary directory entities.
-
-This slice does **not** include ballots, eligibility rosters, member identity data, or vote results.
-
-The private voting service design is documented in `private-voting-service-design.md`. It defines the future private boundary for eligibility, authentication, ballots, receipts, tallying, audits, recounts, disputes, and admin controls, but no private voting backend is implemented.
-
-The implementation gate for ballot casting is documented in `voting-protocol-requirements.md`. The narrow local-only non-production profile is documented in `voting-local-protocol-profile.md`, and the prototype is now implemented behind `/api/local-voting/*` using synthetic voters, single-use credentials, anonymous ballot submission, and opaque receipts. Production voting remains blocked.
-
 ### Ingestion and fixture workflows
 
 Implemented ingestion paths:
@@ -73,9 +62,8 @@ Implemented ingestion paths:
 - `GET /api/registry/health`
 - `make fixture-replay`
 - browser `POST /api/admin/fixtures/ingest`
-- opt-in `pnpm --dir backend run ingest:atproto`
 
-The default local path is fixture replay. Live ATProto ingestion is disabled unless explicitly enabled.
+The default local path is fixture replay. The fixture set is the source of truth for the prototype.
 
 ### Trust and verification
 
@@ -85,14 +73,14 @@ Supported trust/verification record:
 
 Verification assertion records can mark a subject as:
 
-- `mock-verified`
+- `verified`
 - `self-declared`
 - `unverified`
 - `disputed`
 - `revoked`
-- `experimental`
+- `community-submitted`
 
-These labels are prototype metadata only.
+These labels use the governance vocabulary. Local/demo fixture status should be shown as caveat metadata, not as `mock-*` trust labels.
 
 ### Org chart explorer
 
@@ -121,15 +109,17 @@ The web UI includes local-only publisher forms for:
 
 These forms post to `POST /api/admin/fixtures/ingest`. They are unauthenticated local prototype tools and must not be exposed as production admin functionality.
 
-## Data sources in the repo
+## Fixture source of truth
 
-- `docs/dsa-chapters.csv`: public chapter list used by `make chapters-import`.
-- `docs/dsa-caucuses.csv`: neutral curated caucus fixture list used by `make caucuses-import`.
+- `docs/dsa-chapters.csv`: chapter fixture input used by `make chapters-import`.
+- `docs/dsa-caucuses.csv`: caucus fixture input used by `make caucuses-import`.
 - `backend/fixtures/records.json`: generated fixture storage replayed into Postgres.
 - `make registry-health`: offline validation for canonical fixture records and duplicate registry identifiers.
 - `GET /api/registry/health`: backend summary endpoint for the same canonical fixture file.
 - Built-in seed arrays in backend domain code.
-- DSA organization chart source documented in `org-chart-alignment.md`.
+- Built-in seed arrays in backend domain code.
+
+These are authored fixtures. The prototype no longer models external source records or source-of-truth chains.
 
 There are also local scratch docs that may remain untracked while being evaluated:
 
@@ -137,14 +127,10 @@ There are also local scratch docs that may remain untracked while being evaluate
 - `docs/caucus-article-extraction.md`
 - `docs/caucus-shape.md`
 
-The local voting prototype intentionally keeps ballots and receipts out of `atproto_records`, uses only synthetic voters like `member-alpha`, `member-beta`, and `member-gamma`, and labels the UI/API as local-only and non-production.
-
-Production voting is tracked separately in `plan-4-production-voting.md`, with supporting architecture docs for production voting security/auditability, private data boundaries, the Phase 0 governance/protocol gate, an issue-ready implementation backlog, and production demo safety guards. The current `/api/local-voting/*` prototype is not the production path.
-
 ## Current architecture
 
 ```text
-CSV / fixture JSON / browser publisher / optional live firehose
+CSV / fixture JSON / browser publisher
           ↓
 RecordEnvelope validation
           ↓
@@ -163,8 +149,7 @@ The prototype should continue to exclude:
 
 - private member rosters
 - dues/payment status
-- internal ballots and private vote records
-- voter rosters, eligibility proofs, auth/session tokens, and vote receipts
+- voting records, ballots, eligibility proofs, auth/session tokens, and vote receipts
 - casework
 - disciplinary records
 - private deliberation
@@ -173,8 +158,23 @@ The prototype should continue to exclude:
 
 ## Recommended next lanes
 
-1. **Source/provenance model**: make sources and caveats first-class for imported records and derived org-chart/caucus data.
+1. **Foundation layer**: stabilize identity, authority, verification, roles, and the org graph before expanding app-specific slices.
 2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
-3. **Expanded civic records**: public statements, publications/articles, endorsements, and events slices implemented.
+3. **Fixture authoring model**: keep the curated fixture set coherent, minimal, and explicit about public/private boundaries.
 4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.
-5. **Production voting plan**: execute the Phase 0 checklist in `production-voting-governance-gate.md`, follow `production-voting-implementation-backlog.md`, and implement `production-demo-safety-guards.md` before any public demo.
+
+## Foundation completion checklist
+
+- [x] Canonical foundation lexicons and status matrix exist.
+- [x] Fixture records include authority, dispute, revocation, and archive records.
+- [x] Raw storage preserves immutable record revisions and current projections.
+- [x] Resolver API explains record authority, disputes, lifecycle state, and caveats.
+- [x] UI shows authority/status summaries from the resolver before app-layer sections for selected directory entities.
+- [x] Tests cover validation, resolver semantics, and safety boundaries.
+- [ ] Full UI drill-down for org units and public records is still pending.
+
+Status note: the checklist above is a historical progress record, not a live audit log. Treat checked items as implementation milestones that were completed during this phase, while unchecked items remain future work.
+
+## Foundation tracer bullet
+
+The implemented foundation tracer bullet now covers backend storage, fixture records, resolver semantics, and a compact UI panel for selected directory entities. A reader can select a chapter or caucus and see resolver status, revision counts, authority records, dispute counts, and the caveat that fixtures are the prototype source of truth. Full drill-down for org units and app-layer public records remains a follow-up before calling the UI explorer complete.

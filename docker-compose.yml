@@ -16,7 +16,9 @@ services:
       retries: 5
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-dsa_proto}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-dsa_proto}?sslmode=disable
     depends_on:
@@ -26,7 +28,12 @@ services:
       - "${API_PORT:-8080}:8080"
 
   web:
-    build: ./web
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_DEMO_READ_ONLY: ${VITE_DEMO_READ_ONLY:-false}
     ports:
       - "${WEB_PORT:-5173}:80"
 

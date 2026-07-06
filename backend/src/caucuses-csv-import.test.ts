@@ -7,7 +7,7 @@ describe('caucus CSV import', () => {
     const csv = [
       'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label,Source,Notes',
       '"North Star Caucus","North Star","Organizational strategy","northstar.example.org,https://backup.example.org",active,,did:plc:dsa-caucus-north-star,unverified,article,public',
-      '"Mass","Mass","Political education",,active,dsa_mass,,experimental,article,commentary'
+      '"Mass","Mass","Political education",,active,dsa_mass,,community-submitted,article,commentary'
     ].join('\n');
 
     const { records, rowsRead } = importCaucusFixturesFromCsvText(csv, []);
@@ -43,7 +43,7 @@ describe('caucus CSV import', () => {
   });
 
   it('preserves non-caucus fixtures and replaces stale generated caucus imports', () => {
-    const csv = 'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label\nClimate Caucus,Climate,Caucus work,https://example.org,active,climate.example,did:plc:dsa-caucus-climate-caucus,experimental';
+    const csv = 'Name,Short Name,Focus Area,Website,Status,Handle,DID,Trust Label\nClimate Caucus,Climate,Caucus work,https://example.org,active,climate.example,did:plc:dsa-caucus-climate-caucus,community-submitted';
     const staleGenerated = { ...caucusSeedRecords[0], did: 'did:plc:dsa-caucus-old-climate', cid: 'bafy-dsa-caucus-old-climate', uri: 'at://did:plc:dsa-caucus-old-climate/org.dsa.profile.caucus/self' };
     const imported = importCaucusFixturesFromCsvText(csv, [staleGenerated, chapterSeedRecords[0], verificationAssertionSeedRecords[0]]);
 

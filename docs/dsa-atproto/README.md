@@ -1,8 +1,8 @@
 # DSA AT Protocol Infrastructure Concept
 
-This document set sketches how the Democratic Socialists of America could use AT Protocol as a shared civic and organizational data layer for chapters, caucuses, committees, campaigns, public statements, endorsements, events, and source-linked political knowledge.
+This document set sketches how the Democratic Socialists of America could use AT Protocol as an official organizational identity, authority, verification, and public civic data layer for chapters, caucuses, committees, campaigns, publications, and other applications built on top.
 
-The core idea is not “DSA joins Bluesky.” It is that DSA could use AT Protocol as a federated public data substrate, with many applications built on top of shared signed records.
+The core idea is not “DSA joins Bluesky.” It is that DSA could use AT Protocol as a federated public infrastructure base, with many applications built on top of shared signed records.
 
 ```text
 People / Chapters / Caucuses publish signed records
@@ -13,8 +13,8 @@ People / Chapters / Caucuses publish signed records
                   ↓
        Shared civic graph + search APIs
                   ↓
-     Many apps: voter guides, event calendars,
-     caucus directories, chapter sites, dashboards
+      Many apps: directories, publications, events,
+      resource libraries, chapter sites, dashboards
 ```
 
 ## Why AT Protocol fits DSA
@@ -31,14 +31,20 @@ DSA is a national organization composed of local chapters, individual members, c
 
 ## Best uses
 
-AT Protocol is a good fit for public or semi-public organizational data:
+AT Protocol is first a good fit for public or semi-public organizational foundation data:
 
 - National, chapter, caucus, and committee identities
 - Chapter directories
+- Governance relationships
+- Public role, charter, mandate, appointment, dispute, revocation, and archive records
+- Verification and authority/status assertions
+
+Once that foundation is solid, app-layer records can use the same base:
+
 - Public event feeds
 - Public endorsements
 - Campaign guides
-- Source-linked voter guides
+- Public issue guides
 - Public statements and resolutions
 - Caucus publications
 - Public member profiles, when explicitly opted into
@@ -64,17 +70,20 @@ Keep the following off the public protocol layer unless a future privacy archite
 
 Use a hybrid architecture:
 
-1. Official DSA identities publish public records through DSA-controlled or chapter-controlled infrastructure.
+1. Official DSA identities publish public identity, authority, and governance records through DSA-controlled or chapter-controlled infrastructure.
 2. Members and independent caucuses can participate from any compatible PDS.
 3. Shared `org.dsa.*` Lexicons define common record types.
 4. A DSA indexer consumes public records and builds normalized trusted views.
-5. A verification service applies labels such as official, verified, self-declared, disputed, revoked, and archived.
+5. A verification service applies labels such as official, verified-by-national, verified-by-chapter, self-declared, disputed, revoked, and archived.
 6. Multiple apps consume the same data through direct ATProto sync, a shared API, or both.
 7. Private organizing systems remain separate and only publish approved public records outward.
 
 ## Documents
 
 - [architecture.md](architecture.md): system architecture and infrastructure layers
+- [foundation-layer.md](foundation-layer.md): identity, authority, fixture source-of-truth, publication matrix, and app-boundary baseline
+- [foundation-contracts.md](foundation-contracts.md): foundation-layer contracts and invariants every app should build against
+- [authority-chain-validation.md](authority-chain-validation.md): trust root, delegation validation, key custody, revocation, and audit design
 - [lexicons.md](lexicons.md): proposed record namespaces and example schemas
 - [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
 - [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
@@ -82,19 +91,11 @@ Use a hybrid architecture:
 - [current-state.md](current-state.md): current implementation baseline and recommended next lanes
 - [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
 - [local-demo.md](local-demo.md): local run, reseed/reset, and reviewer demo flow
-- [technical-architecture.md](technical-architecture.md): implementation architecture for the mocked-record prototype
+- [technical-architecture.md](technical-architecture.md): implementation architecture for the fixture-record prototype
 - [org-chart-alignment.md](org-chart-alignment.md): public org-chart mapping notes and caveats
 - [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
+- [next-sprint-foundation-contracts.md](next-sprint-foundation-contracts.md): next sprint plan for hardening the foundation contract
 - [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
-- [plan-3-internal-voting.md](plan-3-internal-voting.md): internal voting architecture and safety boundary
-- [plan-4-production-voting.md](plan-4-production-voting.md): production voting and auditability roadmap
-- [production-voting-architecture-plan.md](production-voting-architecture-plan.md): production internal voting blockers, security architecture, auditability, and phase order
-- [production-voting-governance-gate.md](production-voting-governance-gate.md): Phase 0 production voting governance/protocol gate and role matrix
-- [production-voting-implementation-backlog.md](production-voting-implementation-backlog.md): issue-ready production voting implementation backlog
 - [production-demo-safety-guards.md](production-demo-safety-guards.md): production demo route/UI/deploy guard plan
-- [private-voting-service-design.md](private-voting-service-design.md): private voting service boundary and data model
-- [production-internal-voting-data-architecture.md](production-internal-voting-data-architecture.md): production-oriented private voting data boundaries, schema concepts, and implementation slices
-- [voting-protocol-requirements.md](voting-protocol-requirements.md): required protocol decisions before ballot-casting code
-- [voting-local-protocol-profile.md](voting-local-protocol-profile.md): narrow local-only non-production voting profile for the next prototype slice
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation

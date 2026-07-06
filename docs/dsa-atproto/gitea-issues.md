@@ -86,7 +86,7 @@ Milestone 1 needs sample public data that demonstrates DIDs, handles, record typ
   - 3 caucus or working group records
   - 4 opt-in member affiliation/profile examples
 - Use realistic but clearly mock data.
-- Include `trustLabel` values such as `mock-official`, `self-declared`, `unverified`, or `experimental`.
+- Include `trustLabel` values such as `official`, `verified-by-national`, `self-declared`, `unverified`, or `community-submitted`.
 - Avoid private contact info, dues status, internal votes, private deliberation, casework, discipline, or high-risk logistics.
 - Add tests that fixtures pass validation.
 

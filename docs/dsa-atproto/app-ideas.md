@@ -106,7 +106,7 @@ Features:
 - Full-text search
 - Source snapshots
 - Timeline views
-- Record provenance
+- Record authority/status
 - Change history
 - Exportable datasets
 
