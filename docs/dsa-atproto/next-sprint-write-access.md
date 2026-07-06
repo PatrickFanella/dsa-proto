@@ -71,6 +71,14 @@ Gate it behind `ENABLE_WRITE_GATEWAY=false` by default, and keep it disabled whe
 
 Enable persistent write operations with mandatory idempotency keys and optimistic concurrency. Accepted writes append immutable revisions and only update public current projections when the operation is allowed to publish. Same idempotency key plus same request returns the same operation; same key plus a different request returns conflict.
 
+Runtime guardrails:
+
+- `ENABLE_WRITE_GATEWAY=true` is required for any `/api/write/records` traffic;
+- `ENABLE_WRITE_PUBLISH=true` is additionally required for non-dry-run publish attempts;
+- `DEMO_READ_ONLY=true` disables all write routes;
+- review-required apps create private `pending_review` operations and do not touch public projections;
+- publish-eligible apps ingest only after passing concurrency checks.
+
 ### 7. First Writable Family: `org.dsa.event.public`
 
 Enable only public event writes for a registered staging app. Event writes remain constrained to public fields, scoped host entities, `community-submitted` or weaker trust treatment, and moderation rules from the app registry.

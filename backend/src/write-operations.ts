@@ -50,14 +50,32 @@ export type CreateWriteOperationInput = {
   idempotencyScope?: string;
   operationId?: string;
   createdAt?: string;
+  skipIdempotencyLookup?: boolean;
 };
 
 type AuditEvent = WriteOperation['auditEvents'][number];
 
+function idempotencyKeyFor(appId: string, idempotencyKey: string) {
+  return `${appId}:${idempotencyKey}`;
+}
+
 export class InMemoryWriteOperationStore {
   private operations = new Map<string, WriteOperation>();
+  private idempotencyIndex = new Map<string, string>();
+
+  getOperationByIdempotencyKey(appId: string, idempotencyKey: string) {
+    const operationId = this.idempotencyIndex.get(idempotencyKeyFor(appId, idempotencyKey));
+    return operationId ? this.operations.get(operationId) : undefined;
+  }
 
   createOperation(input: CreateWriteOperationInput): WriteOperation {
+    if (input.idempotencyKey && !input.skipIdempotencyLookup) {
+      const existing = this.getOperationByIdempotencyKey(input.appId, input.idempotencyKey);
+      if (existing) {
+        if (existing.requestHash === input.requestHash) return existing;
+        return this.createOperation({ ...input, operationId: randomUUID(), status: 'conflict', reason: 'idempotency key reused with different request', errors: ['idempotency key reused with different request hash'], skipIdempotencyLookup: true });
+      }
+    }
     const now = input.createdAt ?? new Date().toISOString();
     const operationId = input.operationId ?? randomUUID();
     const status = input.status ?? 'dry_run';
@@ -80,6 +98,7 @@ export class InMemoryWriteOperationStore {
       auditEvents: [this.makeAuditEvent('created', now, status, undefined, status, 'operation created')],
     };
     this.operations.set(operationId, operation);
+    if (input.idempotencyKey && operation.status !== 'conflict') this.idempotencyIndex.set(idempotencyKeyFor(input.appId, input.idempotencyKey), operationId);
     return operation;
   }
 
@@ -95,6 +114,7 @@ export class InMemoryWriteOperationStore {
     }
     const next: WriteOperation = { ...current, ...updates, status: nextStatus, updatedAt, auditEvents };
     this.operations.set(operationId, next);
+    if (next.idempotencyKey) this.idempotencyIndex.set(idempotencyKeyFor(next.appId, next.idempotencyKey), operationId);
     return next;
   }
 

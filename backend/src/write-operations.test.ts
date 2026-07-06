@@ -40,4 +40,24 @@ describe('write operations store', () => {
     expect(op.resolverSummary).toBe('preview only');
     expect(store.listOperations()).toHaveLength(1);
   });
+
+  it('returns the same operation for the same idempotency key and request hash', () => {
+    const store = new InMemoryWriteOperationStore();
+    const first = store.createOperation({ appId: 'demo-app', requestHash: 'sha256:same', idempotencyKey: 'idem-1' });
+    const second = store.createOperation({ appId: 'demo-app', requestHash: 'sha256:same', idempotencyKey: 'idem-1' });
+
+    expect(second.operationId).toBe(first.operationId);
+    expect(store.listOperations()).toHaveLength(1);
+  });
+
+  it('creates a separate conflict when the same key is reused with a different request hash', () => {
+    const store = new InMemoryWriteOperationStore();
+    const first = store.createOperation({ appId: 'demo-app', requestHash: 'sha256:first', idempotencyKey: 'idem-2' });
+    const conflict = store.createOperation({ appId: 'demo-app', requestHash: 'sha256:second', idempotencyKey: 'idem-2' });
+
+    expect(conflict.operationId).not.toBe(first.operationId);
+    expect(conflict.status).toBe('conflict');
+    expect(conflict.errors).toContain('idempotency key reused with different request hash');
+    expect(store.getOperation(first.operationId)?.status).toBe('dry_run');
+  });
 });

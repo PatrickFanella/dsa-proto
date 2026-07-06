@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -24,6 +25,7 @@ const envSchema = z.object({
   DEMO_READ_ONLY: envFlagSchema.default(false),
   ENABLE_ADMIN_INGEST: envFlagSchema.default(true),
   ENABLE_WRITE_GATEWAY: envFlagSchema.default(false),
+  ENABLE_WRITE_PUBLISH: envFlagSchema.default(false),
   AUTO_REPLAY_FIXTURES: envFlagSchema.default(true),
   REQUIRE_POSTGRES: envFlagSchema.default(false),
 });
@@ -102,6 +104,18 @@ function validateWriteHeaders(req: IncomingMessage) {
 
 function normalizeWriteOperation(operation: WriteOperation) {
   return writeOperationSchema.parse(operation);
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function hashWriteRequest(input: { mode: 'dry_run' | 'publish'; record: unknown; dryRun: boolean }) {
+  return `sha256:${createHash('sha256').update(stableStringify(input)).digest('hex')}`;
 }
 
 async function readJsonBody(req: IncomingMessage) {
@@ -622,11 +636,12 @@ function getSubjectUri(record: RecordEnvelope) {
   return undefined;
 }
 
-export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST' | 'ENABLE_WRITE_GATEWAY'>> & { writeOperationStore?: InMemoryWriteOperationStore } = {}) {
+export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST' | 'ENABLE_WRITE_GATEWAY' | 'ENABLE_WRITE_PUBLISH'>> & { writeOperationStore?: InMemoryWriteOperationStore } = {}) {
   const corsOrigin = options.CORS_ORIGIN ?? '*';
   const demoReadOnly = options.DEMO_READ_ONLY ?? false;
   const enableAdminIngest = !demoReadOnly && (options.ENABLE_ADMIN_INGEST ?? true);
   const enableWriteGateway = !demoReadOnly && (options.ENABLE_WRITE_GATEWAY ?? false);
+  const enableWritePublish = !demoReadOnly && (options.ENABLE_WRITE_PUBLISH ?? false);
   const writeOperationStore = options.writeOperationStore ?? new InMemoryWriteOperationStore();
   const allowedMethods = demoReadOnly ? 'GET, OPTIONS' : 'GET, POST, OPTIONS';
   return createServer(async (req, res) => {
@@ -666,8 +681,10 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
       if (!auth) return toJson(res, 401, { error: 'unauthorized' });
       const body = await readJsonBody(req);
       if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
-      if (!body || typeof body !== 'object' || (body as { dryRun?: unknown }).dryRun !== true) {
-        const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash: 'invalid-dry-run', status: 'rejected', reason: 'dry-run only', errors: ['dryRun must be true'], resolverSummary: 'dry-run validation rejected before record processing' });
+      const isDryRun = !!body && typeof body === 'object' && (body as { dryRun?: unknown }).dryRun === true;
+      if (!isDryRun && !enableWritePublish) return toJson(res, 422, { error: 'write_publish_disabled' });
+      if (!body || typeof body !== 'object' || (!isDryRun && !enableWritePublish)) {
+        const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash: 'invalid-request', status: 'rejected', reason: 'write publish disabled', errors: ['write publish disabled'], resolverSummary: 'request rejected before record processing' });
         return toJson(res, 422, { prototype: true, data: normalizeWriteOperation(op) });
       }
       const record = (body as { record?: unknown }).record;
@@ -676,14 +693,37 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
       const envelope = recordParse.success ? recordParse.data : undefined;
       if (!envelope) requestErrors.push('invalid record envelope');
       if (envelope) requestErrors.push(...validateRecordEnvelopeAgainstAppScope(envelope, auth.app).map((issue) => issue.reason));
+      const idempotencyKey = getRequestHeader(req, 'idempotency-key') ?? undefined;
+      let hasConflict = false;
       if (envelope?.collection === 'org.dsa.event.public') {
         const eventRecord = envelope.record as PublicEventRecord;
         const hostEntity = await repository.getEntity(eventRecord.hostEntityUri);
         if (!hostEntity) requestErrors.push(`host entity not found: ${eventRecord.hostEntityUri}`);
       }
+      if (envelope) {
+        const revisions = await repository.listRecordRevisions(envelope.uri);
+        const ifNoneMatch = getRequestHeader(req, 'if-none-match');
+        const ifMatch = getRequestHeader(req, 'if-match');
+        if (ifNoneMatch === '*') {
+          if (revisions.length > 0) { requestErrors.push(`conflict: record already exists: ${envelope.uri}`); hasConflict = true; }
+        } else if (typeof ifMatch === 'string' && ifMatch.trim().length > 0) {
+          const latest = revisions[revisions.length - 1];
+          if (!latest) requestErrors.push(`missing current revision: ${envelope.uri}`);
+          else if (latest.cid !== ifMatch.trim()) { requestErrors.push(`revision conflict: expected ${ifMatch.trim()} but found ${latest.cid}`); hasConflict = true; }
+        } else if (isDryRun) {
+          requestErrors.push('missing optimistic concurrency header: use If-None-Match: * or If-Match: <cid>');
+        } else {
+          requestErrors.push('missing optimistic concurrency header: use If-None-Match: * or If-Match: <cid>');
+        }
+      }
       const resolverSummary = envelope ? `resolver: ${JSON.stringify(await repository.resolveRecordAuthority(envelope.uri)).slice(0, 512)}` : 'resolver unavailable';
-      const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash: `sha256:${envelope?.uri ?? 'invalid'}`, targetUri: envelope?.uri, collection: envelope?.collection, status: requestErrors.length ? 'rejected' : 'dry_run', reason: requestErrors.length ? 'validation failed' : 'dry-run accepted', errors: requestErrors, record: envelope, resolverSummary, idempotencyKey: getRequestHeader(req, 'idempotency-key') ?? undefined, idempotencyScope: envelope?.collection });
-      return toJson(res, requestErrors.length ? 422 : 200, { prototype: true, data: normalizeWriteOperation(op) });
+      const requestHash = hashWriteRequest({ mode: isDryRun ? 'dry_run' : 'publish', record: envelope, dryRun: isDryRun });
+      const status = requestErrors.length ? (requestErrors.some((error) => error.includes('conflict') || error.includes('exists') || error.includes('revision conflict')) ? 'conflict' : 'rejected') : (isDryRun ? 'dry_run' : (auth.app.reviewRequired ? 'pending_review' : 'accepted'));
+      const op = writeOperationStore.createOperation({ appId: auth.app.appId, requestHash, targetUri: envelope?.uri, collection: envelope?.collection, status, reason: requestErrors.length ? 'validation failed' : (isDryRun ? 'dry-run accepted' : (auth.app.reviewRequired ? 'pending review' : 'accepted for publish')), errors: requestErrors, record: envelope, resolverSummary, idempotencyKey, idempotencyScope: envelope?.collection });
+      if (!isDryRun && requestErrors.length === 0 && !auth.app.reviewRequired && enableWritePublish && envelope) {
+        await repository.ingestRecordEnvelopes([envelope]);
+      }
+      return toJson(res, op.status === 'conflict' || hasConflict ? 409 : (requestErrors.length ? 422 : 200), { prototype: true, data: normalizeWriteOperation(op) });
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/write/operations/')) {
       if (!enableWriteGateway) return toJson(res, 404, routeDisabled());

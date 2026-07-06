@@ -1,0 +1,8 @@
+# Write Operations Reference
+
+- `ENABLE_WRITE_GATEWAY=false` by default; `/api/write/records` stays closed unless enabled.
+- `ENABLE_WRITE_PUBLISH=false` by default; non-dry-run publish requests are blocked unless it is enabled too.
+- `DEMO_READ_ONLY=true` disables all write routes.
+- Dry-run requests validate headers, scope, and optimistic concurrency without mutating public records.
+- Review-required apps create private `pending_review` operations only.
+- Publish-eligible apps append public records only after optimistic-concurrency checks pass.
