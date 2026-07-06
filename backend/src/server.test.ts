@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
 import { chapterSeedRecords, caucusSeedRecords, memberAffiliationSeedRecords, verificationAssertionSeedRecords, publicStatementSeedRecords, publicationSeedRecords, endorsementSeedRecords, publicEventSeedRecords, orgChartSeedRecords, governanceRelationshipSeedRecords, lifecycleStatusSchema, recordEnvelopeSchema, trustLabelSchema, identityContinuitySeedRecords, projectCurrentIdentity } from './domain.js';
 import { createApp, createMemoryRepository, getConfig } from './server.js';
 import { replayFixtureRecords } from './fixture-replay.js';
+import { loadFixtureFile } from './fixture-files.js';
 
 describe('getConfig', () => {
   it('parses a port from env', () => {
@@ -77,6 +79,21 @@ describe('API responses', () => {
 
     expect((await fetch(`http://127.0.0.1:${address.port}/api/entities`)).status).toBe(200);
     expect((await fetch(`http://127.0.0.1:${address.port}/api/activity`)).status).toBe(200);
+  });
+
+  it('loads the canonical fixture dataset file and exposes ready metadata', async () => {
+    const fixture = await loadFixtureFile(fileURLToPath(new URL('../fixtures/records.json', import.meta.url)));
+    server = createApp(createMemoryRepository(fixture.records as Parameters<typeof createMemoryRepository>[0], fixture.metadata), { DEMO_READ_ONLY: true });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+
+    const ready = await fetch(`http://127.0.0.1:${address.port}/ready`).then((res) => res.json() as Promise<{ status: string; dataset: { dataset: string; schema: string } }>);
+    const entity = await fetch(`http://127.0.0.1:${address.port}/api/entities`).then((res) => res.json() as Promise<{ data: unknown[] }>);
+
+    expect(ready.status).toBe('ready');
+    expect(ready.dataset).toMatchObject({ dataset: 'canonical-fixture', schema: 'records.v1' });
+    expect(entity.data.length).toBeGreaterThan(0);
   });
 
   it('keeps admin fixture ingest disabled in read-only demo mode', async () => {

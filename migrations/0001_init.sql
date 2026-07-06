@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS directory_entities (
   website text NOT NULL,
   description text,
   trust_label text NOT NULL,
-  verification_status text NOT NULL DEFAULT 'unverified',
+  verification_status text NOT NULL DEFAULT 'uncertain',
   verified_by text,
   verification_reason text,
   status text NOT NULL,

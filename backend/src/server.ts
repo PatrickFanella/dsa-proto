@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { allSeedRecords, authorityDisputeRecordSchema, authorityRevocationRecordSchema, recordArchiveRecordSchema, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type AuthorityResolverStatus, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type ResolvedRecordAuthority } from './domain.js';
+import { loadFixtureFile, type FixtureDatasetMetadata } from './fixture-files.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 
@@ -44,6 +45,7 @@ export type DirectoryRepository = {
   getOrgChart(filters?: { kind?: OrgUnitRecord['kind']; unit?: string }): Promise<{ prototype: true; sourceUrl: string; updatedLabel: string; units: Array<{ uri: string; name: string; shortName: string; kind: OrgUnitRecord['kind']; description: string; status: string; website?: string }>; relationships: Array<{ uri: string; subjectUri: string; relationship: GovernanceRelationshipRecord['relationship']; objectUri: string; description: string; sourceUrl: string; status: string; createdAt: string }> }>;
   listRecordRevisions(uri: string): Promise<RecordEnvelope[]>;
   resolveRecordAuthority(uri: string, options?: { asOf?: string; depth?: number }): Promise<ResolvedRecordAuthority>;
+  datasetMetadata?: FixtureDatasetMetadata;
 };
 
 export type ActivityType = 'statement' | 'article' | 'endorsement' | 'event';
@@ -86,11 +88,12 @@ async function readJsonBody(req: IncomingMessage) {
   }
 }
 
-export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords): DirectoryRepository {
+export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords, datasetMetadata?: FixtureDatasetMetadata): DirectoryRepository {
   const rawRecords = seed.map((record) => recordEnvelopeSchema.parse(record));
   const records = dedupeEntities(rawRecords);
   const recordRevisions = dedupeRecordRevisions(rawRecords);
   return {
+    datasetMetadata,
     async listEntities(filters: DirectoryEntityFilters = {}) {
       const limited = records.filter((entity) => matchesDirectoryEntity(entity, filters));
       return typeof filters.limit === 'number' ? limited.slice(0, Math.max(0, filters.limit)) : limited;
@@ -607,7 +610,7 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
     if (req.url === '/ready') {
       try {
         const entities = await repository.listEntities();
-        return toJson(res, 200, { status: 'ready', entityCount: entities.length });
+        return toJson(res, 200, { status: 'ready', entityCount: entities.length, dataset: repository.datasetMetadata ?? { dataset: 'built-in-fallback', schema: 'allSeedRecords' } });
       } catch {
         return toJson(res, 503, { status: 'not_ready', error: 'repository_unavailable' });
       }
@@ -841,14 +844,24 @@ function listEventEnvelopes(records: RecordEnvelope[], entityUri?: string, statu
   }).map(normalizeEventEnvelope);
 }
 
+async function loadCanonicalFixtureDataset() {
+  const fixture = await loadFixtureFile(resolve('fixtures/records.json'));
+  const records = fixture.records.length > 0 ? fixture.records.map((record) => recordEnvelopeSchema.parse(record)) : allSeedRecords;
+  return { metadata: fixture.metadata, records };
+}
+
 export async function bootstrapRepository(databaseUrl: string, options: Partial<Pick<AppConfig, 'AUTO_REPLAY_FIXTURES' | 'REQUIRE_POSTGRES'>> = {}) {
   try {
     const repo = await createPostgresRepository(databaseUrl);
-    if (options.AUTO_REPLAY_FIXTURES ?? true) await replayFixtureRecords(allSeedRecords, repo);
+    if (options.AUTO_REPLAY_FIXTURES ?? true) {
+      const fixture = await loadCanonicalFixtureDataset();
+      await replayFixtureRecords(fixture.records, repo);
+    }
     return repo;
   } catch (error) {
     if (options.REQUIRE_POSTGRES) throw error;
-    return createMemoryRepository();
+    const fixture = await loadCanonicalFixtureDataset();
+    return createMemoryRepository(fixture.records, fixture.metadata);
   }
 }
 
