@@ -48,7 +48,7 @@ Baseline fixture registry: one staging/demo app token may write only `org.dsa.ev
 
 ### 4. Write Operation + Audit Store
 
-Add the write-operation model before persistence into public projections. Every write attempt should produce an operation/audit entry with app id, request hash, target collection/URI, decision, validation errors, and timestamp. Pending/rejected operations must not appear in public read projections.
+Add the write-operation model before persistence into public projections. Every write attempt should produce a private operation/audit entry with app id, request hash, target collection/URI, decision, validation errors, and timestamp. Pending/rejected/dry-run operations must remain private operation records and must not appear in public read projections.
 
 ### 5. Write Gateway Dry-Run Mode
 

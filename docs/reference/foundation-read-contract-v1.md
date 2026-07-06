@@ -120,4 +120,4 @@ For this prototype, the maintained fixture dataset is the source of truth. Apps 
 
 ## Write boundary
 
-This v1 read contract does not include app writes. Future write APIs must use a dedicated `/api/write/*` surface with app registry scopes, idempotency, audit, and moderation. Apps must not use fixture replay/admin ingest as a write path.
+This v1 read contract does not include app writes. Future write APIs must use a dedicated `/api/write/*` surface with app registry scopes, idempotency, audit, and moderation. Write operations are private audit records, not public read projections. Apps must not use fixture replay/admin ingest as a write path.
