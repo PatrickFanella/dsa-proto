@@ -97,6 +97,7 @@ Use a hybrid architecture:
 - [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
 - [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
 - [next-sprint-foundation-contracts.md](next-sprint-foundation-contracts.md): next sprint plan for hardening the foundation contract
+- [next-sprint-write-access.md](next-sprint-write-access.md): sprint plan for controlled app write access without opening the public demo
 - [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
 - [production-demo-safety-guards.md](production-demo-safety-guards.md): production demo route/UI/deploy guard plan
 - [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
