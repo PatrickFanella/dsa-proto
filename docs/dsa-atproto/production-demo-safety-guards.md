@@ -14,20 +14,25 @@ Ship a read-only public demo without exposing local mutation tools or fixture im
 
 Production mode should fail closed.
 
-Suggested environment variables:
+Almaz demo environment variables:
 
 ```text
 NODE_ENV=production
-ENABLE_LOCAL_ADMIN=false
-ENABLE_FIXTURE_REPLAY=false
-ENABLE_LIVE_ATPROTO_INGESTION=false
-ALLOW_MEMORY_REPOSITORY=false
+DEMO_READ_ONLY=true
+ENABLE_ADMIN_INGEST=false
+ENABLE_WRITE_GATEWAY=false
+ENABLE_WRITE_PUBLISH=false
+AUTO_REPLAY_FIXTURES=false
+REQUIRE_POSTGRES=true
+ATPROTO_LIVE_INGESTION=false
 ```
 
 Rules:
 
-- If `NODE_ENV=production`, local admin must be disabled unless an explicit safe demo exception exists.
-- If Postgres is unavailable, the backend must not fall back to in-memory data.
+- `DEMO_READ_ONLY=true` disables local admin ingest and write gateway routes.
+- `ENABLE_ADMIN_INGEST=false` keeps fixture ingest closed even outside demo mode.
+- `ENABLE_WRITE_GATEWAY=false` and `ENABLE_WRITE_PUBLISH=false` keep app-write preview routes closed.
+- `REQUIRE_POSTGRES=true` prevents demo startup from silently serving in-memory data.
 - The demo must not auto-seed or auto-replay fixtures on startup.
 - Public UI should show read-only demo copy when mutation routes are disabled.
 - Local admin routes should return 404 in the demo host.
@@ -69,7 +74,7 @@ Rules:
 
 Implemented in the Almaz demo stack:
 
-- [x] Config parser fields exist for local admin, fixture replay, memory fallback, and live ingestion.
+- [x] Config parser fields exist for read-only mode, admin ingest, write gateway, write publish, fixture replay, memory fallback, and live ingestion.
 - [x] Local admin defaults to disabled in the Almaz demo.
 - [x] `POST /api/admin/fixtures/ingest` is gated off in demo mode.
 - [x] `/api/write/*` is gated off in demo mode and blocked by the Almaz Caddy snippet.
@@ -78,7 +83,7 @@ Implemented in the Almaz demo stack:
 - [x] In-memory fallback is not used in the demo deployment.
 - [x] Auto-seeding/replay is off in the demo deployment.
 - [x] CORS uses an allowlist.
-- [x] Readiness checks Postgres connectivity and migration/version state.
+- [x] Readiness checks service readiness, Postgres-backed startup posture, and dataset metadata.
 - [x] Request logging avoids mutation bodies.
 
 ## Frontend implementation checklist

@@ -1,5 +1,7 @@
 # Authority-Chain Validation and Key Custody
 
+Status: future production design reference only.
+
 This document defines the intended trust and custody model for official DSA-shaped records.
 It is design-level only. No production authority-chain validation, key custody service, recovery workflow, or revocation backend is implemented yet.
 

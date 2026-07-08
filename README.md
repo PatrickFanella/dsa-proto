@@ -1,50 +1,32 @@
 # dsa-proto
 
-dsa-proto is a prototype for exploring how Democratic Socialists of America infrastructure could use AT Protocol as an official organizational identity, authority, verification, and public civic data layer.
+dsa-proto is a TypeScript Node + Vite React prototype for a public DSA civic data layer built on AT Protocol-shaped records.
 
-The first project notes live in [`docs/dsa-atproto/`](docs/dsa-atproto/). This repository uses a TypeScript Node backend, Vite React TypeScript frontend, Postgres, Docker Compose, and Open Pilot conventions.
+## Built stack
 
-Demo status: the public read-only Almaz demo is live at <https://demo.dsaslate.us>. It is a demo, not production.
+- TypeScript Node backend
+- Vite React frontend
+- Postgres
+- Docker Compose
+- public Almaz read-only demo
 
-## Quick start
+The canonical fixture dataset lives at `backend/fixtures/records.json` with metadata, import/replay tooling, and health checks.
 
-```bash
-make verify
-```
+## Current UI
 
-To run the local prototype UI, API, and Postgres stack:
+The web app is the DSA Civic Data Layer dashboard: hero, summary cards, searchable/filterable directory, selected entity profile with resolver context, org graph explorer, public activity feed, safety/readiness panel, and a developer workbench that only exposes local publisher tooling outside read-only mode.
 
-```bash
-docker compose up --build
-```
+## Read endpoints
 
-Then open <http://localhost:5173>. See [`docs/dsa-atproto/local-demo.md`](docs/dsa-atproto/local-demo.md) for the clean-checkout setup, reseed/reset workflow, and reviewer demo script.
+`/health`, `/ready`, `/api/entities`, `/api/entities/:id`, `/api/org-chart`, `/api/records/resolve`, `/api/statements`, `/api/publications`, `/api/articles`, `/api/endorsements`, `/api/events`, `/api/activity`, `/api/registry/health`
 
-## Current planning docs
+## Demo posture
 
-- [`docs/dsa-atproto/README.md`](docs/dsa-atproto/README.md) — concept overview
-- [`docs/why-at-proto.md`](docs/why-at-proto.md) — rationale for AT Protocol as DSA-shaped infrastructure
-- [`docs/dsa-atproto/foundation-layer.md`](docs/dsa-atproto/foundation-layer.md) — identity, authority, fixture source-of-truth, publication matrix, and app-boundary baseline
-- [`docs/dsa-atproto/architecture.md`](docs/dsa-atproto/architecture.md) — infrastructure layers
-- [`docs/dsa-atproto/lexicons.md`](docs/dsa-atproto/lexicons.md) — proposed record namespaces and schemas
-- [`docs/dsa-atproto/governance.md`](docs/dsa-atproto/governance.md) — verification, disputes, schema evolution, and safety
-- [`docs/dsa-atproto/app-ideas.md`](docs/dsa-atproto/app-ideas.md) — possible applications
-- [`docs/dsa-atproto/requirements-interview.md`](docs/dsa-atproto/requirements-interview.md) — first milestone interview
-- [`docs/dsa-atproto/answers.md`](docs/dsa-atproto/answers.md) — answered requirements interview
-- [`docs/dsa-atproto/current-state.md`](docs/dsa-atproto/current-state.md) — current implementation baseline and next lanes
-- [`docs/dsa-atproto/prototype-plan.md`](docs/dsa-atproto/prototype-plan.md) — first local prototype scope
-- [`docs/dsa-atproto/local-demo.md`](docs/dsa-atproto/local-demo.md) — local run, reseed/reset, and reviewer demo flow
-- [`docs/dsa-atproto/technical-architecture.md`](docs/dsa-atproto/technical-architecture.md) — implementation architecture
-- [`docs/dsa-atproto/org-chart-alignment.md`](docs/dsa-atproto/org-chart-alignment.md) — public org chart mapping notes
-- [`docs/dsa-atproto/atproto-ingestion-spike.md`](docs/dsa-atproto/atproto-ingestion-spike.md) — real ATProto ingestion adapter spike
-- [`docs/dsa-atproto/roadmap.md`](docs/dsa-atproto/roadmap.md) — phased roadmap
-- [`docs/dsa-atproto/plan-2-public-civic-records.md`](docs/dsa-atproto/plan-2-public-civic-records.md) — next-phase civic records plan
-- [`docs/superpowers/plans/2026-07-05-foundation-layer-completion.md`](docs/superpowers/plans/2026-07-05-foundation-layer-completion.md) — issue-sized plan to finish the foundation layer
-- [`docs/dsa-atproto/production-demo-safety-guards.md`](docs/dsa-atproto/production-demo-safety-guards.md) — production demo route/UI/deploy guard plan
-- [`deploy/almaz/README.md`](deploy/almaz/README.md) — Almaz demo deploy notes, backup/restore, and monitoring scripts
-- [`docs/dsa-atproto/gitea-issues.md`](docs/dsa-atproto/gitea-issues.md) — proposed implementation issues
+- Local backend may enable admin fixture ingest unless `DEMO_READ_ONLY=true` or `ENABLE_ADMIN_INGEST=false`
+- Almaz uses fail-closed env and Caddy blocks `/api/admin*`
+- Write gateway exists but stays disabled on Almaz (`ENABLE_WRITE_GATEWAY=false`, `ENABLE_WRITE_PUBLISH=false`, Caddy blocks `/api/write*`)
 
-Voting systems and external source-chain records have been removed from current prototype scope. The maintained fixture set is the source of truth for the demo; see the publication matrix in [`docs/dsa-atproto/foundation-layer.md`](docs/dsa-atproto/foundation-layer.md).
+See [`docs/README.md`](docs/README.md) for the doc index and [`docs/dsa-atproto/README.md`](docs/dsa-atproto/README.md) for the current project docs.
 
 ## Open Pilot
 

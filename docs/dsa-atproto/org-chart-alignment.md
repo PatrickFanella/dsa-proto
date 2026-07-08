@@ -1,5 +1,7 @@
 # Org chart alignment
 
+Status: current fixture-mapping notes; reference only.
+
 This prototype maps a small, public slice of the 2020 DSA national organization chart into two record types:
 
 - `org.dsa.profile.orgUnit` for public organizational bodies

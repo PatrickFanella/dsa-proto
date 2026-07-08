@@ -1,5 +1,7 @@
 ## Why an **AT Protocol base infrastructure** fits DSA especially well 🌹
 
+Status: background rationale only.
+
 An organization like DSA is not a simple top-down institution. It is a layered, democratic, partly federated organization: individual members belong to local chapters, chapters elect their own leadership, chapters send delegates to national conventions, national bodies set broad priorities, and the National Political Committee functions as DSA’s board of directors. DSA’s own structure page describes the NPC as the primary political leadership body, elected by National Convention delegates, with chapters sending delegates based partly on chapter size and at-large delegates representing areas without active chapters. ([Democratic Socialists of America (DSA)][1])
 
 That kind of structure needs infrastructure that is **not just one big website** and **not just a pile of disconnected tools**. An AT Protocol base is useful because it can act as a shared foundation for many different organizing tools while still allowing chapters, committees, caucuses, and members to operate with real autonomy.
@@ -334,4 +336,3 @@ In practical terms, it would let DSA build a digital commons: not just a website
 [4]: https://atproto.com/specs/atp "AT Protocol - AT Protocol"
 [5]: https://electoral.dsausa.org/bylaws/ "Our Bylaws – DSA National Electoral Commission"
 [6]: https://atproto.com/guides/faq "FAQ - AT Protocol"
-

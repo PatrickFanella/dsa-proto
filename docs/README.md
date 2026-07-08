@@ -4,9 +4,9 @@ This directory is the current project knowledge base.
 
 ## Sections
 
+- `dsa-atproto/` — current built-state docs and clearly labeled historical/future references
+- `reference/` — stable API and write-gateway contracts
 - `adr/` — architecture decision records
-- `reference/` — stable technical references
-- `dsa-atproto/` — concept, architecture, governance, Lexicon, and milestone planning docs
 - `research/` — exploratory notes, comparisons, and findings
 - `runbooks/` — repeatable operational procedures
 - `labels.md` — Open Pilot label lifecycle

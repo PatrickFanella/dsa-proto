@@ -1,232 +1,111 @@
 # Foundation Contracts and Invariants
 
-This document defines the contract that every app should build against when it consumes the DSA AT Protocol foundation layer.
+This is the app-facing contract implemented by the current prototype. It describes how apps should consume the foundation layer without inventing their own identity, authority, lifecycle, or publication rules.
 
-The foundation layer is the shared public base for identity, authority, verification/status, organizational relationships, and approved public records. Apps may add workflows and views on top, but they should not redefine identity, authority, lifecycle, or publication rules for themselves.
+## Fixture contract
 
-## Non-goals
+- `backend/fixtures/records.json` is the prototype source of truth.
+- Fixture data is demo data, not official DSA verification.
+- Public UIs must preserve fixture/demo caveats for authority-sensitive records.
 
-The foundation layer is not:
+## Identity contract
 
-- a voting system;
-- a private member database;
-- an external source archive or citation graph;
-- a general workflow engine;
-- a publication CMS;
-- the primary home for sensitive internal organizing data.
+Built identity anchors:
 
-For this prototype, the maintained fixture set is the source of truth. The fixtures model the canonical public record layer we want apps to consume. They may be informed by real-world public knowledge, but the prototype does not publish external source-chain records.
+- record URI
+- DID
+- handle
+- collection/type
+- display name
+- lifecycle state
+- identity-continuity records for rename, supersession, archive, and tombstone cases
 
-## 1. Identity contract
+Invariants:
 
-Every public entity in the base layer should have a durable identity that survives ordinary display changes.
+- Handles and display names can change.
+- Apps should link to record URIs and display current handles/names from the read API.
+- Superseded, archived, revoked, and tombstoned identities should remain understandable through resolver context and continuity records.
 
-### Entity types
+## Authority contract
 
-The base layer may describe public identities for:
+Built authority context comes from fixture records and `/api/records/resolve?uri=...`.
 
-- national bodies;
-- chapters;
-- caucuses and member formations;
-- committees, commissions, working groups, and staff roles;
-- publications and campaign identities;
-- opt-in public member profiles;
-- app-layer public records such as events, endorsements, statements, publications, and resource pointers.
+Resolver output includes the target record, known revisions, lifecycle state, trust label, supporting authority records, active disputes, active revocations, archive markers, status, and fixture caveats.
 
-### Canonical identity fields
+Invariants:
 
-Each entity should expose enough information for apps to answer:
+- Apps should not infer official authority from recency or popularity.
+- Apps should display disputes, revocations, archive markers, and weak trust labels when they affect interpretation.
+- Ordinary app writes cannot create foundation authority records.
 
-- What is the entity's stable identifier?
-- What DID currently controls it?
-- What handle currently represents it?
-- What public name should apps display?
-- What type of entity is it?
-- Is it current, renamed, merged, split, dissolved, archived, or disputed?
+## Lifecycle contract
 
-### Identity invariants
+Canonical lifecycle states:
 
-- A handle is not the identity. Handles may change.
-- A display name is not the identity. Names may change.
-- A DID or stable record URI should anchor continuity wherever possible.
-- Renames should preserve continuity with the prior identity.
-- Merges, splits, and dissolutions should be explicit lifecycle events, not silent edits.
-- Tombstones should remain discoverable when an identity is revoked, archived, dissolved, or superseded.
+- `active`
+- `inactive`
+- `superseded`
+- `deprecated`
+- `revoked`
+- `disputed`
+- `archived`
+- `tombstoned`
 
-## 2. Authority contract
+Record-family workflow states such as `draft`, `published`, `withdrawn`, `cancelled`, `resolved`, or `scheduled` are not trust labels. Consumers should use explicit API/resolver context when mapping them to currentness.
 
-Apps should not infer institutional authority from popularity, recency, or self-description alone. The base layer must say who is allowed to assert what.
+## Organizational graph contract
 
-### Authority questions
+The foundation layer owns the public organizational graph.
 
-For every important public claim, consuming apps should be able to ask:
+Built graph behavior:
 
-- Who asserted this?
-- What authority did they have to assert it?
-- Is the assertion current?
-- Has it been revoked, disputed, superseded, or archived?
-- Which trust label should apps use when displaying it?
+- org units and governance relationships are stored as records;
+- `/api/org-chart` exposes grouped units and relationships;
+- registry health validates known-node references, allowed relationship pairs, and hierarchical cycles;
+- non-hierarchical cross-affiliations are not treated as hierarchy cycles.
 
-### Authority roots
+Apps should consume this graph instead of rebuilding chapter/caucus/committee relationships locally.
 
-The prototype should treat the fixture set as the current source of truth for authority. A production version should define explicit trust roots, such as national infrastructure, chapter-controlled infrastructure, caucus-controlled infrastructure, or approved delegated publishers.
+## Trust/status contract
 
-### Delegation invariants
+Trust labels:
 
-- Authority can be delegated, but delegation must be explicit.
-- Delegation should have a scope: entity type, record family, jurisdiction, time range, or app domain.
-- Revocation should override delegated authority from the revocation point forward.
-- Disputes should be visible to consumers rather than hidden behind a single “valid” answer.
-- App-layer publishers may publish approved public records, but they do not automatically become foundation-layer authorities.
+- `official`
+- `verified-by-national`
+- `verified-by-chapter`
+- `verified-by-caucus`
+- `self-declared`
+- `community-submitted`
+- `secondary-source`
+- `uncertain`
 
-## 3. Lifecycle contract
+Invariants:
 
-Every app needs the same answer to “what is current?” The base layer should distinguish immutable history from the current projection.
+- Trust labels describe confidence/authority.
+- Lifecycle states describe currentness and interpretation.
+- Apps cannot upgrade trust labels on their own.
 
-### Lifecycle states
+## Publication boundary
 
-Use these lifecycle meanings consistently:
+Built guardrails reject disallowed record families and obvious unsafe private-data-shaped payload keys during fixture replay, registry health validation, and live-ingest paths.
 
-| State | Meaning | App behavior |
-| --- | --- | --- |
-| `active` | Current public record or entity. | Show normally. |
-| `inactive` | Not currently active, but not necessarily invalid. | Show with status context. |
-| `superseded` | Replaced by a newer record. | Prefer the newer record, keep history. |
-| `deprecated` | Still visible, but no longer recommended for new use. | Avoid for new app behavior. |
-| `revoked` | Authority has withdrawn or invalidated the record. | Do not treat as current. |
-| `disputed` | A recognized party challenges accuracy or authority. | Show warning/context. |
-| `archived` | Preserved as historical record. | Keep discoverable, not current. |
-| `tombstoned` | Identity or record intentionally removed from active use while preserving a marker. | Do not reuse silently. |
+The current shared public layer is for public organizational and civic records only. Private member data, internal workflow state, sensitive logistics, external proof-chain records, and election/ballot systems remain outside the prototype.
 
-Record-family workflow states such as `draft`, `published`, `withdrawn`, `cancelled`, and `resolved` stay app/record-family specific. If a consumer needs a projection into foundation lifecycle, it should use an explicit mapping helper rather than treating those workflow states as canonical lifecycle values.
+## Write contract
 
-### Lifecycle invariants
+The current app-write surface is a fail-closed preview, not production write access.
 
-- Current projections should be derivable from immutable records.
-- Historical records should remain inspectable unless a safety/privacy rule requires removal from public views.
-- Revocation, dispute, archive, and supersession should be records or first-class status fields, not only UI copy.
-- Apps should consume lifecycle state from the base layer rather than inventing their own current/historical rules.
-
-## 4. Organizational graph contract
-
-The foundation layer owns the public organizational graph. Apps should consume this graph instead of rebuilding chapter/caucus/committee relationships locally.
-
-### Relationship types
-
-The base layer should support public relationships such as:
-
-- chapter recognized by national;
-- caucus recognized by chapter or national body;
-- committee, commission, or working group created by a body;
-- publication associated with a body;
-- campaign associated with a body;
-- public role or mandate held by an entity;
-- archive, revocation, dispute, or succession relationship.
-
-### Graph invariants
-
-- Parent/child relationships should use known entity types.
-- Cycles should be either invalid or explicitly modeled as non-hierarchical relationships.
-- Cross-affiliations are allowed only when the relationship type supports them.
-- Temporary bodies need an explicit term, mandate, or archive path.
-- Dissolved or archived units should remain linked to successors or historical parents where known.
-- Jurisdiction should be explicit when it changes app behavior.
-
-## 5. Verification and status contract
-
-Trust labels tell apps how to display and rely on public records. They are not generic vibes; each label needs a stable meaning.
-
-### Trust labels
-
-Use these labels consistently:
-
-| Label | Meaning |
-| --- | --- |
-| `official` | Published or controlled by the relevant official authority. |
-| `verified-by-national` | Verified by national-level authority. |
-| `verified-by-chapter` | Verified by a chapter-level authority. |
-| `verified-by-caucus` | Verified by a caucus-level authority. |
-| `self-declared` | Published by the subject or claimant without higher verification. |
-| `community-submitted` | Submitted by a community source and not yet institutionally verified. |
-| `secondary-source` | Derived from public secondary information, not direct authority. |
-| `uncertain` | Insufficient authority or confidence for stronger treatment. |
-
-### Status invariants
-
-- Trust labels describe confidence/authority, not lifecycle.
-- Lifecycle states such as `revoked`, `disputed`, and `archived` should not be encoded as trust labels.
-- Apps should display weaker labels differently from official or verified records.
-- No app should upgrade a trust label on its own without publishing or receiving a foundation-layer authority/status assertion.
-
-## 6. Publication and privacy contract
-
-The base layer is public infrastructure. Publication rules should be strict by default.
-
-### Publication invariants
-
-- Public organizational identity and relationship records are in scope.
-- Optional public member affiliation must be opt-in, minimal, and never treated as proof of dues status or private membership.
-- Private member data, contact details, dues/payment status, grievance/casework material, private deliberation, sensitive logistics, and high-risk organizing details are out of scope.
-- Voting systems, ballots, credentials, receipts, tallies, eligibility, voter rosters, and vote metadata are out of scope.
-- External source records and source-chain proof records are out of scope for this prototype.
-- Apps may publish approved public records outward, but their private workflow state stays outside the shared public protocol layer.
-
-### Redaction rule
-
-If a record cannot be safely public, minimized, and understood by unrelated indexers, it does not belong in the foundation layer.
-
-## 7. Correction and dispute contract
-
-The base layer should not pretend public data is neutral or magically correct. It needs an explicit path for challenge and correction.
-
-### Correction flow
-
-At minimum, apps should expect records to be:
-
-1. published;
-2. challenged or flagged;
-3. corrected, superseded, disputed, revoked, or archived;
-4. preserved with enough history for consumers to understand what changed.
-
-### Dispute invariants
-
-- Disputed records should remain visible with context unless safety requires removal from public views.
-- Corrections should supersede records rather than silently mutate public meaning.
-- Revocations should identify the revoking authority and effective point in time.
-- Apps should surface contested status when it materially affects user interpretation.
-
-## 8. Compatibility contract
-
-Apps need stable schemas and predictable change rules.
-
-### Compatibility invariants
-
-- Required fields should not be removed without a versioned migration path.
-- New optional fields should be safe for older consumers to ignore.
-- Enum values should be documented before apps rely on them.
-- Deprecated fields should remain readable until consumers have a migration path.
-- Fixture migrations should be documented when they change identity, authority, lifecycle, or publication semantics.
-- Breaking schema changes should update docs and tests in the same change.
-
-## 9. Consumer contract for apps
-
-Apps built on the base layer should follow these rules:
-
-- consume canonical identities from the base layer;
-- consume org relationships from the base layer;
-- consume authority/status/lifecycle from the resolver or shared API;
-- avoid creating local-only identity or authority models unless they are explicitly app-private;
-- keep private workflow state out of public records;
-- publish only approved public record families outward;
-- preserve record URIs and stable identifiers when linking between apps;
-- display caveats for fixture/demo data, weaker trust labels, disputes, revocations, and archived records.
-
-## 10. Prototype acceptance criteria
-
-The prototype base is strong enough for app experiments when:
-
-- fixtures cover representative identity changes, disputes, revocations, archives, and relationships;
-- the resolver returns current projection plus lifecycle/status context;
-- docs define trust labels and lifecycle states in one place;
-- tests catch invalid graph links, unsafe publication classes, and removed/out-of-scope record families;
-- app demos can build directories, public record views, and dashboards without redefining identity, org graph, or authority rules.
+- `ENABLE_WRITE_GATEWAY=false` by default.
+- `ENABLE_WRITE_PUBLISH=false` by default.
+- Almaz keeps both false and Caddy blocks `/api/write*`.
+- App registry scopes control allowed collections, hosts, and trust-label ceilings.
+- Idempotency and optimistic-concurrency headers are required for write attempts.
+- Review-required apps create private pending-review operations rather than public records.
+- The first scoped app-writable family is `org.dsa.event.public` only.
+
+## Compatibility contract
+
+- The read contract is frozen in `docs/reference/foundation-read-contract-v1.md`.
+- Additive response fields are allowed.
+- Required-field removals, enum repurposing, or route removals require docs and migration notes.
+- Historical plan docs are not part of the contract.

@@ -1,5 +1,7 @@
 # ATProto Ingestion Adapter Spike
 
+Status: historical spike reference only.
+
 This spike identifies the smallest real ATProto ingestion path that could feed the same internal record envelope used by the mocked ingestion path.
 
 It is intentionally not wired into local startup. Local development and tests should continue to use deterministic mocked records.

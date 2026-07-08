@@ -1,15 +1,15 @@
-# Local Demo and Reseed Workflow
+# Local Demo
 
-This demo shows the current local civic data workbench: ATProto-shaped public record envelopes are validated, loaded into a local Postgres read model, exposed through REST APIs, and displayed in the directory, registry-health, org-chart, public civic records, and fixture-authoring UI.
+This document describes the current local demo workflow for the built TypeScript/Postgres/Vite prototype.
 
-The data is intentionally mocked. It is not real DSA verification, membership verification, or an official roster.
+The data is curated fixture data. It is not real DSA verification, membership verification, or an official roster.
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- pnpm 10.x if running verification outside Docker
+- pnpm 10.x when running checks outside Docker
 
-## Start from a clean checkout
+## Start locally
 
 From the repository root:
 
@@ -19,129 +19,21 @@ make verify
 docker compose up --build
 ```
 
-Then open:
+Open:
 
 - Web UI: <http://localhost:5173>
-- API health check: <http://localhost:8080/health>
+- API health: <http://localhost:8080/health>
+- API readiness: <http://localhost:8080/ready>
 - Directory API: <http://localhost:8080/api/entities>
 - Registry health API: <http://localhost:8080/api/registry/health>
-- Public statements API: <http://localhost:8080/api/statements>
-- Public endorsements API: <http://localhost:8080/api/endorsements>
-- Public events API: <http://localhost:8080/api/events>
 
-The Compose stack starts:
+The Compose stack starts Postgres, the backend API, and the web UI.
 
-- Postgres on `localhost:5432`
-- Backend API on `localhost:8080`
-- Web UI on `localhost:5173`
+## Fixture dataset
 
-## How mocked records are seeded
+The canonical dataset is `backend/fixtures/records.json`. Backend startup loads that file for the local/demo read model when Postgres is available. Tests and local fallback can use built-in records when needed.
 
-On backend startup, `bootstrapRepository` connects to Postgres, ensures the prototype tables exist, and ingests the deterministic mocked records from the backend seed arrays:
-
-- `org.dsa.profile.chapter`
-- `org.dsa.profile.caucus`
-- `org.dsa.affiliation.member`
-- `org.dsa.verification.assertion`
-- `org.dsa.profile.orgUnit`
-- `org.dsa.relationship.governance`
-- `org.dsa.endorsement.public`
-- `org.dsa.event.public`
-
-The backend upserts both:
-
-- raw ATProto-shaped envelopes into `atproto_records`
-- normalized searchable directory rows into `directory_entities`
-
-Verification, org-unit, governance-relationship, public endorsement, and public event records are preserved in `atproto_records`; only chapter, caucus, and member-affiliation records become ordinary directory cards.
-
-If Postgres is unavailable, the backend falls back to an in-memory repository so local tests and development can still run.
-
-## Reseed or reset the demo data
-
-For the normal local demo, restarting the backend is enough to re-run deterministic upserts:
-
-```bash
-docker compose restart api
-```
-
-To reset the database volume completely and rebuild from seed data:
-
-```bash
-docker compose down -v
-docker compose up --build
-```
-
-Use the destructive reset only when you intentionally want to discard local Postgres data.
-
-## Demo script
-
-1. Open <http://localhost:5173>.
-2. Point out the prototype banner: the directory is built from mocked public records, not live ATProto or verified DSA data.
-3. Browse the directory cards:
-   - chapters
-   - caucuses / working groups
-   - opt-in member-affiliation examples
-4. Use the search box to find records by name, handle, DID, jurisdiction, focus area, or affiliated organization.
-5. Use the type filter to switch between all records, chapters, caucuses, and member affiliations.
-6. Click a card and review the authority/status panel:
-   - entity type
-   - DID
-   - handle
-   - collection / record type
-   - mock AT URI
-   - trust label
-   - raw record JSON
-7. For member-affiliation examples, call out that they are public prototype self-declarations. They do not imply verified membership.
-8. Open <http://localhost:8080/api/entities> to show the normalized API response that powers the UI.
-9. Open the org-chart section to show public organizational units and governance relationships from the source-linked DSA chart.
-10. Open the public publications section to show publication profiles and articles linked back to publishers and related entities.
-11. Open the public statements section to show non-directory civic records linked back to issuers and related entities.
-12. Open the public endorsements section to show non-directory endorsement records linked back to endorsers and related entities.
-13. Open the public events section to show non-directory event records linked back to hosts and related entities.
-14. Open the unified civic activity section to show mixed activity cards across statements, articles, endorsements, and events.
-15. Open the registry health panel to show the canonical fixture file summary, including chapter/caucus totals and any invalid or duplicate entries.
-17. Optionally try query filters:
-
-   ```text
-   http://localhost:8080/api/entities?type=chapter
-   http://localhost:8080/api/entities?type=member-affiliation&q=alex
-   http://localhost:8080/api/entities?q=climate
-   http://localhost:8080/api/org-chart?kind=publication
-   http://localhost:8080/api/statements
-   http://localhost:8080/api/publications
-   http://localhost:8080/api/articles
-   http://localhost:8080/api/activity?entity=at://did:plc:nycdsa/org.dsa.profile.chapter/self
-   http://localhost:8080/api/endorsements
-   ```
-
-## Local fixture author -> replay -> browse loop
-
-This prototype also supports an opt-in local publishing loop that does not use a real PDS.
-
-1. Author a deterministic record into fixture storage:
-
-   ```bash
-   pnpm --dir backend run fixtures:author -- --type chapter --name "West Side DSA" --shortName "WSDSA"
-   pnpm --dir backend run fixtures:author -- --type verification --subjectUri at://did:plc:westside/org.dsa.profile.chapter/self --subjectDid did:plc:westside --issuerDid did:plc:nationaldsa --issuerHandle dsausa.org --assertion verified
-   ```
-
-2. Replay fixture file(s) into Postgres:
-
-   ```bash
-   pnpm --dir backend run fixtures:replay -- fixtures/records.json
-   ```
-
-3. Browse the UI or API as usual:
-
-   - <http://localhost:5173>
-   - <http://localhost:8080/api/entities>
-
-This is local prototype fixture authoring and replay, not live ATProto publishing or a real PDS write path.
-
-## Canonical registry health workflow
-
-The repo treats its curated CSV/list fixtures as the current canonical registry source. Before replaying or demoing, validate the generated fixture set for invalid envelopes and duplicate registry identifiers:
+Useful fixture commands:
 
 ```bash
 make chapters-import
@@ -150,73 +42,66 @@ make registry-health
 make fixture-replay
 ```
 
-`make registry-health` checks `fixtures/records.json` by default and fails on invalid records or duplicate directory identifiers (`uri`, `did`, `handle`, normalized name within type).
-
-## Import chapter fixtures from CSV
-
-The repository includes `docs/dsa-chapters.csv` as the source list of public chapter records. Importing it creates ATProto-shaped `org.dsa.profile.chapter` fixture envelopes only; it ignores contact, social, and other private-ish columns.
+Author local fixture examples:
 
 ```bash
-make chapters-import
+pnpm --dir backend run fixtures:author -- --type chapter --name "West Side DSA" --shortName "WSDSA"
+pnpm --dir backend run fixtures:author -- --type verification --subjectUri at://did:plc:westside/org.dsa.profile.chapter/self --subjectDid did:plc:westside --issuerDid did:plc:nationaldsa --issuerHandle dsausa.org --assertion verified
+pnpm --dir backend run fixtures:replay -- fixtures/records.json
 ```
 
-The import writes to `fixtures/records.json` by default and preserves non-import fixtures when merging.
+## Current UI walkthrough
 
-## Import caucus fixtures from CSV
+1. Open <http://localhost:5173>.
+2. Confirm the page presents the **DSA Civic Data Layer** dashboard and read-only/demo posture.
+3. Review the summary cards for entities, foundation graph records, app-layer records, and write posture.
+4. Search/filter the directory by text, entity type, state, and chapter kind.
+5. Select an entity and review:
+   - DID, handle, collection, record URI, status, and trust label;
+   - resolver status and fixture caveat;
+   - known revisions;
+   - supporting authority records;
+   - dispute, revocation, and archive markers when present.
+6. Use the Organization Graph Explorer for org units and governance relationships.
+7. Use the Public Activity Feed for statements, publication articles, endorsements, and events.
+8. In read-only demo mode, confirm publishing is unavailable.
 
-The repository includes `docs/dsa-caucuses.csv` as a neutral curated source for public caucus fixture records. Importing it creates ATProto-shaped `org.dsa.profile.caucus` envelopes only.
+## Local admin fixture ingest
+
+When local admin ingest is enabled, the developer workbench can post fixture envelopes to:
+
+```http
+POST /api/admin/fixtures/ingest
+```
+
+This is local development tooling. It is unauthenticated fixture ingest, not production admin functionality and not an app write API. The Almaz demo disables it with environment flags and Caddy route blocking.
+
+## Write gateway preview
+
+The app-write gateway exists for controlled staging/dev experiments:
+
+```http
+POST /api/write/records
+GET /api/write/operations/:operationId
+```
+
+It is disabled by default and disabled on Almaz. When enabled outside demo mode, it validates app token, app scope, idempotency, optimistic-concurrency headers, schema, publication boundary, and subject/host constraints. The current registry app is review-required, so successful non-dry-run submissions become private `pending_review` operations rather than public records.
+
+## Reset local data
+
+Restart API to reload deterministic local data:
 
 ```bash
-make caucuses-import
+docker compose restart api
 ```
 
-Then browse the directory and use the type filter to view caucuses.
+Destroy and rebuild the Postgres volume only when you intentionally want a clean local database:
 
-## Browser prototype publisher
-
-The web UI also includes a local-only prototype publisher panel for quick chapter fixture creation.
-
-1. Start the stack:
-
-   ```bash
-   docker compose up --build
-   ```
-
-2. Open <http://localhost:5173>.
-3. Use the **Local prototype publisher** form to edit chapter fields, or the **Local verification assertion publisher** form to author a mock verification/dispute record.
-4. Review the generated ATProto-shaped JSON previews.
-5. Click **Publish local fixture** or **Publish verification assertion**.
-6. The browser posts to the local backend endpoint:
-
-   ```http
-   POST /api/admin/fixtures/ingest
-   ```
-
-7. The backend validates the record, ingests it through the same record-envelope replay path, refreshes the directory, and selects the related subject for authority/status review when possible.
-
-This browser flow is intentionally limited to safe local fixture records. It is not authenticated, is not production admin tooling, and should remain local prototype-only until a real security model exists.
-
-## What the prototype proves
-
-- ATProto-shaped public records can be normalized into a simple civic directory.
-- The app can preserve authority/status context alongside user-readable fields.
-- Search and type filters work over a Postgres-backed read model.
-- Trust assertions and org-chart relationship records can be modeled without becoming ordinary directory cards.
-- The fixture ingestion boundary can be supplemented by real ATProto transport without changing the UI concept.
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 ## Safety boundary
 
-Do not model or seed private organizing data in this prototype.
-
-The seed data and future demo data must exclude:
-
-- private member rosters
-- dues or payment status
-- voting systems, ballots, eligibility proofs, credentials, receipts, and tallies
-- casework
-- disciplinary records
-- private deliberation
-- high-risk organizing logistics
-- personal contact information that was not explicitly published for the demo
-
-Trust labels such as `official`, `verified-by-national`, `self-declared`, `uncertain`, and `community-submitted` use the governance vocabulary. In this local demo they are fixture labels only, not real DSA verification decisions.
+Do not seed private organizing data. The fixture set should remain public, minimal, and safe to display in unrelated app views.

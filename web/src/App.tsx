@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { buildChapterFixtureEnvelope, buildVerificationFixtureEnvelope, createDefaultChapterDraft, createDefaultVerificationDraft, type ChapterDraft, type VerificationDraft } from './publisher';
 
 export type DirectoryCard = {
@@ -291,10 +291,38 @@ const fallbackEvents: PublicEventCard[] = [
 
 const fallbackActivity: CivicActivityCard[] = [
   { uri: fallbackStatements[0].uri, type: 'statement', title: fallbackStatements[0].title, summary: fallbackStatements[0].summary, actorName: fallbackStatements[0].issuerName, actorUri: fallbackStatements[0].issuerUri, date: fallbackStatements[0].publishedAt, status: fallbackStatements[0].status, topics: fallbackStatements[0].topics, relatedEntityUris: fallbackStatements[0].relatedEntityUris, collection: fallbackStatements[0].collection, trustLabel: fallbackStatements[0].trustLabel },
+  { uri: fallbackStatements[1].uri, type: 'statement', title: fallbackStatements[1].title, summary: fallbackStatements[1].summary, actorName: fallbackStatements[1].issuerName, actorUri: fallbackStatements[1].issuerUri, date: fallbackStatements[1].publishedAt, status: fallbackStatements[1].status, topics: fallbackStatements[1].topics, relatedEntityUris: fallbackStatements[1].relatedEntityUris, collection: fallbackStatements[1].collection, trustLabel: fallbackStatements[1].trustLabel },
+  { uri: fallbackStatements[2].uri, type: 'statement', title: fallbackStatements[2].title, summary: fallbackStatements[2].summary, actorName: fallbackStatements[2].issuerName, actorUri: fallbackStatements[2].issuerUri, date: fallbackStatements[2].publishedAt, status: fallbackStatements[2].status, topics: fallbackStatements[2].topics, relatedEntityUris: fallbackStatements[2].relatedEntityUris, collection: fallbackStatements[2].collection, trustLabel: fallbackStatements[2].trustLabel },
   { uri: fallbackArticles[0].uri, type: 'article', title: fallbackArticles[0].title, summary: fallbackArticles[0].summary, actorName: fallbackArticles[0].publicationName, actorUri: fallbackArticles[0].publicationUri, date: fallbackArticles[0].publishedAt, status: fallbackArticles[0].status, topics: fallbackArticles[0].topics, relatedEntityUris: fallbackArticles[0].relatedEntityUris, collection: fallbackArticles[0].collection, trustLabel: fallbackArticles[0].trustLabel },
   { uri: fallbackEndorsements[0].uri, type: 'endorsement', title: fallbackEndorsements[0].candidateOrMeasureName, summary: `${fallbackEndorsements[0].officeOrMeasure} · ${fallbackEndorsements[0].jurisdiction}`, actorName: fallbackEndorsements[0].endorsingEntityName, actorUri: fallbackEndorsements[0].endorsingEntityUri, date: fallbackEndorsements[0].electionDate, status: fallbackEndorsements[0].status, topics: fallbackEndorsements[0].topics, relatedEntityUris: fallbackEndorsements[0].relatedEntityUris, collection: fallbackEndorsements[0].collection, trustLabel: fallbackEndorsements[0].trustLabel },
   { uri: fallbackEvents[0].uri, type: 'event', title: fallbackEvents[0].title, summary: fallbackEvents[0].locationLabel ?? fallbackEvents[0].mode, actorName: fallbackEvents[0].hostEntityName, actorUri: fallbackEvents[0].hostEntityUri, date: fallbackEvents[0].startsAt, status: fallbackEvents[0].status, topics: fallbackEvents[0].topics, relatedEntityUris: fallbackEvents[0].relatedEntityUris, collection: fallbackEvents[0].collection, trustLabel: fallbackEvents[0].trustLabel },
 ];
+
+// Badge components for consistent UI
+function Badge({ children, color }: { children: ReactNode; color: 'cyan' | 'emerald' | 'amber' | 'violet' | 'sky' | 'fuchsia' | 'slate' }) {
+  const colors = {
+    cyan: 'border-cyan-400/40 text-cyan-200',
+    emerald: 'border-emerald-400/40 text-emerald-200',
+    amber: 'border-amber-400/40 text-amber-200',
+    violet: 'border-violet-400/40 text-violet-200',
+    sky: 'border-sky-400/40 text-sky-200',
+    fuchsia: 'border-fuchsia-400/40 text-fuchsia-200',
+    slate: 'border-zinc-600 text-zinc-400',
+  };
+  return <span className={`rounded-full border px-2.5 py-0.5 text-xs uppercase tracking-wider ${colors[color]}`}>{children}</span>;
+}
+
+function FoundationBadge() {
+  return <span className="rounded-full border border-emerald-400/50 bg-emerald-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-200">Foundation Layer</span>;
+}
+
+function AppLayerBadge() {
+  return <span className="rounded-full border border-violet-400/50 bg-violet-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-violet-200">App Layer</span>;
+}
+
+function ReadOnlyBadge() {
+  return <span className="rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-amber-200">Read-Only Demo</span>;
+}
 
 export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all', initialResolvedAuthority = null }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type']; initialResolvedAuthority?: ResolvedRecordAuthority | null }) {
   const demoReadOnly = import.meta.env.VITE_DEMO_READ_ONLY === 'true';
@@ -321,7 +349,6 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const [resolvedAuthority, setResolvedAuthority] = useState<ResolvedRecordAuthority | null>(initialResolvedAuthority);
   const preview = useMemo(() => buildChapterFixtureEnvelope(draft), [draft]);
   const verificationPreview = useMemo(() => buildVerificationFixtureEnvelope(verificationDraft), [verificationDraft]);
-  const appLayerExamplePill = <span className="rounded-full border border-zinc-700 px-2 py-1 text-xs uppercase tracking-wide text-zinc-500">app-layer example</span>;
 
   useEffect(() => {
     const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
@@ -387,6 +414,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
   const chapterCount = entities.filter((entity) => entity.type === 'chapter').length;
+  const caucusCount = entities.filter((entity) => entity.type === 'caucus').length;
   const visibleEntities = useMemo(() => entities.filter((entity) => {
     const matchesType = typeFilter === 'all' || entity.type === typeFilter;
     const matchesSearch = !search.trim() || `${entity.name} ${entity.shortName} ${entity.handle} ${entity.did} ${entity.jurisdiction} ${entity.organizationHandle ?? ''} ${entity.memberHandle ?? ''} ${entity.focusArea ?? ''}`.toLowerCase().includes(search.trim().toLowerCase());
@@ -396,10 +424,6 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   }), [entities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   const selectedEntity = visibleEntities.find((entity) => entity.id === selectedId) ?? visibleEntities[0];
-  const relatedStatements = useMemo(() => selectedEntity ? statements.filter((statement) => statement.issuerUri === selectedEntity.id || statement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, statements]);
-  const relatedArticles = useMemo(() => selectedEntity ? articles.filter((article) => article.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, articles]);
-  const relatedEndorsements = useMemo(() => selectedEntity ? endorsements.filter((endorsement) => endorsement.endorsingEntityUri === selectedEntity.id || endorsement.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, endorsements]);
-  const relatedEvents = useMemo(() => selectedEntity ? events.filter((event) => event.hostEntityUri === selectedEntity.id || event.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, events]);
   const relatedActivity = useMemo(() => selectedEntity ? activity.filter((item) => item.actorUri === selectedEntity.id || item.relatedEntityUris.includes(selectedEntity.id)) : [], [selectedEntity, activity]);
   const orgChartUnitsByUri = useMemo(() => new Map(orgChart.units.map((unit) => [unit.uri, unit])), [orgChart.units]);
   const orgChartUnitsByKind = useMemo(() => Object.entries(orgChart.units.reduce<Record<string, OrgChartUnit[]>>((acc, unit) => {
@@ -459,511 +483,602 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-8 py-12 text-zinc-100">
-      <section className="mx-auto max-w-6xl rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-        <p className="text-sm uppercase tracking-[0.3em] text-fuchsia-300">DSA ATProto prototype</p>
-        <h1 className="mt-4 text-4xl font-bold">Directory entities</h1>
-        <p className="mt-4 text-zinc-300">Foundation-first local workbench for DSA-shaped identity, authority, verification, roles, and organizational graph records. Publications, events, and endorsements are app-layer examples built on top.</p>
-        <p className="mt-2 text-sm text-amber-300">Verification labels are prototype trust metadata only, not real DSA legitimacy or membership proof.</p>
-        <p className="mt-2 text-sm text-cyan-300">{demoReadOnly ? 'Read-only public demo: publisher controls are disabled; this view only reads curated fixture records.' : 'Local prototype publishing only: these forms create safe fixture records for the local backend, not real ATProto/PDS publishing or real DSA legitimacy.'}</p>
-        <section className="mt-8 rounded-xl border border-emerald-400/30 bg-zinc-950 p-5">
-          <h2 className="text-2xl font-semibold">How DSA operates</h2>
-          <p className="mt-2 text-sm text-zinc-300">Source-linked public organization chart slice.</p>
-          <p className="mt-1 text-sm text-emerald-200"><a href={orgChart.sourceUrl} className="underline">Organization chart source</a> · {orgChart.updatedLabel}</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <button type="button" onClick={() => { setOrgChartKindFilter('all'); setOrgChartSelectedUnit(''); }} className={`rounded-full border px-3 py-1 ${orgChartKindFilter === 'all' ? 'border-emerald-300 text-emerald-100' : 'border-zinc-700 text-zinc-300'}`}>All kinds</button>
-            {[...new Set(orgChart.units.map((unit) => unit.kind))].map((kind) => <button key={kind} type="button" onClick={() => { setOrgChartKindFilter(kind); setOrgChartSelectedUnit(''); }} className={`rounded-full border px-3 py-1 ${orgChartKindFilter === kind ? 'border-emerald-300 text-emerald-100' : 'border-zinc-700 text-zinc-300'}`}>{orgChartKindLabels[kind] ?? kind}</button>)}
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
-            <div className="space-y-4">
-              {orgChartUnitsByKind.map(([kind, units]) => (
-                <section key={kind} className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-                  <h3 className="text-lg font-semibold">{orgChartKindLabels[kind] ?? kind}</h3>
-                  <ul className="mt-3 space-y-2 text-sm">
-                    {units.map((unit) => <li key={unit.uri}><button type="button" onClick={() => setOrgChartSelectedUnit(unit.uri)} className={`w-full rounded-lg border px-3 py-2 text-left ${activeOrgUnit?.uri === unit.uri ? 'border-cyan-400 bg-zinc-950' : 'border-zinc-800 bg-zinc-950'}`}><strong>{unit.shortName}</strong> — {unit.name}<div className="text-zinc-400">{unit.description}</div></button></li>)}
-                  </ul>
-                </section>
-              ))}
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      {/* Hero Section */}
+      <section className="mx-auto max-w-7xl px-6 py-12">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">DSA Civic Data Layer</h1>
+              <FoundationBadge />
+              {demoReadOnly && <ReadOnlyBadge />}
             </div>
-            <aside className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm">
-              {activeOrgUnit ? (
-                <>
-                  <h3 className="text-xl font-semibold">{activeOrgUnit.name}</h3>
-                  <p className="mt-1 text-zinc-400">{orgChartKindLabels[activeOrgUnit.kind] ?? activeOrgUnit.kind}</p>
-                  <p className="mt-3 text-zinc-200">{activeOrgUnit.description}</p>
-                  {activeOrgUnit.website ? <p className="mt-2"><a href={activeOrgUnit.website} className="underline">Source link</a></p> : null}
-                  <p className="mt-2 text-amber-300">Prototype caveat: public alignment slice only.</p>
-                  <div className="mt-4 grid gap-4">
-                    <div>
-                      <h4 className="font-semibold">Incoming relationships</h4>
-                      <ul className="mt-2 space-y-2">{incomingOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{unitName(relationship.subjectUri)} {relationship.relationship} {unitName(relationship.objectUri)}</li>)}</ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Outgoing relationships</h4>
-                      <ul className="mt-2 space-y-2">{outgoingOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{unitName(relationship.subjectUri)} {relationship.relationship} {unitName(relationship.objectUri)}</li>)}</ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Relationships summary</h4>
-                      <ul className="mt-2 space-y-2">{selectedOrgRelationships.map((relationship) => <li key={relationship.uri} className="rounded border border-zinc-800 bg-zinc-950 p-2">{relationship.description}</li>)}</ul>
-                    </div>
-                  </div>
-                </>
-              ) : null}
-            </aside>
+            <p className="mt-3 max-w-2xl text-lg text-zinc-300">
+              A public foundation-layer dashboard for DSA organizational records. This substrate provides identity, authority, verification, and organizational graph records that other applications build upon.
+            </p>
+            <p className="mt-2 text-sm text-amber-300">
+              Verification labels are prototype trust metadata only — not real DSA legitimacy or membership proof.
+            </p>
           </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-lime-400/30 bg-zinc-950 p-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="text-2xl font-semibold">Registry health</h2>
-            <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] ${registryHealth.status === 'ok' ? 'border-emerald-400/50 text-emerald-200' : registryHealth.status === 'warning' ? 'border-amber-400/50 text-amber-200' : 'border-rose-400/50 text-rose-200'}`}>{registryHealth.status.toUpperCase()}</span>
-          </div>
-          <p className="mt-2 text-sm text-zinc-300">Last checked from fixture file: {registryHealth.fileLabel}</p>
-          <p className="mt-3 text-sm text-zinc-200">{registryHealth.directoryCountsByType.chapter ?? 0} chapters, {registryHealth.directoryCountsByType.caucus ?? 0} caucuses, {registryHealth.totalRecords} total records</p>
-          <p className="mt-1 text-sm text-zinc-400">Invalid: {registryHealth.invalidCount} · Duplicates: {registryHealth.duplicateCount}</p>
-          {registryHealth.invalidRecords.length || registryHealth.duplicateCount ? (
-            <div className="mt-4 grid gap-2 text-sm text-amber-200">
-              {registryHealth.invalidRecords.length ? <p>Invalid records present in the canonical fixture file.</p> : null}
-              {Object.entries(registryHealth.duplicates).flatMap(([label, entries]) => entries.map((entry) => <p key={`${label}-${entry.value}`}>Duplicate {label}: {entry.value}</p>))}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-emerald-200">Canonical registry fixture set is healthy.</p>
-          )}
-        </section>
-        <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
-          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public publications</h2>{appLayerExamplePill}</div>
-          <p className="mt-2 text-sm text-zinc-300">Publication profiles and articles are loaded from the prototype backend and kept out of directory entities.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            {publications.map((publication) => (
-              <article key={publication.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{publication.name}</h3>
-                  <span className="rounded-full border border-violet-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-violet-200">{publication.status}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">{publication.shortName}</p>
-                <p className="mt-2 text-zinc-400">Publisher: {publication.publisherName}</p>
-                <p className="mt-1 text-zinc-500">{publication.collection} · {publication.trustLabel}</p>
-                {publication.website ? <p className="mt-1 text-zinc-500"><a className="underline" href={publication.website}>Website</a></p> : null}
-              </article>
-            ))}
-            {articles.map((article) => (
-              <article key={article.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{article.title}</h3>
-                  <span className="rounded-full border border-sky-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-sky-200">{article.status}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">{article.summary}</p>
-                <p className="mt-2 text-zinc-400">Publication: {article.publicationName}</p>
-                <p className="mt-1 text-zinc-500">Topics: {article.topics.join(', ')}</p>
-                <p className="mt-1 text-zinc-500">Related URIs: {article.relatedEntityUris.join(', ')}</p>
-                <p className="mt-1 text-zinc-500">{article.collection} · {article.trustLabel}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-emerald-400/30 bg-zinc-950 p-5">
-          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public endorsements</h2>{appLayerExamplePill}</div>
-          <p className="mt-2 text-sm text-zinc-300">Public endorsement records are loaded from the prototype backend and kept out of directory entities.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            {endorsements.map((endorsement) => (
-              <article key={endorsement.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{endorsement.candidateOrMeasureName}</h3>
-                  <span className="rounded-full border border-emerald-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-emerald-200">{endorsement.status}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">Endorser: {endorsement.endorsingEntityName}</p>
-                <p className="mt-1 text-zinc-400">{endorsement.officeOrMeasure}</p>
-                <p className="mt-1 text-zinc-500">Jurisdiction: {endorsement.jurisdiction}</p>
-                <p className="mt-1 text-zinc-500">Election date: {endorsement.electionDate}</p>
-                <p className="mt-1 text-zinc-500">Topics: {endorsement.topics.join(', ')}</p>
-                {endorsement.statementUri ? <p className="mt-1 text-zinc-500">Statement: {endorsement.statementUri}</p> : null}
-                {endorsement.sourceUrl ? <p className="mt-1 text-zinc-500">Source: <a className="underline" href={endorsement.sourceUrl}>link</a></p> : null}
-                <p className="mt-1 text-zinc-500">{endorsement.collection} · {endorsement.trustLabel}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-amber-400/30 bg-zinc-950 p-5">
-          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public events</h2>{appLayerExamplePill}</div>
-          <p className="mt-2 text-sm text-zinc-300">Public event records are loaded from the prototype backend and kept out of directory entities.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            {events.map((event) => (
-              <article key={event.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{event.title}</h3>
-                  <span className="rounded-full border border-amber-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-amber-200">{event.status}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">Host: {event.hostEntityName}</p>
-                <p className="mt-1 text-zinc-400">Starts: {event.startsAt}{event.endsAt ? ` · Ends: ${event.endsAt}` : ''}</p>
-                <p className="mt-1 text-zinc-500">Mode: {event.mode}</p>
-                <p className="mt-1 text-zinc-500">Topics: {event.topics.join(', ')}</p>
-                <p className="mt-1 text-zinc-500">Related URIs: {event.relatedEntityUris.join(', ')}</p>
-                {event.publicUrl ? <p className="mt-1 text-zinc-500">Public URL: <a className="underline" href={event.publicUrl}>link</a></p> : null}
-                {event.locationLabel ? <p className="mt-1 text-zinc-500">Location: {event.locationLabel}</p> : null}
-                <p className="mt-1 text-zinc-500">{event.collection} · {event.trustLabel}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
-          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Civic activity</h2>{appLayerExamplePill}</div>
-          <p className="mt-2 text-sm text-zinc-300">Unified feed across public statements, articles, endorsements, and events.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            {activity.map((item) => (
-              <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <span className="rounded-full border border-cyan-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-cyan-200">{item.type}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">Actor: {item.actorName}</p>
-                <p className="mt-1 text-zinc-400">Date: {item.date}</p>
-                <p className="mt-1 text-zinc-400">Status: {item.status}</p>
-                <p className="mt-2 text-zinc-300">{item.summary}</p>
-                <p className="mt-1 text-zinc-500">Topics: {item.topics.join(', ')}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section className="mt-8 rounded-xl border border-sky-400/30 bg-zinc-950 p-5">
-          <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">Public statements</h2>{appLayerExamplePill}</div>
-          <p className="mt-2 text-sm text-zinc-300">Public statement records are loaded from the prototype backend and kept out of directory entities.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            {statements.map((statement) => (
-              <article key={statement.uri} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold">{statement.title}</h3>
-                  <span className="rounded-full border border-sky-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-sky-200">{statement.status}</span>
-                </div>
-                <p className="mt-2 text-zinc-300">{statement.summary}</p>
-                <p className="mt-2 text-zinc-400">Issuer: {statement.issuerName}</p>
-                <p className="mt-1 text-zinc-500">Published: {statement.publishedAt}</p>
-                <p className="mt-1 text-zinc-500">Topics: {statement.topics.join(', ')}</p>
-                <p className="mt-1 text-zinc-500">Related URIs: {statement.relatedEntityUris.join(', ')}</p>
-                <p className="mt-1 text-zinc-500">{statement.collection} · {statement.trustLabel}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <div className="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto]">
-          <label className="grid gap-2 text-sm text-zinc-300">
-            Search
-            <input aria-label="Search directory" value={search} onChange={(event) => setSearch(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" placeholder="Search names, handles, DIDs, jurisdictions" />
-          </label>
-          <label className="grid gap-2 text-sm text-zinc-300">
-            Type
-            <select aria-label="Filter by type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
-              <option value="all">All</option>
-              <option value="chapter">Chapter</option>
-              <option value="caucus">Caucus</option>
-              <option value="member-affiliation">Member affiliation</option>
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm text-zinc-300">
-            State
-            <select aria-label="Filter by state" value={stateFilter} onChange={(event) => setStateFilter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
-              <option value="all">All states</option>
-              {chapterStates.map((state) => <option key={state} value={state}>{state}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm text-zinc-300">
-            Chapter kind
-            <select aria-label="Filter by chapter kind" value={jurisdictionTypeFilter} onChange={(event) => setJurisdictionTypeFilter(event.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
-              <option value="all">All kinds</option>
-              <option value="chapter">Chapter</option>
-              <option value="organizing-committee">Organizing committee</option>
-            </select>
-          </label>
-        </div>
-        <p className="mt-4 text-sm text-zinc-300">Showing {visibleEntities.length} of {totalCount} records{typeFilter === 'chapter' ? ` · ${chapterCount} chapters total` : ''}</p>
-        {demoReadOnly ? (
-          <section className="mt-8 rounded-xl border border-amber-400/40 bg-zinc-950 p-5">
-            <h2 className="text-2xl font-semibold">Read-only public demo</h2>
-            <p className="mt-2 text-sm text-zinc-300">Publisher controls are disabled for the public demo. This view only reads curated fixture records.</p>
-          </section>
-        ) : (
-          <>
-            <section className="mt-8 rounded-xl border border-fuchsia-400/30 bg-zinc-950 p-5">
-              <h2 className="text-2xl font-semibold">Local prototype publisher</h2>
-              <p className="mt-2 text-sm text-zinc-300">Create a chapter fixture and send it to <code>/api/admin/fixtures/ingest</code>.</p>
-              <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishPrototypeChapter}>
-                {(['name', 'shortName', 'handle', 'did', 'website', 'jurisdictionName', 'jurisdictionState'] as const).map((field) => (
-                  <label key={field} className="grid gap-2 text-sm text-zinc-300">
-                    {field}
-                    <input aria-label={field} value={draft[field]} onChange={(event) => setDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
-                  </label>
-                ))}
-                <button type="submit" className="rounded-lg border border-fuchsia-400/50 bg-fuchsia-500/20 px-4 py-2 text-sm font-semibold text-fuchsia-100 md:col-span-2">Publish local fixture</button>
-              </form>
-              <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a chapter fixture.</p>
-              {submitState ? <p className="mt-3 text-sm text-cyan-200">{submitState}</p> : null}
-              <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(preview, null, 2)}</pre>
-            </section>
-            <section className="mt-8 rounded-xl border border-cyan-400/30 bg-zinc-950 p-5">
-              <h2 className="text-2xl font-semibold">Local verification assertion publisher</h2>
-              <p className="mt-2 text-sm text-zinc-300">Create a local fixture verification/dispute assertion and send it to <code>/api/admin/fixtures/ingest</code>.</p>
-              <p className="mt-2 text-sm text-amber-300">This does not create real DSA legitimacy, membership proof, or real PDS records.</p>
-              <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={publishVerificationAssertion}>
-                {(['subjectUri', 'subjectDid', 'issuerDid', 'issuerHandle', 'reason'] as const).map((field) => (
-                  <label key={field} className="grid gap-2 text-sm text-zinc-300">
-                    {field}
-                    <input aria-label={field} value={verificationDraft[field]} onChange={(event) => setVerificationDraft((current) => ({ ...current, [field]: event.target.value }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" />
-                  </label>
-                ))}
-                <label className="grid gap-2 text-sm text-zinc-300">
-                  assertion
-                  <select aria-label="assertion" value={verificationDraft.assertion} onChange={(event) => setVerificationDraft((current) => ({ ...current, assertion: event.target.value as VerificationDraft['assertion'] }))} className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
-                    <option value="verified">verified</option>
-                    <option value="disputed">disputed</option>
-                    <option value="revoked">revoked</option>
-                    <option value="self-declared">self-declared</option>
-                  </select>
-                </label>
-                <button type="submit" className="rounded-lg border border-cyan-400/50 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 md:col-span-2">Publish verification assertion</button>
-              </form>
-              <p className="mt-3 text-sm text-amber-300">Member-affiliation safety copy still applies; this publisher only emits a local verification assertion fixture.</p>
-              <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(verificationPreview, null, 2)}</pre>
-            </section>
-          </>
-        )}
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-          <div className="grid gap-4">
-            {visibleEntities.map((entity) => (
-              <button
-                key={entity.id}
-                type="button"
-                onClick={() => setSelectedId(entity.id)}
-                className={`rounded-xl border p-5 text-left transition ${entity.id === selectedEntity?.id ? 'border-fuchsia-400 bg-zinc-950' : 'border-zinc-800 bg-zinc-950'}`}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <h2 className="text-xl font-semibold">{entity.name}</h2>
-                  <div className="flex gap-2 text-xs uppercase tracking-[0.2em]">
-                    <span className="rounded-full border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">{entity.type}</span>
-                    <span className="rounded-full border border-cyan-400/40 px-3 py-1 text-cyan-200">{entity.verificationStatus}</span>
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-zinc-400">{entity.shortName} · {entity.jurisdiction} · {entity.status}</p>
-                {entity.type === 'caucus' ? <p className="mt-2 text-sm text-amber-300">Mock / prototype caucus or working-group data</p> : null}
-                {entity.type === 'member-affiliation' ? <p className="mt-2 text-sm text-amber-300">Public prototype member affiliation record; not verified membership.</p> : null}
-                <dl className="mt-3 grid gap-2 text-sm text-zinc-300">
-                  <div><dt className="inline text-zinc-500">Handle:</dt> <dd className="inline">{entity.handle}</dd></div>
-                  <div><dt className="inline text-zinc-500">Record type:</dt> <dd className="inline">{entity.collection}</dd></div>
-                  <div><dt className="inline text-zinc-500">Entity type:</dt> <dd className="inline">{entity.type}</dd></div>
-                  <div><dt className="inline text-zinc-500">DID:</dt> <dd className="inline">{entity.did}</dd></div>
-                  <div><dt className="inline text-zinc-500">AT URI:</dt> <dd className="inline">{entity.id}</dd></div>
-                  {entity.type === 'member-affiliation' ? <div><dt className="inline text-zinc-500">Public role:</dt> <dd className="inline">{entity.publicRole ?? 'self-declared'}</dd></div> : null}
-                  <div><dt className="inline text-zinc-500">Verification:</dt> <dd className="inline">{entity.verificationStatus}</dd></div>
-                  {entity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{entity.verifiedBy}</dd></div> : null}
-                </dl>
-              </button>
-            ))}
-            {!visibleEntities.length ? <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">No records match these filters. Try clearing state, kind, search, or type.</p> : null}
-          </div>
-          <aside className="rounded-xl border border-cyan-400/40 bg-zinc-950 p-5">
-            {selectedEntity ? (
-              <>
-                <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Fixture authority</p>
-                <h2 className="mt-3 text-2xl font-semibold">{selectedEntity.name}</h2>
-                <dl className="mt-4 grid gap-2 text-sm text-zinc-300">
-                  <div><dt className="inline text-zinc-500">Entity type:</dt> <dd className="inline">{selectedEntity.type}</dd></div>
-                  <div><dt className="inline text-zinc-500">DID:</dt> <dd className="inline">{selectedEntity.did}</dd></div>
-                  <div><dt className="inline text-zinc-500">Handle:</dt> <dd className="inline">{selectedEntity.handle}</dd></div>
-                  <div><dt className="inline text-zinc-500">Collection:</dt> <dd className="inline">{selectedEntity.collection}</dd></div>
-                  <div><dt className="inline text-zinc-500">AT URI:</dt> <dd className="inline">{selectedEntity.id}</dd></div>
-                  <div><dt className="inline text-zinc-500">Trust label:</dt> <dd className="inline">{selectedEntity.trustLabel}</dd></div>
-                  <div><dt className="inline text-zinc-500">Verification status:</dt> <dd className="inline">{selectedEntity.verificationStatus}</dd></div>
-                  {selectedEntity.verifiedBy ? <div><dt className="inline text-zinc-500">Verified by:</dt> <dd className="inline">{selectedEntity.verifiedBy}</dd></div> : null}
-                </dl>
-                <p className="mt-4 text-sm text-amber-300">{selectedEntity.verificationReason ?? (selectedEntity.type === 'member-affiliation' ? 'Public prototype member affiliation record; not verified membership.' : selectedEntity.type === 'caucus' ? 'Mock / prototype caucus or working-group data' : 'Public chapter directory record.')}</p>
-                <section className="mt-4 rounded-lg border border-cyan-400/30 bg-zinc-950 p-4">
-                  <h3 className="text-lg font-semibold text-cyan-100">Authority and status</h3>
-                  {resolvedAuthority ? (
-                    <div className="mt-3 space-y-4 text-sm text-zinc-300">
-                      {/* Status */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-500">Authority status:</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-[0.2em] ${
-                          resolvedAuthority.status === 'valid' ? 'border-emerald-400/50 text-emerald-200' :
-                          resolvedAuthority.status === 'expired' ? 'border-amber-400/50 text-amber-200' :
-                          resolvedAuthority.status === 'revoked' ? 'border-rose-400/50 text-rose-200' :
-                          resolvedAuthority.status === 'disputed' ? 'border-orange-400/50 text-orange-200' :
-                          'border-zinc-500 text-zinc-400'
-                        }`}>{resolvedAuthority.status}</span>
-                      </div>
-
-                      {/* Current Record */}
-                      {resolvedAuthority.record && (
-                        <div>
-                          <h4 className="text-zinc-500 mb-1">Current record</h4>
-                          <div className="rounded border border-zinc-800 bg-zinc-900 p-2 space-y-1 text-xs">
-                            <div><span className="text-zinc-500">URI:</span> <code className="text-cyan-300">{resolvedAuthority.record.uri}</code></div>
-                            <div><span className="text-zinc-500">Collection:</span> {resolvedAuthority.record.collection}</div>
-                            <div><span className="text-zinc-500">Trust label:</span> {resolvedAuthority.record.trustLabel}</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Revisions */}
-                      {resolvedAuthority.revisions.length > 0 && (
-                        <div>
-                          <h4 className="text-zinc-500 mb-1">Immutable revisions ({resolvedAuthority.revisions.length})</h4>
-                          <div className="space-y-1">
-                            {resolvedAuthority.revisions.map((revision) => (
-                              <div key={revision.cid} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
-                                <div><span className="text-zinc-500">CID:</span> <code className="text-amber-300">{revision.cid}</code></div>
-                                <div><span className="text-zinc-500">Indexed:</span> {new Date(revision.indexedAt).toISOString()}</div>
-                                <button
-                                  type="button"
-                                  onClick={() => setResolverTargetUri(revision.uri)}
-                                  className="mt-1 text-cyan-400 hover:text-cyan-300 underline"
-                                >
-                                  Drill down →
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Authority Records */}
-                      {resolvedAuthority.authorityRecords.length > 0 && (
-                        <div>
-                          <h4 className="text-zinc-500 mb-1">Authority records ({resolvedAuthority.authorityRecords.length})</h4>
-                          <div className="space-y-1">
-                            {resolvedAuthority.authorityRecords.map((authRecord) => (
-                              <div key={authRecord.uri} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
-                                <div><span className="text-zinc-500">URI:</span> <code className="text-cyan-300">{authRecord.uri}</code></div>
-                                <div><span className="text-zinc-500">Collection:</span> {authRecord.collection}</div>
-                                <button
-                                  type="button"
-                                  onClick={() => setResolverTargetUri(authRecord.uri)}
-                                  className="mt-1 text-cyan-400 hover:text-cyan-300 underline"
-                                >
-                                  Drill down →
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Caveats */}
-                      {resolvedAuthority.caveats.length > 0 && (
-                        <div>
-                          <h4 className="text-zinc-500 mb-1">Caveats</h4>
-                          {resolvedAuthority.caveats.map((caveat) => (
-                            <p key={caveat} className="text-amber-300 text-xs">{caveat}</p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-sm text-zinc-500">No resolver data loaded for this record.</p>
-                  )}
-                </section>
-                <section className="mt-5 rounded-lg border border-cyan-400/30 bg-zinc-900 p-4">
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related civic activity</h3>{appLayerExamplePill}</div>
-                  {relatedActivity.length ? (
-                    <div className="mt-3 grid gap-3">
-                      {relatedActivity.map((item) => (
-                        <article key={item.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-semibold">{item.title}</h4>
-                            <span className="rounded-full border border-cyan-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-cyan-200">{item.type}</span>
-                          </div>
-                          <p className="mt-2 text-zinc-300">Actor: {item.actorName}</p>
-                          <p className="mt-1 text-zinc-400">Date: {item.date}</p>
-                          <p className="mt-1 text-zinc-400">Status: {item.status}</p>
-                          <p className="mt-2 text-zinc-300">{item.summary}</p>
-                          <p className="mt-1 text-zinc-500">Topics: {item.topics.join(', ')}</p>
-                        </article>
-                      ))}
-                    </div>
-                  ) : <p className="mt-3 text-sm text-zinc-400">No civic activity linked to this entity yet.</p>}
-                </section>
-                <section className="mt-5 rounded-lg border border-sky-400/30 bg-zinc-900 p-4">
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public statements</h3>{appLayerExamplePill}</div>
-                  {relatedStatements.length ? (
-                    <div className="mt-3 grid gap-3">
-                      {relatedStatements.map((statement) => (
-                        <article key={statement.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-semibold">{statement.title}</h4>
-                            <span className="rounded-full border border-sky-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-sky-200">{statement.status}</span>
-                          </div>
-                          <p className="mt-2 text-zinc-300">{statement.summary}</p>
-                          <p className="mt-2 text-zinc-400">Issuer: {statement.issuerName}</p>
-                          <p className="mt-1 text-zinc-500">Topics: {statement.topics.join(', ')}</p>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-zinc-400">No public statements linked to this entity yet.</p>
-                  )}
-                </section>
-                <section className="mt-5 rounded-lg border border-violet-400/30 bg-zinc-900 p-4">
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related publication articles</h3>{appLayerExamplePill}</div>
-                  {relatedArticles.length ? (
-                    <div className="mt-3 grid gap-3">
-                      {relatedArticles.map((article) => (
-                        <article key={article.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-semibold">{article.title}</h4>
-                            <span className="rounded-full border border-violet-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-violet-200">{article.status}</span>
-                          </div>
-                          <p className="mt-2 text-zinc-300">{article.summary}</p>
-                          <p className="mt-2 text-zinc-400">Publication: {article.publicationName}</p>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-zinc-400">No publication articles linked to this entity yet.</p>
-                  )}
-                </section>
-                <section className="mt-5 rounded-lg border border-emerald-400/30 bg-zinc-900 p-4">
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public endorsements</h3>{appLayerExamplePill}</div>
-                  {relatedEndorsements.length ? (
-                    <div className="mt-3 grid gap-3">
-                      {relatedEndorsements.map((endorsement) => (
-                        <article key={endorsement.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-semibold">{endorsement.candidateOrMeasureName}</h4>
-                            <span className="rounded-full border border-emerald-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-emerald-200">{endorsement.status}</span>
-                          </div>
-                          <p className="mt-2 text-zinc-300">{endorsement.officeOrMeasure}</p>
-                          <p className="mt-1 text-zinc-400">Endorser: {endorsement.endorsingEntityName}</p>
-                          <p className="mt-1 text-zinc-500">Election: {endorsement.electionDate}</p>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-zinc-400">No public endorsements linked to this entity yet.</p>
-                  )}
-                </section>
-                <section className="mt-5 rounded-lg border border-amber-400/30 bg-zinc-900 p-4">
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-semibold">Related public events</h3>{appLayerExamplePill}</div>
-                  {relatedEvents.length ? (
-                    <div className="mt-3 grid gap-3">
-                      {relatedEvents.map((event) => (
-                        <article key={event.uri} className="rounded border border-zinc-800 bg-zinc-950 p-3 text-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-semibold">{event.title}</h4>
-                            <span className="rounded-full border border-amber-400/40 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-amber-200">{event.status}</span>
-                          </div>
-                          <p className="mt-2 text-zinc-300">Host: {event.hostEntityName}</p>
-                          <p className="mt-1 text-zinc-400">Starts: {event.startsAt}</p>
-                          <p className="mt-1 text-zinc-500">Mode: {event.mode}</p>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-zinc-400">No public events linked to this entity yet.</p>
-                  )}
-                </section>
-                <pre className="mt-4 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-xs text-zinc-200">{JSON.stringify(selectedEntity.record.record, null, 2)}</pre>
-              </>
-            ) : null}
-          </aside>
         </div>
       </section>
+
+      {/* Operational Summary Cards */}
+      <section className="mx-auto max-w-7xl px-6 pb-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Registry Health Card */}
+          <div className="rounded-xl border border-emerald-400/30 bg-zinc-900/50 p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">Registry Health</h2>
+              <span className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-wider ${
+                registryHealth.status === 'ok' ? 'border-emerald-400/50 text-emerald-200' : 
+                registryHealth.status === 'warning' ? 'border-amber-400/50 text-amber-200' : 
+                'border-rose-400/50 text-rose-200'
+              }`}>{registryHealth.status.toUpperCase()}</span>
+            </div>
+            <p className="mt-3 text-2xl font-semibold">{registryHealth.totalRecords}</p>
+            <p className="text-sm text-zinc-400">Total records</p>
+            <div className="mt-3 flex gap-4 text-xs text-zinc-500">
+              <span>{registryHealth.directoryCountsByType.chapter ?? 0} chapters</span>
+              <span>{registryHealth.directoryCountsByType.caucus ?? 0} caucuses</span>
+            </div>
+          </div>
+
+          {/* Directory Counts Card */}
+          <div className="rounded-xl border border-cyan-400/30 bg-zinc-900/50 p-5">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">Directory Entities</h2>
+            <p className="mt-3 text-2xl font-semibold">{totalCount}</p>
+            <p className="text-sm text-zinc-400">Active records</p>
+            <div className="mt-3 flex gap-4 text-xs text-zinc-500">
+              <span>{chapterCount} chapters</span>
+              <span>{caucusCount} caucuses</span>
+            </div>
+          </div>
+
+          {/* Org Units Card */}
+          <div className="rounded-xl border border-violet-400/30 bg-zinc-900/50 p-5">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">Organization Units</h2>
+            <p className="mt-3 text-2xl font-semibold">{orgChart.units.length}</p>
+            <p className="text-sm text-zinc-400">Chart entities</p>
+            <div className="mt-3 flex gap-2 flex-wrap">
+              {[...new Set(orgChart.units.map(u => u.kind))].slice(0, 3).map(kind => (
+                <span key={kind} className="text-xs text-zinc-500">{orgChartKindLabels[kind] ?? kind}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* App Layer Records Card */}
+          <div className="rounded-xl border border-amber-400/30 bg-zinc-900/50 p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">App-Layer Records</h2>
+              <AppLayerBadge />
+            </div>
+            <p className="mt-3 text-2xl font-semibold">{statements.length + publications.length + articles.length + events.length + endorsements.length}</p>
+            <p className="text-sm text-zinc-400">Public records</p>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-zinc-500">
+              <span>{statements.length} statements</span>
+              <span>{publications.length} Publications</span>
+              <span>{articles.length} articles</span>
+              <span>{events.length} events</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Safety/Readiness Panel */}
+      {demoReadOnly && (
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10">
+                <svg className="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-amber-200">Read-Only Public Demo</h2>
+                <p className="mt-1 text-sm text-zinc-300">
+                  Publisher controls are disabled. This view only reads curated fixture records. The write gateway is disabled for public access. First writable family (events) is available in staging only.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Primary Workspace: Directory List + Entity Profile */}
+      <section className="mx-auto max-w-7xl px-6 pb-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+          {/* Left: Directory List */}
+          <div className="space-y-4">
+            {/* Search and Filters */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <label className="block">
+                <span className="text-sm font-medium text-zinc-400">Search directory</span>
+                <input 
+                  aria-label="Search directory" 
+                  value={search} 
+                  onChange={(event) => setSearch(event.target.value)} 
+                  className="mt-1.5 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 placeholder-zinc-500" 
+                  placeholder="Names, handles, DIDs, jurisdictions..." 
+                />
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <label className="block">
+                  <span className="text-xs text-zinc-500">Type</span>
+                  <select 
+                    aria-label="Filter by type" 
+                    value={typeFilter} 
+                    onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)} 
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100"
+                  >
+                    <option value="all">All types</option>
+                    <option value="chapter">Chapter</option>
+                    <option value="caucus">Caucus</option>
+                    <option value="member-affiliation">Member affiliation</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-xs text-zinc-500">State</span>
+                  <select 
+                    aria-label="Filter by state" 
+                    value={stateFilter} 
+                    onChange={(event) => setStateFilter(event.target.value)} 
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100"
+                  >
+                    <option value="all">All states</option>
+                    {chapterStates.map((state) => <option key={state} value={state}>{state}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-xs text-zinc-500">Chapter kind</span>
+                  <select
+                    aria-label="Filter by chapter kind"
+                    value={jurisdictionTypeFilter}
+                    onChange={(event) => setJurisdictionTypeFilter(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100"
+                  >
+                    <option value="all">All kinds</option>
+                    <option value="chapter">Chapter</option>
+                    <option value="organizing-committee">Organizing committee</option>
+                  </select>
+                </label>
+              </div>
+              <p className="mt-3 text-xs text-zinc-500">
+                Showing {visibleEntities.length} of {totalCount} records
+              </p>
+            </div>
+
+            {/* Entity List */}
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+              {visibleEntities.map((entity) => (
+                <button
+                  key={entity.id}
+                  type="button"
+                  onClick={() => setSelectedId(entity.id)}
+                  className={`w-full rounded-xl border p-4 text-left transition ${
+                    entity.id === selectedEntity?.id 
+                      ? 'border-cyan-400 bg-zinc-900' 
+                      : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-semibold">{entity.name}</h3>
+                    <div className="flex gap-1.5">
+                      <Badge color={entity.type === 'chapter' ? 'cyan' : entity.type === 'caucus' ? 'violet' : 'slate'}>{entity.type}</Badge>
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-sm text-zinc-400">{entity.shortName} · {entity.jurisdiction}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge color={entity.verificationStatus === 'verified' ? 'emerald' : entity.verificationStatus === 'disputed' ? 'amber' : 'slate'}>{entity.verificationStatus}</Badge>
+                    <span className="text-xs text-zinc-500">{entity.status}</span>
+                  </div>
+                  {entity.type === 'member-affiliation' && (
+                    <p className="mt-2 text-xs text-amber-300">Public prototype member affiliation record; not verified membership.</p>
+                  )}
+                  {entity.type === 'caucus' && (
+                    <p className="mt-2 text-xs text-amber-300">Mock / prototype caucus or working-group data</p>
+                  )}
+                </button>
+              ))}
+              {!visibleEntities.length && (
+                <div className="rounded-xl border border-dashed border-zinc-700 p-8 text-center">
+                  <p className="text-sm text-zinc-400">No records match your filters.</p>
+                  <p className="mt-1 text-xs text-zinc-500">Try clearing search, type, or state filters.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Entity Profile */}
+          <div className="rounded-xl border border-cyan-400/30 bg-zinc-900/50 p-6">
+            {selectedEntity ? (
+              <div>
+                <div className="flex items-center gap-2">
+                  <FoundationBadge />
+                  <span className="text-xs uppercase tracking-wider text-zinc-500">Foundation Layer</span>
+                </div>
+                <h2 className="mt-3 text-2xl font-bold">{selectedEntity.name}</h2>
+                
+                {/* Trust & Status */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="self-center text-xs font-medium uppercase tracking-wider text-zinc-500">Trust label</span>
+                  <Badge color={selectedEntity.trustLabel === 'official' ? 'emerald' : selectedEntity.trustLabel === 'community-submitted' ? 'violet' : 'slate'}>
+                    {selectedEntity.trustLabel}
+                  </Badge>
+                  <Badge color={selectedEntity.verificationStatus === 'verified' ? 'emerald' : selectedEntity.verificationStatus === 'disputed' ? 'amber' : 'slate'}>
+                    {selectedEntity.verificationStatus}
+                  </Badge>
+                  <Badge color="slate">{selectedEntity.status}</Badge>
+                </div>
+
+                {/* Key Details */}
+                <dl className="mt-5 grid gap-2 text-sm">
+                  <div className="flex justify-between border-b border-zinc-800 pb-2">
+                    <dt className="text-zinc-500">Handle</dt>
+                    <dd className="font-mono text-cyan-200">{selectedEntity.handle}</dd>
+                  </div>
+                  <div className="flex justify-between border-b border-zinc-800 pb-2">
+                    <dt className="text-zinc-500">DID</dt>
+                    <dd className="font-mono text-zinc-300">{selectedEntity.did}</dd>
+                  </div>
+                  <div className="flex justify-between border-b border-zinc-800 pb-2">
+                    <dt className="text-zinc-500">Collection</dt>
+                    <dd className="text-zinc-300">{selectedEntity.collection}</dd>
+                  </div>
+                  <div className="flex justify-between border-b border-zinc-800 pb-2">
+                    <dt className="text-zinc-500">Jurisdiction</dt>
+                    <dd className="text-zinc-300">{selectedEntity.jurisdiction}</dd>
+                  </div>
+                  {selectedEntity.verifiedBy && (
+                    <div className="flex justify-between border-b border-zinc-800 pb-2">
+                      <dt className="text-zinc-500">Verified by</dt>
+                      <dd className="text-emerald-200">{selectedEntity.verifiedBy}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {/* Authority & Status Panel */}
+                <section className="mt-6 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+                  <h3 className="text-lg font-semibold text-cyan-100">Authority & Status</h3>
+                  {resolvedAuthority ? (
+                    <div className="mt-3 space-y-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-500">Authority status:</span>
+                        <Badge color={
+                          resolvedAuthority.status === 'valid' ? 'emerald' : 
+                          resolvedAuthority.status === 'expired' ? 'amber' : 
+                          resolvedAuthority.status === 'revoked' ? 'fuchsia' : 
+                          resolvedAuthority.status === 'disputed' ? 'amber' : 'slate'
+                        }>{resolvedAuthority.status}</Badge>
+                      </div>
+                      {resolvedAuthority.record && (
+                        <div className="rounded border border-zinc-800 bg-zinc-900 p-2">
+                          <p className="text-xs text-zinc-500 mb-1">Current record</p>
+                          <p className="font-mono text-xs text-cyan-200 truncate">{resolvedAuthority.record.uri}</p>
+                        </div>
+                      )}
+                      {resolvedAuthority.revisions.length > 0 && (
+                        <div>
+                          <p className="text-xs text-zinc-500 mb-1">Revisions ({resolvedAuthority.revisions.length})</p>
+                          <ul className="space-y-1 text-xs text-zinc-400">
+                            {resolvedAuthority.revisions.map((revision) => (
+                              <li key={`${revision.uri}-${revision.cid}`} className="font-mono">{revision.cid}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {resolvedAuthority.caveats.length > 0 && (
+                        <div className="text-xs text-amber-300">
+                          {resolvedAuthority.caveats.map(caveat => <p key={caveat}>{caveat}</p>)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-zinc-500">No resolver data loaded.</p>
+                  )}
+                </section>
+
+                {/* Related Activity Preview */}
+                {relatedActivity.length > 0 && (
+                  <section className="mt-5">
+                    <div className="flex items-center gap-2">
+                      <AppLayerBadge />
+                      <h3 className="text-lg font-semibold">Related Activity</h3>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {relatedActivity.slice(0, 3).map((item) => (
+                        <div key={item.uri} className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{item.title}</span>
+                            <Badge color={item.type === 'statement' ? 'sky' : item.type === 'event' ? 'amber' : item.type === 'endorsement' ? 'emerald' : 'violet'}>{item.type}</Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-zinc-400">{item.actorName} · {new Date(item.date).toLocaleDateString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Record JSON Preview */}
+                <details className="mt-5">
+                  <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-400">View record JSON</summary>
+                  <pre className="mt-3 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 max-h-48">
+                    {JSON.stringify(selectedEntity.record.record, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center py-12">
+                <p className="text-zinc-500">Select an entity to view details</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Org Graph Explorer */}
+      <section className="mx-auto max-w-7xl px-6 pb-8">
+        <div className="rounded-xl border border-emerald-400/30 bg-zinc-900/30 p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <FoundationBadge />
+                <h2 className="text-xl font-bold">Organization Graph Explorer</h2>
+              </div>
+              <p className="mt-2 text-sm text-zinc-400">
+                Source-linked public organization chart slice · <a href={orgChart.sourceUrl} className="text-cyan-300 hover:underline">Original chart</a> · {orgChart.updatedLabel}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                type="button" 
+                onClick={() => { setOrgChartKindFilter('all'); setOrgChartSelectedUnit(''); }} 
+                className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                  orgChartKindFilter === 'all' ? 'border-emerald-300 bg-emerald-500/10 text-emerald-200' : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                }`}
+              >
+                All
+              </button>
+              {[...new Set(orgChart.units.map((unit) => unit.kind))].map((kind) => (
+                <button 
+                  key={kind} 
+                  type="button" 
+                  onClick={() => { setOrgChartKindFilter(kind); setOrgChartSelectedUnit(''); }} 
+                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                    orgChartKindFilter === kind ? 'border-emerald-300 bg-emerald-500/10 text-emerald-200' : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  {orgChartKindLabels[kind] ?? kind}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
+            {/* Unit List */}
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+              {orgChartUnitsByKind.map(([kind, units]) => (
+                <div key={kind} className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                  <h3 className="text-sm font-medium text-emerald-200">{orgChartKindLabels[kind] ?? kind}</h3>
+                  <div className="mt-2 space-y-1">
+                    {units.map((unit) => (
+                      <button
+                        key={unit.uri}
+                        type="button"
+                        onClick={() => setOrgChartSelectedUnit(unit.uri)}
+                        className={`w-full rounded border p-2 text-left text-sm transition ${
+                          activeOrgUnit?.uri === unit.uri 
+                            ? 'border-cyan-400 bg-zinc-900' 
+                            : 'border-zinc-800 hover:border-zinc-700'
+                        }`}
+                      >
+                        <span className="font-medium">{unit.shortName}</span>
+                        <span className="text-zinc-500"> — {unit.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Unit Details */}
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+              {activeOrgUnit ? (
+                <div>
+                  <h3 className="text-lg font-semibold">{activeOrgUnit.name}</h3>
+                  <p className="text-sm text-zinc-500">{orgChartKindLabels[activeOrgUnit.kind] ?? activeOrgUnit.kind}</p>
+                  <p className="mt-3 text-sm text-zinc-300">{activeOrgUnit.description}</p>
+                  {activeOrgUnit.website && (
+                    <a href={activeOrgUnit.website} className="mt-2 inline-block text-sm text-cyan-300 hover:underline">Website →</a>
+                  )}
+                  
+                  <div className="mt-5 grid gap-4">
+                    {incomingOrgRelationships.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium uppercase tracking-wider text-zinc-500">Incoming ({incomingOrgRelationships.length})</h4>
+                        <ul className="mt-2 space-y-1">
+                          {incomingOrgRelationships.map((rel) => (
+                            <li key={rel.uri} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
+                              <span className="text-emerald-200">{unitName(rel.subjectUri)}</span>
+                              <span className="text-zinc-500"> {rel.relationship} </span>
+                              <span className="text-cyan-200">{unitName(rel.objectUri)}</span>
+                              <p className="mt-1 text-zinc-400">{rel.description}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {outgoingOrgRelationships.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium uppercase tracking-wider text-zinc-500">Outgoing ({outgoingOrgRelationships.length})</h4>
+                        <ul className="mt-2 space-y-1">
+                          {outgoingOrgRelationships.map((rel) => (
+                            <li key={rel.uri} className="rounded border border-zinc-800 bg-zinc-900 p-2 text-xs">
+                              <span className="text-emerald-200">{unitName(rel.subjectUri)}</span>
+                              <span className="text-zinc-500"> {rel.relationship} </span>
+                              <span className="text-cyan-200">{unitName(rel.objectUri)}</span>
+                              <p className="mt-1 text-zinc-400">{rel.description}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-4 text-xs text-amber-300">Prototype caveat: public alignment slice only.</p>
+                </div>
+              ) : (
+                <p className="text-zinc-500">Select a unit to view details</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Public Activity Feed */}
+      <section className="mx-auto max-w-7xl px-6 pb-8">
+        <div className="rounded-xl border border-violet-400/30 bg-zinc-900/30 p-6">
+          <div className="flex items-center gap-2">
+            <AppLayerBadge />
+            <h2 className="text-xl font-bold">Public Activity Feed</h2>
+          </div>
+          <p className="mt-2 text-sm text-zinc-400">
+            Unified feed of public statements, articles, endorsements, and events from the app layer built on this foundation.
+          </p>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {activity.map((item) => (
+              <article key={item.uri} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-semibold">{item.title}</h3>
+                  <Badge color={
+                    item.type === 'statement' ? 'sky' : 
+                    item.type === 'event' ? 'amber' : 
+                    item.type === 'endorsement' ? 'emerald' : 'violet'
+                  }>{item.type}</Badge>
+                </div>
+                <p className="mt-2 text-sm text-zinc-400">{item.summary}</p>
+                <div className="mt-3 flex items-center gap-3 text-xs text-zinc-500">
+                  <span>{item.actorName}</span>
+                  <span>·</span>
+                  <span>{new Date(item.date).toLocaleDateString()}</span>
+                  <span>·</span>
+                  <Badge color={item.trustLabel === 'official' ? 'emerald' : 'slate'}>{item.trustLabel}</Badge>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Developer Workbench (only when not read-only) */}
+      {!demoReadOnly && (
+        <section className="mx-auto max-w-7xl px-6 pb-12">
+          <div className="rounded-xl border border-fuchsia-400/30 bg-zinc-900/30 p-6">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-fuchsia-400/50 bg-fuchsia-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-fuchsia-200">Developer</span>
+              <h2 className="text-xl font-bold">Local Publisher Workbench</h2>
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              Local prototype publishing only — creates safe fixture records for the local backend, not real ATProto/PDS publishing or real DSA legitimacy.
+            </p>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              {/* Chapter Publisher */}
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+                <h3 className="text-lg font-semibold text-fuchsia-200">Publish Chapter Fixture</h3>
+                <p className="mt-1 text-xs text-zinc-500">Create a chapter fixture and send to /api/admin/fixtures/ingest</p>
+                <form className="mt-4 grid gap-3" onSubmit={publishPrototypeChapter}>
+                  {(['name', 'shortName', 'handle', 'did', 'website', 'jurisdictionName', 'jurisdictionState'] as const).map((field) => (
+                    <label key={field} className="block">
+                      <span className="text-xs text-zinc-500">{field}</span>
+                      <input 
+                        aria-label={field} 
+                        value={draft[field]} 
+                        onChange={(event) => setDraft((current) => ({ ...current, [field]: event.target.value }))} 
+                        className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100" 
+                      />
+                    </label>
+                  ))}
+                  <button type="submit" className="mt-2 rounded-lg border border-fuchsia-400/50 bg-fuchsia-500/20 px-4 py-2 text-sm font-semibold text-fuchsia-100 hover:bg-fuchsia-500/30">
+                    Publish Fixture
+                  </button>
+                </form>
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-400">Preview JSON</summary>
+                  <pre className="mt-2 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-2 text-xs text-zinc-300 max-h-32">
+                    {JSON.stringify(preview, null, 2)}
+                  </pre>
+                </details>
+              </div>
+
+              {/* Verification Publisher */}
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+                <h3 className="text-lg font-semibold text-cyan-200">Publish Verification Assertion</h3>
+                <p className="mt-1 text-xs text-zinc-500">Create a verification/dispute assertion fixture</p>
+                <p className="mt-1 text-xs text-amber-300">Does not create real DSA legitimacy or membership proof.</p>
+                <form className="mt-4 grid gap-3" onSubmit={publishVerificationAssertion}>
+                  {(['subjectUri', 'subjectDid', 'issuerDid', 'issuerHandle', 'reason'] as const).map((field) => (
+                    <label key={field} className="block">
+                      <span className="text-xs text-zinc-500">{field}</span>
+                      <input 
+                        aria-label={field} 
+                        value={verificationDraft[field]} 
+                        onChange={(event) => setVerificationDraft((current) => ({ ...current, [field]: event.target.value }))} 
+                        className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100" 
+                      />
+                    </label>
+                  ))}
+                  <label className="block">
+                    <span className="text-xs text-zinc-500">assertion</span>
+                    <select 
+                      aria-label="assertion" 
+                      value={verificationDraft.assertion} 
+                      onChange={(event) => setVerificationDraft((current) => ({ ...current, assertion: event.target.value as VerificationDraft['assertion'] }))} 
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+                    >
+                      <option value="verified">verified</option>
+                      <option value="disputed">disputed</option>
+                      <option value="revoked">revoked</option>
+                      <option value="self-declared">self-declared</option>
+                    </select>
+                  </label>
+                  <button type="submit" className="mt-2 rounded-lg border border-cyan-400/50 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/30">
+                    Publish Assertion
+                  </button>
+                </form>
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-400">Preview JSON</summary>
+                  <pre className="mt-2 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-2 text-xs text-zinc-300 max-h-32">
+                    {JSON.stringify(verificationPreview, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            </div>
+
+            {submitState && (
+              <div className="mt-4 rounded-lg border border-cyan-400/30 bg-cyan-500/5 p-3">
+                <p className="text-sm text-cyan-200">{submitState}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Read-only message when demoReadOnly */}
+      {demoReadOnly && (
+        <section className="mx-auto max-w-7xl px-6 pb-12">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-zinc-600 bg-zinc-800 px-3 py-1 text-xs font-medium uppercase tracking-wider text-zinc-400">Developer</span>
+              <h2 className="text-xl font-bold text-zinc-400">Publishing unavailable</h2>
+            </div>
+            <p className="mt-3 text-sm text-zinc-500">
+              Publisher controls are disabled for the public demo. This view only reads curated fixture records.
+            </p>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

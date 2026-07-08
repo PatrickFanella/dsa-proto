@@ -1,42 +1,35 @@
 # Current State
 
-Last regrouped after removing voting and external source-chain records from the prototype scope.
+`dsa-proto` is a TypeScript Node + Postgres + Vite React prototype for a public DSA civic data layer. It uses AT Protocol-shaped record envelopes, but it is not a live PDS, not an official DSA registry, and not a production authority system.
 
-## Summary
+The public Almaz demo is read-only at <https://demo.dsaslate.us>.
 
-`dsa-proto` is a local TypeScript/Postgres/React prototype for an official DSA-shaped AT Protocol infrastructure base. Its first priority is public identity, authority, verification, roles, and the organizational graph.
+## Built components
 
-It is not a production ATProto service, not an official DSA registry, and not a real PDS publishing workflow. The maintained fixture set is the prototype source of truth. The public demo deployment is live on Almaz at <https://demo.dsaslate.us>, but it remains a demo with explicit safety gates, not production.
+- **Backend:** TypeScript Node API, Postgres persistence, in-memory fallback for local/test use.
+- **Frontend:** Vite React “DSA Civic Data Layer” dashboard.
+- **Dataset:** canonical fixture file at `backend/fixtures/records.json` with metadata.
+- **Operations:** Docker Compose for local/demo deployment; `make verify` for validation.
 
-See `foundation-layer.md` for the intended foundation boundary and publication matrix.
+## Current data model
 
-## Implemented capabilities
-
-### Directory records
-
-Supported directory card types:
+Foundation record families currently represented in fixtures and code:
 
 - `org.dsa.profile.chapter`
 - `org.dsa.profile.caucus`
-- `org.dsa.affiliation.member`
+- `org.dsa.affiliation.member` for opt-in public affiliation examples
+- `org.dsa.profile.orgUnit`
+- `org.dsa.relationship.governance`
+- `org.dsa.verification.assertion`
+- `org.dsa.identity.continuity`
+- `org.dsa.authority.delegation`
+- `org.dsa.authority.mandate`
+- `org.dsa.authority.charter`
+- `org.dsa.authority.revocation`
+- `org.dsa.authority.dispute`
+- `org.dsa.record.archive`
 
-The directory supports:
-
-- text search
-- type filter
-- state filter for chapters
-- chapter-kind filter for chapters / organizing committees
-- authority/status panel
-- verification status display
-- raw record JSON preview
-- registry health dashboard panel backed by the canonical fixture file
-
-### Public civic records
-
-These records demonstrate apps that can sit on top of the base layer. They should not drive the architecture until the identity and authority foundation is strong.
-These sections remain useful regression coverage, but foundation work should not add new app-layer scope until the resolver and authority graph are complete.
-
-Implemented Plan 2 civic record types:
+App-layer public record families currently represented:
 
 - `org.dsa.statement.public`
 - `org.dsa.publication.profile`
@@ -44,137 +37,69 @@ Implemented Plan 2 civic record types:
 - `org.dsa.endorsement.public`
 - `org.dsa.event.public`
 
-Statements are stored as raw ATProto-shaped records, served through `/api/statements`, and rendered in the UI. Publication profiles/articles are served through `/api/publications` and `/api/articles`. Public endorsements are served through `/api/endorsements`. Public events are served through `/api/events`. None of these become ordinary directory cards.
+## Current API surface
 
-The unified civic activity feed is served through `/api/activity` and powers the top-level civic activity section plus the merged related civic activity timeline on selected entities. The feed normalizes statements, articles, endorsements, and events into one ordered list.
+Read endpoints:
 
-Selected entity detail panels also show related public statements, related publication articles, related public endorsements, related public events, and the merged civic activity timeline when the linked URIs point back to the entity.
-
-### Ingestion and fixture workflows
-
-Implemented ingestion paths:
-
-- deterministic built-in seed records
-- `backend/fixtures/records.json`
-- `make chapters-import`
-- `make caucuses-import`
-- `make registry-health`
+- `GET /health`
+- `GET /ready`
+- `GET /api/entities`
+- `GET /api/entities/:id`
+- `GET /api/org-chart`
+- `GET /api/records/resolve?uri=...`
+- `GET /api/statements`
+- `GET /api/publications`
+- `GET /api/articles`
+- `GET /api/endorsements`
+- `GET /api/events`
+- `GET /api/activity`
 - `GET /api/registry/health`
-- `make fixture-replay`
-- browser `POST /api/admin/fixtures/ingest`
 
-The default local path is fixture replay. The fixture set is the source of truth for the prototype.
+Local/development mutation tooling:
 
-### Trust and verification
+- `POST /api/admin/fixtures/ingest` validates and ingests fixture envelopes when local admin ingest is enabled. It is disabled on Almaz.
 
-Supported trust/verification record:
+Fail-closed app-write preview:
 
-- `org.dsa.verification.assertion`
+- `POST /api/write/records`
+- `GET /api/write/operations/:operationId`
 
-Verification assertion records can mark a subject as:
+The write gateway is disabled by default and disabled on Almaz. When enabled in non-demo environments, it uses app registry scope checks, idempotency, optimistic-concurrency headers, private write-operation audit records, and pending-review behavior.
 
-- `verified`
-- `self-declared`
-- `uncertain`
-- `disputed`
-- `revoked`
-- `community-submitted`
+## Current UI
 
-These labels use the governance vocabulary. Local/demo fixture status should be shown as caveat metadata, not as `mock-*` trust labels.
+The web app is a read-oriented dashboard:
 
-### Org chart explorer
-
-Supported org-chart records:
-
-- `org.dsa.profile.orgUnit`
-- `org.dsa.relationship.governance`
-
-The org-chart explorer supports:
-
-- `/api/org-chart`
-- `/api/org-chart?kind=<kind>`
-- `/api/org-chart?unit=<at-uri>`
-- grouped unit display
-- unit-focused incoming/outgoing relationships
-- source link to the June 2020 public DSA organization chart
-
-Org-chart records are stored in `atproto_records`, but they do not become ordinary directory cards.
-
-### Browser local publisher
-
-The web UI includes local-only publisher forms for:
-
-- chapter fixture records
-- verification assertion records
-
-These forms post to `POST /api/admin/fixtures/ingest`. They are unauthenticated local prototype tools and must not be exposed as production admin functionality.
+- hero and read-only demo posture;
+- operational summary cards;
+- searchable/filterable directory;
+- selected entity profile with trust label and resolver context;
+- known revisions, authority records, disputes, revocations, and archive markers;
+- organization graph explorer;
+- public activity feed for statements, articles, endorsements, and events;
+- safety/readiness panel;
+- developer publisher workbench only outside read-only demo mode.
 
 ## Fixture source of truth
 
-- `docs/dsa-chapters.csv`: chapter fixture input used by `make chapters-import`.
-- `docs/dsa-caucuses.csv`: caucus fixture input used by `make caucuses-import`.
-- `backend/fixtures/records.json`: generated fixture storage replayed into Postgres.
-- `make registry-health`: offline validation for canonical fixture records and duplicate registry identifiers.
-- `GET /api/registry/health`: backend summary endpoint for the same canonical fixture file.
-- Built-in seed arrays in backend domain code.
-- Built-in seed arrays in backend domain code.
+For this prototype, the maintained fixture dataset is the source of truth. It is curated test/demo data, not production validation from DSA or from a live ATProto network.
 
-These are authored fixtures. The prototype no longer models external source records or source-of-truth chains.
+Fixture workflows:
 
-There are also local scratch docs that may remain untracked while being evaluated:
+- `make chapters-import`
+- `make caucuses-import`
+- `make registry-health`
+- `make fixture-replay`
+- `pnpm --dir backend run fixtures:author -- ...`
+- `pnpm --dir backend run fixtures:replay -- fixtures/records.json`
 
-- `docs/caucus-article.md`
-- `docs/caucus-article-extraction.md`
-- `docs/caucus-shape.md`
+## Explicit non-goals
 
-## Current architecture
+The built prototype does not implement:
 
-```text
-CSV / fixture JSON / browser publisher
-          ↓
-RecordEnvelope validation
-          ↓
-raw atproto_records
-          ↓
-directory_entities read model + org-chart raw-record projection
-          ↓
-REST API
-          ↓
-React local workbench
-```
-
-## Safety boundary
-
-The prototype should continue to exclude:
-
-- private member rosters
-- dues/payment status
-- voting records, ballots, eligibility proofs, auth/session tokens, and vote receipts
-- casework
-- disciplinary records
-- private deliberation
-- high-risk organizing logistics
-- personal contact information not explicitly published for the demo
-
-## Recommended next lanes
-
-1. **Foundation layer**: stabilize identity, authority, verification, roles, and the org graph before expanding app-specific slices.
-2. **Demo stabilization**: clean reset flows, screenshots, README flow, and safe defaults.
-3. **Fixture authoring model**: keep the curated fixture set coherent, minimal, and explicit about public/private boundaries.
-4. **Safe deploy path**: public demo with local admin/publisher functionality disabled or protected.
-
-## Foundation completion checklist
-
-- [x] Canonical foundation lexicons and status matrix exist.
-- [x] Fixture records include authority, dispute, revocation, and archive records.
-- [x] Raw storage preserves immutable record revisions and current projections.
-- [x] Resolver API explains record authority, disputes, lifecycle state, and caveats.
-- [x] UI shows authority/status summaries from the resolver before app-layer sections for selected directory entities.
-- [x] Tests cover validation, resolver semantics, and safety boundaries.
-- [ ] Full UI drill-down for org units and public records is still pending.
-
-Status note: the checklist above is a historical progress record, not a live audit log. Treat checked items as implementation milestones that were completed during this phase, while unchecked items remain future work.
-
-## Foundation tracer bullet
-
-The implemented foundation tracer bullet now covers backend storage, fixture records, resolver semantics, and a compact UI panel for selected directory entities. A reader can select a chapter or caucus and see resolver status, revision counts, authority records, dispute counts, and the caveat that fixtures are the prototype source of truth. Full drill-down for org units and app-layer public records remains a follow-up before calling the UI explorer complete.
+- production authority-chain validation or key custody;
+- live PDS publishing;
+- authenticated production app writes;
+- private member databases or internal workflow systems;
+- external citation/proof-chain records;
+- election/ballot systems.

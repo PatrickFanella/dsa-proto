@@ -1,258 +1,78 @@
-# Governance
+# Governance and Safety Rules
 
-The technical system only works if legitimacy, safety, and change management are explicit. AT Protocol can publish signed claims, but DSA needs governance to decide which claims are official, verified, community-submitted, uncertain, disputed, revoked, archived, or merely self-declared.
+This document describes the governance semantics implemented by the current prototype. It is not a production DSA governance policy.
 
-## Core questions
+## Current trust labels
 
-- Who controls official handles?
-- How are chapters verified?
-- How are caucuses recognized or labeled?
-- How are committee accounts created and rotated?
-- Who can publish official endorsements?
-- How are corrections issued?
-- How are disputes represented?
-- Who owns schema evolution?
-- Which apps are official?
-- What data must never be published?
+Trust labels are display and filtering signals for public records:
 
-## Handle policy
+- `official`
+- `verified-by-national`
+- `verified-by-chapter`
+- `verified-by-caucus`
+- `self-declared`
+- `community-submitted`
+- `secondary-source`
+- `uncertain`
 
-Recommended handle pattern:
+The prototype treats `revoked`, `disputed`, `archived`, `superseded`, and `tombstoned` as lifecycle or resolver states, not trust labels.
 
-```text
-@dsausa.org
-@chapter.dsausa.org
-@committee.chapter.dsausa.org
-@caucus.dsausa.org
-```
+## Current authority behavior
 
-Handle policy should define:
+Authority is fixture-backed. The resolver combines target records, known revisions, supporting authority records, disputes, revocations, archive markers, lifecycle state, trust label, and caveats.
 
-- Who can request a handle
-- What proof is required
-- Who approves requests
-- What happens when leadership changes
-- How account recovery works
-- How defunct entities are archived
-- How impersonation is handled
+Production trust roots, key custody, signature validation, account recovery, and delegated issuer authorization are not implemented.
 
-Handles are human-readable. DIDs are the durable identity. Apps should store DIDs and display current handles.
+## Current app-write governance
 
-## Verification model
+The write gateway exists but is fail-closed by default.
 
-Verification should be represented as explicit signed records, not hardcoded assumptions.
+Current app-write rules:
 
-Examples:
+- no public Almaz write access;
+- no app access to admin fixture ingest;
+- app tokens authenticate against a local registry;
+- app scopes restrict collection, host, and allowed trust labels;
+- ordinary app writes cannot publish foundation families;
+- ordinary app writes cannot self-assign `official` or verified labels;
+- review-required apps create private `pending_review` operations only;
+- the only first-family app-write preview is `org.dsa.event.public`.
 
-- National verifies a chapter.
-- Chapter verifies a committee.
-- Caucus verifies publication accounts.
-- Chapter verifies an endorsement record.
-- A member self-declares an affiliation.
-- An app labels a source as community-submitted or uncertain.
+## Current data safety boundary
 
-Canonical trust labels:
+The public layer is only for public organizational and civic records.
 
-```text
-official
-verified-by-national
-verified-by-chapter
-verified-by-caucus
-self-declared
-community-submitted
-secondary-source
-uncertain
-```
+Out of scope for public records:
 
-`disputed`, `revoked`, and `archived` are lifecycle or authority states, not trust labels.
+- private member databases;
+- personal contact details not explicitly published for the demo;
+- dues/payment status;
+- grievance, casework, disciplinary, or private deliberation material;
+- sensitive logistics;
+- external proof-chain records;
+- election/ballot systems.
 
-Local demo note: `org.dsa.verification.assertion` models how public verification, dispute, revocation, and self-declaration assertions could work. In production, these records need a trust root, issuer authorization checks, key custody, recovery, rotation, revocation, dispute handling, and audit policy before apps treat them as official legitimacy.
+Publication-boundary validation rejects disallowed record families and obvious unsafe private-data-shaped payload keys during fixture replay, registry health validation, and live-ingest paths. This is a guardrail, not a complete privacy review.
 
-## Authority and status model
+## Current correction and dispute model
 
-For official infrastructure, record trust is primarily institutional authority, not just a link to an external source.
+The prototype represents corrections and contested status with first-class records and resolver output rather than silent UI-only edits:
 
-Every official or verified record should identify:
+- disputes use `org.dsa.authority.dispute`;
+- revocations use `org.dsa.authority.revocation`;
+- archive markers use `org.dsa.record.archive`;
+- identity continuity records model rename/supersession/archive/tombstone cases;
+- immutable revision history is preserved for known records.
 
-- issuing DID and current handle;
-- organizational unit or role represented by the issuer;
-- authority path that permits this issuer to publish this record type;
-- effective date and, when applicable, expiration date;
-- superseded, amended, revoked, archived, or disputed records;
-- public source URLs or evidence where useful for auditability.
+Apps should surface those states when they affect interpretation.
 
-An official signature proves control of a key, not permanent legitimacy. Apps should evaluate the signature together with the authority graph, current revocation state, disputes, and safety policy.
+## Future production governance not built yet
 
-## Chapter verification
+Before any production use, the project would need real governance for:
 
-A chapter identity should be verified by national or by a delegated regional process.
-
-Minimum record:
-
-- Chapter DID
-- Chapter handle
-- Jurisdiction
-- Recognizing authority
-- Effective date
-- Status
-- Public source, if available
-
-Statuses:
-
-```text
-active
-inactive
-superseded
-deprecated
-disputed
-revoked
-archived
-tombstoned
-```
-
-## Caucus legitimacy
-
-Caucuses may be official, unofficial, national, local, independent, temporary, or disputed. The system should not pretend all caucuses have the same status.
-
-Recommended approach:
-
-- Let caucuses publish independently.
-- Let national, chapters, or other bodies issue verification assertions.
-- Label status clearly in apps.
-- Do not suppress unofficial caucuses by default, but do not imply official recognition.
-
-Useful labels:
-
-```text
-recognized
-chapter-recognized
-independent
-self-declared
-inactive
-disputed
-archived
-```
-
-## Endorsement authority
-
-Endorsements are politically sensitive and should have explicit authority.
-
-An endorsement record should identify:
-
-- Candidate or ballot measure
-- Office or jurisdiction
-- Election date
-- Publishing entity
-- Decision date
-- Decision authority, if public
-- Official source URL
-- Status
-
-Statuses:
-
-```text
-draft
-published
-corrected
-rescinded
-disputed
-archived
-```
-
-Corrections should be additive. Avoid silently replacing history. Publish a correction record and let indexers mark the current state.
-
-## Disputes and corrections
-
-Disputes should be first-class records.
-
-Examples:
-
-- A chapter says an endorsement record is inaccurate.
-- A caucus says an account is impersonating them.
-- A source URL no longer supports the claim.
-- A chapter has dissolved or split.
-
-Apps should display dispute status rather than simply deleting public history, except where safety or legal policy requires removal.
-
-## Schema evolution
-
-Create a lightweight schema governance process:
-
-1. Propose a Lexicon change.
-2. Publish rationale and examples.
-3. Test in one or more apps.
-4. Mark experimental fields clearly.
-5. Stabilize after implementation feedback.
-6. Deprecate old fields with migration notes.
-
-Principles:
-
-- Prefer additive changes.
-- Avoid breaking existing appviews.
-- Keep records minimal and source-linked.
-- Avoid modeling private internal data.
-- Use DIDs and AT URIs for durable references.
-
-## Official vs unofficial apps
-
-The data layer should support both official and unofficial apps. However, apps should label themselves clearly.
-
-Possible app labels:
-
-```text
-official-dsa
-official-chapter
-official-caucus
-community
-experimental
-archival
-research
-```
-
-Official apps may choose stricter trust filters. Community apps may show broader records but should preserve confidence labels.
-
-## Data safety policy
-
-Default rule: if publishing a record could expose a member, address, sensitive plan, disciplinary process, or private deliberation, do not publish it to AT Protocol.
-
-Never publish by default:
-
-- Raw voter addresses
-- Member addresses
-- Private phone numbers or emails
-- Dues/payment status
-- Internal member rosters
-- Disciplinary or grievance records
-- Sensitive direct action logistics
-- Internal votes
-- Private meeting minutes
-- Personal data scraped from private systems
-
-Safe public records should still be reviewed for risk. Public does not mean harmless.
-
-## Operational responsibilities
-
-For official infrastructure, define owners for:
-
-- PDS hosting
-- Account recovery
-- Key rotation
-- Incident response
-- Schema registry
-- Indexer maintenance
-- API uptime
-- Moderation and dispute queues
-- Documentation
-- Security review
-
-## Recommended governance structure
-
-Start minimal:
-
-1. A small technical working group maintains Lexicons and indexers.
-2. National or delegated bodies verify chapters.
-3. Chapters verify their own committees and endorsements.
-4. Caucuses can self-publish and seek verification where appropriate.
-5. Apps must display trust labels.
-6. Sensitive member data remains in private systems.
-7. Corrections and disputes are public records when safe.
+- official handle ownership;
+- DID/key custody and recovery;
+- delegated authority checks;
+- moderation queues and takedown procedures;
+- schema evolution and deprecation windows;
+- operational ownership for indexers, APIs, backups, and incident response.

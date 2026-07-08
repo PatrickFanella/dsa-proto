@@ -1,5 +1,7 @@
 # App Ideas
 
+Status: future reference only.
+
 Multiple apps can be built on the same AT Protocol data layer. Each app can use different trust filters, UX, and workflows while consuming shared signed records.
 
 ## Electoral guide

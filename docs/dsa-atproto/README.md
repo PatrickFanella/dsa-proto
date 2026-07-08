@@ -1,104 +1,32 @@
-# DSA AT Protocol Infrastructure Concept
+# DSA AT Protocol Prototype Docs
 
-This document set sketches how the Democratic Socialists of America could use AT Protocol as an official organizational identity, authority, verification, and public civic data layer for chapters, caucuses, committees, campaigns, publications, and other applications built on top.
+This directory documents what is currently built in `dsa-proto`: a fixture-backed, read-focused civic data layer prototype using AT Protocol-shaped records.
 
-The core idea is not “DSA joins Bluesky.” It is that DSA could use AT Protocol as a federated public infrastructure base, with many applications built on top of shared signed records.
+The public demo is read-only. Local developer tooling can author and replay fixtures, but it is not a production write system.
 
-```text
-People / Chapters / Caucuses publish signed records
-                  ↓
-        ATProto Personal Data Servers
-                  ↓
-        Relays / Firehose / Indexers
-                  ↓
-       Shared civic graph + search APIs
-                  ↓
-      Many apps: directories, publications, events,
-      resource libraries, chapter sites, dashboards
-```
+## Current built-state docs
 
-## Why AT Protocol fits DSA
+- [current-state.md](current-state.md) — concise implementation summary
+- [technical-architecture.md](technical-architecture.md) — built stack, storage, routes, and deployment posture
+- [foundation-layer.md](foundation-layer.md) — current foundation boundary and publication matrix
+- [foundation-contracts.md](foundation-contracts.md) — app-facing invariants implemented by the prototype
+- [lexicons.md](lexicons.md) — implemented record families and vocabularies
+- [governance.md](governance.md) — current trust, lifecycle, safety, and app-write governance rules
+- [local-demo.md](local-demo.md) — local run, fixture replay, and UI walkthrough
+- [production-demo-safety-guards.md](production-demo-safety-guards.md) — Almaz read-only guardrails
+- [org-chart-alignment.md](org-chart-alignment.md) — current org graph fixture mapping notes
 
-DSA is a national organization composed of local chapters, individual members, caucuses, working groups, committees, campaigns, and publications. That structure maps well to AT Protocol's strengths:
+## Stable references
 
-- Portable identities
-- Signed public records
-- Federation across semi-autonomous groups
-- Human-readable handles backed by durable DIDs
-- Custom schemas through Lexicons
-- Public data that can be indexed by many apps
-- A graph of relationships between people, chapters, caucuses, campaigns, candidates, events, and statements
+- [../reference/foundation-read-contract-v1.md](../reference/foundation-read-contract-v1.md) — supported app-facing read contract
+- [../reference/write-operations.md](../reference/write-operations.md) — fail-closed write gateway and operation rules
+- [../reference/stack.md](../reference/stack.md) — stack reference
 
-## Best uses
+## Historical and future-reference notes
 
-AT Protocol is first a good fit for public or semi-public organizational foundation data:
+These are not active implementation plans. They are retained for rationale or future production design context.
 
-- National, chapter, caucus, and committee identities
-- Chapter directories
-- Governance relationships
-- Public role, charter, mandate, appointment, dispute, revocation, and archive records
-- Verification and authority/status assertions
-
-Once that foundation is solid, app-layer records can use the same base:
-
-- Public event feeds
-- Public endorsements
-- Campaign guides
-- Public issue guides
-- Public statements and resolutions
-- Caucus publications
-- Public member profiles, when explicitly opted into
-- Developer APIs and app ecosystems built from shared records
-
-## Poor uses
-
-AT Protocol should not be used as the primary home for sensitive internal organizing data.
-
-Keep the following off the public protocol layer unless a future privacy architecture and security review explicitly support them:
-
-- Raw member rosters
-- Home addresses
-- Dues/payment status
-- Internal disciplinary records
-- Sensitive casework
-- Private deliberations
-- High-risk organizing logistics
-- Internal votes
-- Personal contact information that was not explicitly published
-
-## Recommended model
-
-Use a hybrid architecture:
-
-1. Official DSA identities publish public identity, authority, and governance records through DSA-controlled or chapter-controlled infrastructure.
-2. Members and independent caucuses can participate from any compatible PDS.
-3. Shared `org.dsa.*` Lexicons define common record types.
-4. A DSA indexer consumes public records and builds normalized trusted views.
-5. A verification service applies labels such as official, verified-by-national, verified-by-chapter, self-declared, disputed, revoked, and archived.
-6. Multiple apps consume the same data through direct ATProto sync, a shared API, or both.
-7. Private organizing systems remain separate and only publish approved public records outward.
-
-## Documents
-
-- [architecture.md](architecture.md): system architecture and infrastructure layers
-- [foundation-layer.md](foundation-layer.md): identity, authority, fixture source-of-truth, publication matrix, and app-boundary baseline
-- [foundation-contracts.md](foundation-contracts.md): foundation-layer contracts and invariants every app should build against
-- [foundation-contract-gap-map.md](foundation-contract-gap-map.md): current implementation gaps against the foundation contracts
-- [authority-chain-validation.md](authority-chain-validation.md): trust root, delegation validation, key custody, revocation, and audit design
-- [lexicons.md](lexicons.md): proposed record namespaces and example schemas
-- [governance.md](governance.md): verification, disputes, schema evolution, and safety policy
-- [../reference/foundation-read-contract-v1.md](../reference/foundation-read-contract-v1.md): frozen app-facing read contract for prototype apps
-- [app-ideas.md](app-ideas.md): applications that could be built on the shared data layer
-- [answers.md](answers.md): answered requirements interview
-- [current-state.md](current-state.md): current implementation baseline and recommended next lanes
-- [prototype-plan.md](prototype-plan.md): first local prototype scope and success criteria
-- [local-demo.md](local-demo.md): local run, reseed/reset, and reviewer demo flow
-- [technical-architecture.md](technical-architecture.md): implementation architecture for the fixture-record prototype
-- [org-chart-alignment.md](org-chart-alignment.md): public org-chart mapping notes and caveats
-- [atproto-ingestion-spike.md](atproto-ingestion-spike.md): Phase 2 real ATProto ingestion adapter findings
-- [roadmap.md](roadmap.md): phased path from local prototype to deployable demo
-- [next-sprint-foundation-contracts.md](next-sprint-foundation-contracts.md): next sprint plan for hardening the foundation contract
-- [next-sprint-write-access.md](next-sprint-write-access.md): sprint plan for controlled app write access without opening the public demo
-- [plan-2-public-civic-records.md](plan-2-public-civic-records.md): next-phase plan for public statements (slice 1 done), endorsements, events, and publications
-- [production-demo-safety-guards.md](production-demo-safety-guards.md): production demo route/UI/deploy guard plan
-- [gitea-issues.md](gitea-issues.md): proposed issue breakdown for implementation
+- [../why-at-proto.md](../why-at-proto.md)
+- [authority-chain-validation.md](authority-chain-validation.md)
+- [atproto-ingestion-spike.md](atproto-ingestion-spike.md)
+- [app-ideas.md](app-ideas.md)
