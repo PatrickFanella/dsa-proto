@@ -14,7 +14,7 @@ describe('organization seed', () => {
       SEED_ORGANIZATION_SLUG: 'lakefront',
       SEED_HANDLE_DOMAIN: 'pds-staging.dsaslate.us',
     });
-    expect(accountHandle(config, DEFAULT_SEED_MEMBERS[0])).toBe('lakefront-alex-rivera.pds-staging.dsaslate.us');
+    expect(accountHandle(config, DEFAULT_SEED_MEMBERS[0])).toBe('lf-alex.pds-staging.dsaslate.us');
     expect(config.createdAt).toBe('2026-07-10T00:00:00.000Z');
   });
 

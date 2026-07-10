@@ -14,6 +14,7 @@ const recordResponseSchema = z.object({ uri: z.string().startsWith('at://'), cid
 
 export const seedMemberSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
+  handleKey: z.string().regex(/^[a-z0-9-]+$/),
   displayName: z.string().min(1),
   role: z.enum(['owner', 'admin', 'event_planner', 'media_manager', 'data_manager', 'viewer']),
 });
@@ -21,16 +22,16 @@ export const seedMemberSchema = z.object({
 export type SeedMember = z.infer<typeof seedMemberSchema>;
 
 export const DEFAULT_SEED_MEMBERS: SeedMember[] = [
-  { id: 'alex-rivera', displayName: 'Alex Rivera', role: 'owner' },
-  { id: 'jordan-lee', displayName: 'Jordan Lee', role: 'admin' },
-  { id: 'morgan-patel', displayName: 'Morgan Patel', role: 'admin' },
-  { id: 'casey-williams', displayName: 'Casey Williams', role: 'event_planner' },
-  { id: 'riley-kim', displayName: 'Riley Kim', role: 'event_planner' },
-  { id: 'taylor-brooks', displayName: 'Taylor Brooks', role: 'event_planner' },
-  { id: 'jamie-nguyen', displayName: 'Jamie Nguyen', role: 'media_manager' },
-  { id: 'avery-johnson', displayName: 'Avery Johnson', role: 'data_manager' },
-  { id: 'quinn-davis', displayName: 'Quinn Davis', role: 'viewer' },
-  { id: 'skyler-martin', displayName: 'Skyler Martin', role: 'viewer' },
+  { id: 'alex-rivera', handleKey: 'alex', displayName: 'Alex Rivera', role: 'owner' },
+  { id: 'jordan-lee', handleKey: 'jordan', displayName: 'Jordan Lee', role: 'admin' },
+  { id: 'morgan-patel', handleKey: 'morgan', displayName: 'Morgan Patel', role: 'admin' },
+  { id: 'casey-williams', handleKey: 'casey', displayName: 'Casey Williams', role: 'event_planner' },
+  { id: 'riley-kim', handleKey: 'riley', displayName: 'Riley Kim', role: 'event_planner' },
+  { id: 'taylor-brooks', handleKey: 'taylor', displayName: 'Taylor Brooks', role: 'event_planner' },
+  { id: 'jamie-nguyen', handleKey: 'jamie', displayName: 'Jamie Nguyen', role: 'media_manager' },
+  { id: 'avery-johnson', handleKey: 'avery', displayName: 'Avery Johnson', role: 'data_manager' },
+  { id: 'quinn-davis', handleKey: 'quinn', displayName: 'Quinn Davis', role: 'viewer' },
+  { id: 'skyler-martin', handleKey: 'skyler', displayName: 'Skyler Martin', role: 'viewer' },
 ];
 
 export interface OrganizationSeedConfig {
@@ -39,6 +40,7 @@ export interface OrganizationSeedConfig {
   createdAt: string;
   pdsUrl: string;
   handleDomain: string;
+  handlePrefix: string;
   organizationSlug: string;
   organizationName: string;
   secretsDirectory: string;
@@ -51,6 +53,7 @@ export function getOrganizationSeedConfig(env: NodeJS.ProcessEnv = process.env):
   const parsed = z.object({
     PDS_PUBLIC_URL: z.string().url().default('https://pds-staging.dsaslate.us'),
     SEED_HANDLE_DOMAIN: z.string().default('pds-staging.dsaslate.us'),
+    SEED_HANDLE_PREFIX: z.string().regex(/^[a-z0-9-]+$/).default('lf'),
     SEED_ORGANIZATION_SLUG: z.string().regex(/^[a-z0-9-]+$/).default('lakefront-chapter'),
     SEED_ORGANIZATION_NAME: z.string().min(1).default('Lakefront DSA'),
     SEED_SECRET_DIR: z.string().default('deploy/almaz-staging/secrets/organization-seed'),
@@ -66,6 +69,7 @@ export function getOrganizationSeedConfig(env: NodeJS.ProcessEnv = process.env):
     createdAt: parsed.SEED_CREATED_AT,
     pdsUrl: parsed.PDS_PUBLIC_URL.replace(/\/$/, ''),
     handleDomain: parsed.SEED_HANDLE_DOMAIN,
+    handlePrefix: parsed.SEED_HANDLE_PREFIX,
     organizationSlug: parsed.SEED_ORGANIZATION_SLUG,
     organizationName: parsed.SEED_ORGANIZATION_NAME,
     secretsDirectory: parsed.SEED_SECRET_DIR,
@@ -75,8 +79,8 @@ export function getOrganizationSeedConfig(env: NodeJS.ProcessEnv = process.env):
   };
 }
 
-export function accountHandle(config: Pick<OrganizationSeedConfig, 'handleDomain' | 'organizationSlug'>, member: SeedMember) {
-  return `${config.organizationSlug}-${member.id}.${config.handleDomain}`;
+export function accountHandle(config: Pick<OrganizationSeedConfig, 'handleDomain' | 'handlePrefix'>, member: SeedMember) {
+  return `${config.handlePrefix}-${member.handleKey}.${config.handleDomain}`;
 }
 
 async function postJson(fetchHandler: typeof fetch, url: string, body: unknown, token?: string) {
