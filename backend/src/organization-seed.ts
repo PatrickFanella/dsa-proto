@@ -114,7 +114,9 @@ async function createOrResumeAccount(fetchHandler: typeof fetch, config: Organiz
   });
   if (!response.ok) {
     const failure = z.object({ error: z.string().optional(), message: z.string().optional() }).parse(await response.json().catch(() => ({})));
-    if (failure.error !== 'HandleNotAvailable') {
+    const handleExists = failure.error === 'HandleNotAvailable'
+      || (failure.error === 'InvalidRequest' && failure.message?.startsWith('Handle already taken:') === true);
+    if (!handleExists) {
       throw new Error(`account ${handle} failed with HTTP ${response.status} ${failure.error ?? 'unknown'}: ${failure.message ?? 'account creation failed'}`);
     }
     response = await postJson(fetchHandler, `${config.pdsUrl}/xrpc/com.atproto.server.createSession`, { identifier: handle, password });
