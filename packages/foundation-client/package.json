@@ -1,0 +1,32 @@
+{
+  "name": "@dsaslate/foundation-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "lexicons": "lex build --lexicons ../../backend/lexicons --out src/lexicons --clear --pretty=false --index-file",
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run src",
+    "format": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@atproto/lex": "^0.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^4.0.8"
+  }
+}

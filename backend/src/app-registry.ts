@@ -26,18 +26,9 @@ const appRegistryEntrySchema = z.object({
 
 export type AppRegistryEntry = z.infer<typeof appRegistryEntrySchema>;
 
-export const appRegistryFixture: AppRegistryEntry[] = [
-  {
-    appId: 'demo-staging-event-writer',
-    displayName: 'Demo Staging Event Writer',
-    token: 'demo-staging-event-token',
-    allowedCollections: ['org.dsa.event.public'],
-    allowedHostEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'],
-    allowedTrustLabels: ['community-submitted', 'uncertain'],
-    reviewRequired: true,
-    enabled: true,
-  },
-];
+// The legacy gateway is retained only for compatibility tests. Runtime credentials
+// must be injected; no bearer token or enabled writer ships in source.
+export const appRegistryFixture: AppRegistryEntry[] = [];
 
 const trustLabelOrder = ['uncertain', 'community-submitted', 'self-declared', 'secondary-source', 'verified-by-caucus', 'verified-by-chapter', 'verified-by-national', 'official'] as const;
 

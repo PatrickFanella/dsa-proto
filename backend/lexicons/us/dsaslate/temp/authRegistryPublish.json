@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.authRegistryPublish",
+  "defs": {
+    "main": {
+      "type": "permission-set",
+      "title": "DSA Slate registry publication",
+      "detail": "Publish provisional registry and policy records. This permission is reserved for the registry root account.",
+      "permissions": [
+        {
+          "type": "permission",
+          "resource": "repo",
+          "collection": [
+            "us.dsaslate.temp.orgEntity",
+            "us.dsaslate.temp.orgProfile",
+            "us.dsaslate.temp.orgRelationship",
+            "us.dsaslate.temp.authorityDelegation",
+            "us.dsaslate.temp.authorityAttestation",
+            "us.dsaslate.temp.authorityAction",
+            "us.dsaslate.temp.identityTransition",
+            "us.dsaslate.temp.dsaUnit",
+            "us.dsaslate.temp.dsaPolicy",
+            "us.dsaslate.temp.publicEvent"
+          ],
+          "action": ["create", "update", "delete"]
+        }
+      ]
+    }
+  }
+}

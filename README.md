@@ -1,40 +1,50 @@
 # dsa-proto
 
-dsa-proto is a TypeScript Node + Vite React prototype for a public DSA civic data layer built on AT Protocol-shaped records.
+`dsa-proto` is a TypeScript AppView foundation for public organizational data on AT Protocol. It now contains real temporary Lexicons, deterministic v0 conversion, Tap-backed synchronization, policy-versioned authority resolution, XRPC plus REST v1 views, and OAuth/DPoP-backed PDS publishing.
 
-## Built stack
+Nothing in this repository is official DSA infrastructure yet. All `us.dsaslate.temp.*` records remain provisional, and the resolver cannot return `official` until a stable namespace and formally adopted activation configuration exist.
 
-- TypeScript Node backend
-- Vite React frontend
-- Postgres
-- Docker Compose
-- public Almaz read-only demo
+## Built foundation
 
-The canonical fixture dataset lives at `backend/fixtures/records.json` with metadata, import/replay tooling, and health checks.
+- Canonical Lexicon JSON and generated TypeScript bindings under `backend/lexicons/` and `backend/src/lexicons/`.
+- Public v1 records for organizational identity/profile/relationships, authority, transitions, DSA policy/unit classification, and events.
+- Strict AT URI, DID, NSID, TID, handle, CID, raw-content, unknown-field, and privacy-boundary validation.
+- Deterministic migration from disposable `org.dsa.*` fixtures; public member affiliations are dropped.
+- Official `@atproto/tap` consumption with acknowledged delivery, per-repository serialization, identity/account state, quarantine, and recovery hooks.
+- Versioned authority decisions that keep provenance, lifecycle, workflow, and authority separate.
+- Canonical `us.dsaslate.temp.*` XRPC methods with `/api/v1/*` dashboard adapters.
+- A generated, typed application client under `packages/foundation-client` with opaque-cursor helpers and structured errors.
+- ATProto OAuth with DPoP, encrypted Postgres session/state storage, private review operations, and PDS-selected URI/CID writes.
+- An isolated Events application for foundation-v1 staging, with public browsing plus OAuth-controlled event create/update/delete and explicit indexing progress; the legacy fixture dashboard remains a separate mode.
+- Isolated local and Almaz staging topology under `deploy/local` and `deploy/almaz-staging`; the existing `deploy/almaz` read-only demo is unchanged.
 
-## Current UI
+## Verification
 
-The web app is the DSA Civic Data Layer dashboard: hero, summary cards, searchable/filterable directory, selected entity profile with resolver context, org graph explorer, public activity feed, safety/readiness panel, and a developer workbench that only exposes local publisher tooling outside read-only mode.
-
-## Read endpoints
-
-`/health`, `/ready`, `/api/entities`, `/api/entities/:id`, `/api/org-chart`, `/api/records/resolve`, `/api/statements`, `/api/publications`, `/api/articles`, `/api/endorsements`, `/api/events`, `/api/activity`, `/api/registry/health`
-
-## Demo posture
-
-- Local backend may enable admin fixture ingest unless `DEMO_READ_ONLY=true` or `ENABLE_ADMIN_INGEST=false`
-- Almaz uses fail-closed env and Caddy blocks `/api/admin*`
-- Write gateway exists but stays disabled on Almaz (`ENABLE_WRITE_GATEWAY=false`, `ENABLE_WRITE_PUBLISH=false`, Caddy blocks `/api/write*`)
-
-See [`docs/README.md`](docs/README.md) for the doc index and [`docs/dsa-atproto/README.md`](docs/dsa-atproto/README.md) for the current project docs.
-
-## Open Pilot
-
-This repository keeps the Open Pilot issue template and PR template. Bootstrap labels after creating the repository:
+Node 24 and pnpm 10.33.0 are required.
 
 ```bash
-open-pilot labels bootstrap patrickfanella/dsa-proto
+make verify
 ```
+
+The offline gate regenerates Lexicon bindings, checks schema compatibility and clean diffs, then runs typechecks, lint, tests, builds, Compose validation, and Open Pilot template checks. `make verify-integration` is the separate networked PDS/Tap stack.
+
+## Interfaces
+
+Canonical XRPC queries and procedures live at `/xrpc/us.dsaslate.temp.*`. Dashboard adapters include:
+
+- `/api/v1/entities`
+- `/api/v1/entities/:id`
+- `/api/v1/org-graph`
+- `/api/v1/records/resolve`
+- `/api/v1/activity`
+- `/api/v1/sync/status`
+- `/api/v1/session`
+- `/api/v1/review/operations`
+- `/api/v1/self/records`
+
+Legacy unversioned fixture routes remain only for `demo.dsaslate.us` compatibility and have no v1 guarantee. Admin fixture ingest and the legacy bearer-token gateway are disabled by default; no enabled bearer credential ships in source.
+
+See [docs/dsa-atproto/README.md](docs/dsa-atproto/README.md), [the v1 read contract](docs/reference/foundation-read-contract-v1.md), [the write operations reference](docs/reference/write-operations.md), and [the Almaz staging runbook](deploy/almaz-staging/README.md).
 
 ## License
 

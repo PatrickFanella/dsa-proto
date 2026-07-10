@@ -1,77 +1,42 @@
-# Technical Architecture
-
-## Architecture summary
-
-The built system is a local/public civic data workbench: TypeScript Node backend, Vite React frontend, Postgres, Docker Compose, and a read-only public Almaz demo.
+# Technical architecture
 
 ```text
-backend/fixtures/records.json + import/replay tooling
-        ↓
-Postgres read model and raw record store
-        ↓
-REST API
-        ↓
-React dashboard
+controller PDSes ──> relay ──> Tap (verification/backfill/acks)
+                                      │
+                                      ▼
+                            AppView sync worker
+                                      │ atomic record + cursor
+                                      ▼
+                                  Postgres
+                                      │
+                         shared application handlers
+                            ┌─────────┴─────────┐
+                            ▼                   ▼
+                      XRPC contract       REST /api/v1
+                                                │
+                                                ▼
+                                         React dashboard
 ```
 
-## Stack
+The portable registry/root account is a `did:plc`; the AppView service identity is `did:web:api-staging.dsaslate.us`. DNS controls the experimental Lexicon namespace. A separate DSA policy record controls organizational meaning, and neither fact alone constitutes official adoption.
 
-- TypeScript workspace
-- Node backend in `backend/`
-- Vite React frontend in `web/`
-- Postgres via Docker Compose
-- `make verify` as the main validation entrypoint
+## Integrity and storage
 
-## Fixture and record model
+`foundation_record_versions` retains immutable content, raw canonical CBOR, decoded unknown fields, repo revision, stream sequence, action, validation state, disposition, and observation time. `foundation_current_records` is selected by authenticated repo revision rather than client timestamps. Repo state and the processed cursor are persisted in the same transaction used by Tap handlers before acknowledgement.
 
-The canonical fixture dataset is `backend/fixtures/records.json` with metadata. It feeds the local read model and demo UI.
+Tap performs CAR backfill, repository/MST/signature verification, per-repository ordering, and automatic resynchronization. The AppView additionally checks the DID's authoritative PDS, collection/type/URI equality, monotonic revisions, enrolled-repository policy, and provisional authority.
 
-Supported record families include:
+## OAuth and writes
 
-- foundation: chapter, caucus, opt-in public member affiliation, org unit, governance relationship, verification assertion, identity continuity, authority/delegation/dispute/revocation/archive context
-- app layer: public statements, publication profiles/articles, endorsements, events
+The Node OAuth client implements PKCE/DPoP and requests the published permission sets. OAuth state, DPoP JWK material, and sessions are encrypted in Postgres. The browser receives only an opaque, HttpOnly, SameSite app-session cookie.
 
-## API surface
+- `orgProfile` and `publicEvent` content is sent to the controller PDS; the PDS chooses the commit, revision, URI, and CID.
+- Moderated claims enter `review_operations_v1`; rejected content and moderation notes stay private.
+- Registry migration uses a distinct registry-publish permission and root session, then arrives in the AppView through Tap.
+- The legacy token gateway has no source credential and no default in-memory production operation store.
 
-Read endpoints currently built:
+## Deployment
 
-- `/api/entities`
-- `/api/entities/:id`
-- `/api/org-chart`
-- `/api/records/resolve`
-- `/api/statements`
-- `/api/publications`
-- `/api/articles`
-- `/api/endorsements`
-- `/api/events`
-- `/api/activity`
-- `/api/registry/health`
-- `/health`
-- `/ready`
+`deploy/local` runs a separate PDS/Tap/AppView/web/Postgres integration topology. `deploy/almaz-staging` is isolated from `deploy/almaz` by Compose project, volumes, networks, secrets, loopback ports, and Caddy hosts. Only PDS, API/XRPC/OAuth/DID metadata, and web endpoints are public.
 
-Local admin ingest exists only as dev tooling at `POST /api/admin/fixtures/ingest` and is disabled on Almaz.
-
-## Frontend
-
-The current UI is the DSA Civic Data Layer dashboard with a searchable/filterable directory, selected entity resolver context, org graph explorer, public activity feed, safety/readiness panel, and a local publisher workbench visible only outside read-only mode.
-
-## Deployment posture
-
-- Local backend can allow admin fixture ingest unless `DEMO_READ_ONLY=true` or `ENABLE_ADMIN_INGEST=false`
-- Almaz uses fail-closed env and Caddy blocks `/api/admin*`
-- Write gateway exists but remains disabled on Almaz (`ENABLE_WRITE_GATEWAY=false`, `ENABLE_WRITE_PUBLISH=false`, Caddy blocks `/api/write*`)
-
-## Verification
-
-```bash
-make verify
-```
-
-## Canonical companion docs
-
-- `foundation-layer.md`
-- `foundation-contracts.md`
-- `lexicons.md`
-- `governance.md`
-- `local-demo.md`
-- `production-demo-safety-guards.md`
+`make verify` is offline and deterministic. `make verify-integration` is networked and requires container images; browser OAuth/account-consent acceptance remains an explicit staging step.

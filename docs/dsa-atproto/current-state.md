@@ -1,105 +1,38 @@
-# Current State
+# Current state
 
-`dsa-proto` is a TypeScript Node + Postgres + Vite React prototype for a public DSA civic data layer. It uses AT Protocol-shaped record envelopes, but it is not a live PDS, not an official DSA registry, and not a production authority system.
+The repository now has two deliberately separate surfaces:
 
-The public Almaz demo is read-only at <https://demo.dsaslate.us>.
+1. `demo.dsaslate.us`: the existing read-only fixture demo and unversioned compatibility routes.
+2. The new `us.dsaslate.temp.*` foundation: real Lexicons, a PDS publication path, Tap synchronization, AppView projections, authority evaluation, OAuth writes, and isolated staging configuration.
 
-## Built components
+## Implemented
 
-- **Backend:** TypeScript Node API, Postgres persistence, in-memory fallback for local/test use.
-- **Frontend:** Vite React “DSA Civic Data Layer” dashboard.
-- **Dataset:** canonical fixture file at `backend/fixtures/records.json` with metadata.
-- **Operations:** Docker Compose for local/demo deployment; `make verify` for validation.
+- Twenty-two canonical Lexicon schemas: ten public record types, eight XRPC methods, three permission sets, and shared definitions, generated with `@atproto/lex`.
+- Eight canonical XRPC methods and matching `/api/v1` adapters with opaque cursors (50 default, 100 maximum).
+- A generated `@dsaslate/foundation-client` consumer package that follows opaque pagination and preserves authority/provenance types.
+- Immutable record versions, raw DAG-CBOR bytes, current state, repo/identity state, candidate disposition, authority cache tables, encrypted OAuth state, and private review audit tables.
+- Strict envelope validation and regression coverage preventing client/database trust labels from becoming `official`.
+- A deterministic converter from legacy chapters, caucuses, org units, relationships, authority/lifecycle records, transitions, and events. Member affiliations and deferred app families are dropped.
+- A registry publisher that sends only content/rkeys to the root PDS and verifies the PDS-returned URI/CID; the AppView no longer loads migrated staging records directly into its foundation tables.
+- Tap acknowledged WebSocket processing. The worker enrolls the root and root-delegated repositories, serializes each repository, persists before acknowledgement, ignores non-authoritative PDS updates, and keeps unenrolled records in candidate/quarantine disposition.
+- Authority precedence for invalid/desynchronized provenance, revocation, dispute, expiry, official/provisional root chains, non-root attestation, self-assertion, and unresolved data.
+- OAuth BFF state/session storage encrypted with AES-256-GCM, confidential-client signing keys, DPoP-bound grants, HttpOnly app sessions, self-authored PDS writes, and private review submissions.
+- Local and Almaz staging Compose/Caddy/runbook scaffolding, backup/checksum/restore-drill scripts, and provisional UI mode.
+- A separate Events app surface for v1 staging, with public browsing, OAuth session visibility, controller-owned event create/update/delete, CID conflict protection, explicit PDS-versus-AppView progress, and no legacy fixture fallback.
 
-## Current data model
+## Still requires external execution or organizational authority
 
-Foundation record families currently represented in fixtures and code:
+- Almaz runs the isolated staging PDS, root-only Tap feed, AppView API/worker, web client, and Postgres behind loopback/private networks. The one-level service names are live through Caddy and Cloudflare Tunnel; direct origin exposure remains disabled.
+- The portable staging registry is `did:plc:4f5y7qroik2vqzuur5fhv236`, hosted by `https://pds-staging.dsaslate.us` with handle `registry.pds-staging.dsaslate.us`. It remains provisional.
+- The registry-handle and namespace-authority TXT records resolve publicly. All 23 `us.dsaslate.temp.*` Lexicons are published from the registry repository, and OAuth initiation redirects to the staging PDS for registry, self-publication, and delegation-management scopes.
+- Authority resolution and repository enrollment support constrained root -> chapter/unit -> organizer chains with exact parent strong references, depth/cycle checks, validity and revocation handling, and entity/collection/action subset enforcement.
+- Registry OAuth consent is complete. The canonical migration published 762 current records through the PDS: 252 entities, profiles, and DSA unit classifications plus policy, authority, and transition records. Tap/AppView cursor 773 is current with no backlog or desynchronized repositories.
+- Public PDS -> Tap -> AppView create/update/delete/tombstone acceptance through OAuth, concurrent first-boot migrations, API/indexer restart persistence, backup checksums, isolated restore, and monitoring passed on 2026-07-10. Of 252 migrated entities, 251 resolve `provisional` and one preserves its migrated root-issued `disputed` state; `official` remains impossible.
+- An encrypted off-host backup destination, scheduled timers, alert delivery, and Almaz disk-capacity remediation still need activation.
+- Obtain formal organizational adoption, choose the stable namespace, publish stable v1 schemas and migration manifests, and configure the exact adoption digest/root/policy gate.
 
-- `org.dsa.profile.chapter`
-- `org.dsa.profile.caucus`
-- `org.dsa.affiliation.member` for opt-in public affiliation examples
-- `org.dsa.profile.orgUnit`
-- `org.dsa.relationship.governance`
-- `org.dsa.verification.assertion`
-- `org.dsa.identity.continuity`
-- `org.dsa.authority.delegation`
-- `org.dsa.authority.mandate`
-- `org.dsa.authority.charter`
-- `org.dsa.authority.revocation`
-- `org.dsa.authority.dispute`
-- `org.dsa.record.archive`
+Until those actions occur, this is production-oriented implementation and deployment scaffolding, not an activated official service.
 
-App-layer public record families currently represented:
+## Public boundary
 
-- `org.dsa.statement.public`
-- `org.dsa.publication.profile`
-- `org.dsa.publication.article`
-- `org.dsa.endorsement.public`
-- `org.dsa.event.public`
-
-## Current API surface
-
-Read endpoints:
-
-- `GET /health`
-- `GET /ready`
-- `GET /api/entities`
-- `GET /api/entities/:id`
-- `GET /api/org-chart`
-- `GET /api/records/resolve?uri=...`
-- `GET /api/statements`
-- `GET /api/publications`
-- `GET /api/articles`
-- `GET /api/endorsements`
-- `GET /api/events`
-- `GET /api/activity`
-- `GET /api/registry/health`
-
-Local/development mutation tooling:
-
-- `POST /api/admin/fixtures/ingest` validates and ingests fixture envelopes when local admin ingest is enabled. It is disabled on Almaz.
-
-Fail-closed app-write preview:
-
-- `POST /api/write/records`
-- `GET /api/write/operations/:operationId`
-
-The write gateway is disabled by default and disabled on Almaz. When enabled in non-demo environments, it uses app registry scope checks, idempotency, optimistic-concurrency headers, private write-operation audit records, and pending-review behavior.
-
-## Current UI
-
-The web app is a read-oriented dashboard:
-
-- hero and read-only demo posture;
-- operational summary cards;
-- searchable/filterable directory;
-- selected entity profile with trust label and resolver context;
-- known revisions, authority records, disputes, revocations, and archive markers;
-- organization graph explorer;
-- public activity feed for statements, articles, endorsements, and events;
-- safety/readiness panel;
-- developer publisher workbench only outside read-only demo mode.
-
-## Fixture source of truth
-
-For this prototype, the maintained fixture dataset is the source of truth. It is curated test/demo data, not production validation from DSA or from a live ATProto network.
-
-Fixture workflows:
-
-- `make chapters-import`
-- `make caucuses-import`
-- `make registry-health`
-- `make fixture-replay`
-- `pnpm --dir backend run fixtures:author -- ...`
-- `pnpm --dir backend run fixtures:replay -- fixtures/records.json`
-
-## Explicit non-goals
-
-The built prototype does not implement:
-
-- production authority-chain validation or key custody;
-- live PDS publishing;
-- authenticated production app writes;
-- private member databases or internal workflow systems;
-- external citation/proof-chain records;
-- election/ballot systems.
+Public v1 contains non-person organizational and deliberately public civic records only. Person identity, membership, interest, contact, dues/payment, grievance, ballot/election, and private logistics data are rejected and remain in separate systems.

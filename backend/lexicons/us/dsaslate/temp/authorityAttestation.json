@@ -1,0 +1,25 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.authorityAttestation",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "claim", "issuedAt"],
+        "properties": {
+          "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "claim": {
+            "type": "string",
+            "knownValues": ["recognizesEntity", "recognizesController", "verifiesProfile"]
+          },
+          "delegation": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "reason": { "type": "string", "maxLength": 1000, "maxGraphemes": 500 },
+          "issuedAt": { "type": "string", "format": "datetime" },
+          "expiresAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

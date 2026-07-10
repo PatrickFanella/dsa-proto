@@ -22,6 +22,6 @@ CREATE INDEX IF NOT EXISTS atproto_record_revisions_indexed_at_idx
   ON atproto_record_revisions(indexed_at);
 
 INSERT INTO atproto_record_revisions (uri, cid, did, handle, collection, record, trust_label, indexed_at)
-SELECT uri, cid, did, handle, collection, record, 'official', indexed_at
+SELECT uri, cid, did, handle, collection, record, coalesce(trust_label, 'uncertain'), indexed_at
 FROM atproto_records
 ON CONFLICT (uri, cid) DO NOTHING;

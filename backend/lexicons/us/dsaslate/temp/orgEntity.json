@@ -1,0 +1,20 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.orgEntity",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["displayName", "entityType", "createdAt"],
+        "properties": {
+          "displayName": { "type": "string", "maxLength": 160, "maxGraphemes": 80 },
+          "entityType": { "type": "string", "maxLength": 64 },
+          "canonicalUrl": { "type": "string", "format": "uri" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

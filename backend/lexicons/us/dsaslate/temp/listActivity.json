@@ -1,0 +1,28 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.listActivity",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "cursor": { "type": "string", "maxLength": 512 },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 },
+          "entity": { "type": "string", "format": "at-uri" }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["items"],
+          "properties": {
+            "items": { "type": "array", "maxLength": 100, "items": { "type": "ref", "ref": "us.dsaslate.temp.defs#activityView" } },
+            "cursor": { "type": "string", "maxLength": 512 }
+          }
+        }
+      }
+    }
+  }
+}

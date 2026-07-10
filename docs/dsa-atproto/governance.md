@@ -1,78 +1,27 @@
-# Governance and Safety Rules
+# Governance and activation
 
-This document describes the governance semantics implemented by the current prototype. It is not a production DSA governance policy.
+Authority, provenance, workflow status, and lifecycle are separate values. A client, fixture, handle, URL, database row, or record envelope cannot assert `official`.
 
-## Current trust labels
+## Resolver order
 
-Trust labels are display and filtering signals for public records:
+1. Invalid or desynchronized provenance is unresolved.
+2. Active root revocation wins.
+3. Active root dispute wins over ordinary attestations.
+4. Expired authority yields `expired`.
+5. A complete chain to a formally activated stable root yields `official`.
+6. A complete chain to the staging root yields `provisional`.
+7. A recognized non-root claim yields `attested`.
+8. A controller-authored profile/event without higher authority is `selfAsserted`.
+9. Everything else is `unresolved`.
 
-- `official`
-- `verified-by-national`
-- `verified-by-chapter`
-- `verified-by-caucus`
-- `self-declared`
-- `community-submitted`
-- `secondary-source`
-- `uncertain`
+Temporary policy records can never satisfy step 5. The code requires activation enabled, a non-temporary stable namespace, a non-temporary adopted policy URI, and an adoption artifact digest. Missing any input keeps the result provisional.
 
-The prototype treats `revoked`, `disputed`, `archived`, `superseded`, and `tombstoned` as lifecycle or resolver states, not trust labels.
+## Federation and review
 
-## Current authority behavior
+The root DID is enrolled by configuration. Additional repositories enter the primary view only through a current root-derived delegation chain. A non-root delegation must point to its exact parent URI/CID, be authored by the parent delegate, stay within the parent's entity/collection/action scope, carry the `delegate` action in the parent grant, and remain inside validity and revocation bounds. Other valid records remain private candidate/quarantine data. Moderated claims require a private review decision and an authorized registry publisher; moderation notes are not public ATProto records.
 
-Authority is fixture-backed. The resolver combines target records, known revisions, supporting authority records, disputes, revocations, archive markers, lifecycle state, trust label, and caveats.
+## Custody and organizational gate
 
-Production trust roots, key custody, signature validation, account recovery, and delegated issuer authorization are not implemented.
+Official activation additionally requires a documented organizational decision naming the root controller, custodians, scope, incident authority, and stable namespace; two-person recovery custody; offline recovery material; tested rotation and restore; privacy/security review; schema-evolution and incident runbooks; and named operations ownership.
 
-## Current app-write governance
-
-The write gateway exists but is fail-closed by default.
-
-Current app-write rules:
-
-- no public Almaz write access;
-- no app access to admin fixture ingest;
-- app tokens authenticate against a local registry;
-- app scopes restrict collection, host, and allowed trust labels;
-- ordinary app writes cannot publish foundation families;
-- ordinary app writes cannot self-assign `official` or verified labels;
-- review-required apps create private `pending_review` operations only;
-- the only first-family app-write preview is `org.dsa.event.public`.
-
-## Current data safety boundary
-
-The public layer is only for public organizational and civic records.
-
-Out of scope for public records:
-
-- private member databases;
-- personal contact details not explicitly published for the demo;
-- dues/payment status;
-- grievance, casework, disciplinary, or private deliberation material;
-- sensitive logistics;
-- external proof-chain records;
-- election/ballot systems.
-
-Publication-boundary validation rejects disallowed record families and obvious unsafe private-data-shaped payload keys during fixture replay, registry health validation, and live-ingest paths. This is a guardrail, not a complete privacy review.
-
-## Current correction and dispute model
-
-The prototype represents corrections and contested status with first-class records and resolver output rather than silent UI-only edits:
-
-- disputes use `org.dsa.authority.dispute`;
-- revocations use `org.dsa.authority.revocation`;
-- archive markers use `org.dsa.record.archive`;
-- identity continuity records model rename/supersession/archive/tombstone cases;
-- immutable revision history is preserved for known records.
-
-Apps should surface those states when they affect interpretation.
-
-## Future production governance not built yet
-
-Before any production use, the project would need real governance for:
-
-- official handle ownership;
-- DID/key custody and recovery;
-- delegated authority checks;
-- moderation queues and takedown procedures;
-- schema evolution and deprecation windows;
-- operational ownership for indexers, APIs, backups, and incident response.
+`dsaslate.us` DNS control proves temporary schema authority. It does not prove DSA organizational adoption. If the organization delegates a different domain, stable NSIDs must use that domain rather than silently renaming temporary records.

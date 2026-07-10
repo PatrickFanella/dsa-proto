@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.orgRelationship",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "relationship", "object", "createdAt"],
+        "properties": {
+          "subject": { "type": "string", "format": "at-uri" },
+          "relationship": { "type": "string", "maxLength": 64 },
+          "object": { "type": "string", "format": "at-uri" },
+          "description": { "type": "string", "maxLength": 1000, "maxGraphemes": 500 },
+          "evidenceUris": {
+            "type": "array",
+            "maxLength": 12,
+            "items": { "type": "string", "format": "uri" }
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

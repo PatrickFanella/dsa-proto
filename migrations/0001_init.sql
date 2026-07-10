@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS atproto_records (
   handle text NOT NULL,
   collection text NOT NULL,
   record jsonb NOT NULL,
+  trust_label text NOT NULL DEFAULT 'uncertain',
   indexed_at timestamptz NOT NULL
 );
 

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { RecordEnvelope } from './domain.js';
-import { authenticateAppFromToken, appRegistryFixture, validateRecordEnvelopeAgainstAppScope } from './app-registry.js';
+import { authenticateAppFromToken, validateRecordEnvelopeAgainstAppScope, type AppRegistryEntry } from './app-registry.js';
 
-const app = appRegistryFixture[0];
+const app: AppRegistryEntry = {
+  appId: 'test-event-writer', displayName: 'Test event writer', token: 'test-only-token', allowedCollections: ['org.dsa.event.public'], allowedHostEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], allowedTrustLabels: ['community-submitted', 'uncertain'], reviewRequired: true, enabled: true,
+};
 
 function eventRecord(overrides: Partial<RecordEnvelope> = {}): RecordEnvelope {
   return {
@@ -29,8 +31,9 @@ function eventRecord(overrides: Partial<RecordEnvelope> = {}): RecordEnvelope {
 }
 
 describe('app registry', () => {
-  it('authenticates the staging demo token', () => {
-    expect(authenticateAppFromToken(app.token)?.app.appId).toBe(app.appId);
+  it('authenticates only against an explicitly injected registry', () => {
+    expect(authenticateAppFromToken(app.token)).toBeUndefined();
+    expect(authenticateAppFromToken(app.token, [app])?.app.appId).toBe(app.appId);
   });
 
   it('allows the staging event scope', () => {
@@ -57,7 +60,7 @@ describe('app registry', () => {
   });
 
   it('rejects unknown token and disabled apps', () => {
-    expect(authenticateAppFromToken('missing-token')).toBeUndefined();
+    expect(authenticateAppFromToken('missing-token', [app])).toBeUndefined();
     const issues = validateRecordEnvelopeAgainstAppScope(eventRecord(), { ...app, enabled: false });
     expect(issues.some((issue) => issue.reason.includes('disabled'))).toBe(true);
   });

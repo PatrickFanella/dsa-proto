@@ -1,0 +1,29 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.listEntities",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "cursor": { "type": "string", "maxLength": 512 },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 },
+          "q": { "type": "string", "maxLength": 200 },
+          "unitKind": { "type": "string", "maxLength": 64 }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["entities"],
+          "properties": {
+            "entities": { "type": "array", "maxLength": 100, "items": { "type": "ref", "ref": "us.dsaslate.temp.defs#entityView" } },
+            "cursor": { "type": "string", "maxLength": 512 }
+          }
+        }
+      }
+    }
+  }
+}

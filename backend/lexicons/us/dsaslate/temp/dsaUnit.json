@@ -1,0 +1,34 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.dsaUnit",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["entity", "unitKind", "createdAt"],
+        "properties": {
+          "entity": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "unitKind": {
+            "type": "string",
+            "knownValues": ["chapter", "organizingCommittee", "caucus", "nationalCommittee", "steeringCommittee", "workingGroup", "commission", "staff", "publication", "membershipBody", "delegateBody", "youthCommittee", "other"]
+          },
+          "jurisdiction": { "type": "ref", "ref": "#jurisdiction" },
+          "parentEntity": { "type": "string", "format": "at-uri" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "jurisdiction": {
+      "type": "object",
+      "required": ["kind", "name"],
+      "properties": {
+        "kind": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 160, "maxGraphemes": 80 },
+        "region": { "type": "string", "maxLength": 80, "maxGraphemes": 40 },
+        "country": { "type": "string", "maxLength": 2 }
+      }
+    }
+  }
+}

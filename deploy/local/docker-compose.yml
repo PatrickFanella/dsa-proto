@@ -1,0 +1,155 @@
+name: dsa-slate-foundation-local
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: dsaslate_foundation
+      POSTGRES_USER: dsaslate
+      POSTGRES_PASSWORD: local-only-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dsaslate -d dsaslate_foundation"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - appview-postgres:/var/lib/postgresql/data
+    networks: [private]
+
+  pds:
+    image: ${PDS_IMAGE:-ghcr.io/bluesky-social/pds:0.4.219}
+    environment:
+      PDS_HOSTNAME: localhost
+      PDS_DEV_MODE: "true"
+      PDS_JWT_SECRET: local-only-jwt-secret-change-me
+      PDS_ADMIN_PASSWORD: local-only-admin-password
+      PDS_PLC_ROTATION_KEY_K256_PRIVATE_KEY_HEX: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      PDS_DATA_DIRECTORY: /pds
+      PDS_BLOBSTORE_DISK_LOCATION: /pds/blocks
+      PDS_DID_PLC_URL: https://plc.directory
+      PDS_INVITE_REQUIRED: "false"
+    volumes:
+      - pds-data:/pds
+    ports:
+      - "127.0.0.1:${LOCAL_PDS_PORT:-3000}:3000"
+      - "127.0.0.1:${LOCAL_TAP_PORT:-2480}:2480"
+    networks: [public, private]
+
+  root-init:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/local-pds-init.js"]
+    environment:
+      LOCAL_PDS_URL: http://pds:3000
+      LOCAL_ROOT_HANDLE: registry.test
+      LOCAL_ROOT_EMAIL: registry@example.test
+      LOCAL_ROOT_PASSWORD: local-integration-password
+      LOCAL_ROOT_STATE_FILE: /run/local-root/root.json
+      LOCAL_ROOT_DID_FILE: /run/local-root/root.did
+    volumes:
+      - local-root-state:/run/local-root
+    depends_on: [pds]
+    networks: [public]
+
+  tap:
+    image: ${TAP_IMAGE:-ghcr.io/bluesky-social/indigo/tap:latest}
+    environment:
+      TAP_DATABASE_URL: sqlite:///data/tap.db
+      TAP_BIND: :2480
+      TAP_COLLECTION_FILTERS: us.dsaslate.temp.*
+      TAP_NO_REPLAY: "true"
+      TAP_ADMIN_PASSWORD: local-tap-password
+      TAP_RELAY_URL: http://localhost:3000
+    volumes:
+      - tap-data:/data
+    network_mode: service:pds
+    depends_on: [pds]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgres://dsaslate:local-only-password@postgres:5432/dsaslate_foundation?sslmode=disable
+      CORS_ORIGIN: http://127.0.0.1:${LOCAL_WEB_PORT:-5173}
+      AUTO_REPLAY_FIXTURES: "false"
+      REQUIRE_POSTGRES: "true"
+      ENABLE_ADMIN_INGEST: "false"
+      ENABLE_WRITE_GATEWAY: "false"
+      ENABLE_REVIEW_SUBMISSIONS: "false"
+      PROVISIONAL_ROOT_DID: ${PROVISIONAL_ROOT_DID:-did:plc:dsaslatetempreg234567abc}
+      PROVISIONAL_ROOT_DID_FILE: /run/local-root/root.did
+    volumes:
+      - local-root-state:/run/local-root:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      root-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${LOCAL_API_PORT:-8080}:8080"
+    networks: [public, private]
+
+  tap-worker:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/foundation-tap-worker.js"]
+    environment:
+      DATABASE_URL: postgres://dsaslate:local-only-password@postgres:5432/dsaslate_foundation?sslmode=disable
+      TAP_URL: http://pds:2480
+      TAP_ADMIN_PASSWORD: local-tap-password
+      AUTO_REPLAY_FIXTURES: "false"
+      REQUIRE_POSTGRES: "true"
+      PROVISIONAL_ROOT_DID: ${PROVISIONAL_ROOT_DID:-did:plc:dsaslatetempreg234567abc}
+      PROVISIONAL_ROOT_DID_FILE: /run/local-root/root.did
+    volumes:
+      - local-root-state:/run/local-root:ro
+    depends_on:
+      tap:
+        condition: service_started
+      api:
+        condition: service_started
+      root-init:
+        condition: service_completed_successfully
+    networks: [public, private]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: web/Dockerfile
+      args:
+        VITE_API_URL: http://127.0.0.1:${LOCAL_API_PORT:-8080}
+        VITE_DEMO_READ_ONLY: "false"
+        VITE_FOUNDATION_V1: "true"
+    ports:
+      - "127.0.0.1:${LOCAL_WEB_PORT:-5173}:80"
+    networks: [public]
+
+  integration:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/integration-runner.js"]
+    environment:
+      INTEGRATION_API_URL: http://api:8080
+      INTEGRATION_PDS_URL: http://pds:3000
+      INTEGRATION_TAP_URL: http://pds:2480
+      INTEGRATION_TAP_ADMIN_PASSWORD: local-tap-password
+      INTEGRATION_ROOT_STATE_FILE: /run/local-root/root.json
+    volumes:
+      - local-root-state:/run/local-root:ro
+    depends_on: [pds, tap, tap-worker, api]
+    networks: [public, private]
+
+volumes:
+  appview-postgres:
+  pds-data:
+  tap-data:
+  local-root-state:
+
+networks:
+  public:
+  private:
+    internal: true

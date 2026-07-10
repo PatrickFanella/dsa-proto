@@ -13,6 +13,7 @@ id_ed25519
 # Open Pilot / agent state
 .open-pilot/
 .opencode/
+.codex/
 opencode-data/
 .blacktower/deepwork/
 
@@ -73,6 +74,9 @@ Cargo.lock
 postgres-data/
 *.sql.gz
 deploy/almaz/backups/
+deploy/almaz-staging/backups/
+deploy/almaz-staging/secrets/*
+!deploy/almaz-staging/secrets/README.md
 
 # Terraform / infra
 .terraform/

@@ -11,7 +11,7 @@ if (!config.enabled) {
 }
 
 const appConfig = getConfig();
-const repository = await createPostgresRepository(appConfig.DATABASE_URL);
+const repository = await createPostgresRepository(appConfig.DATABASE_URL, { rootDid: appConfig.PROVISIONAL_ROOT_DID });
 const stats: LiveAtprotoIngestionStats = { accepted: 0, rejected: 0, ignored: 0 };
 const collectionFilter = new Set<string>(config.collections);
 

@@ -1,123 +1,40 @@
-# Foundation Read Contract v1
+# Foundation read contract v1
 
-Status: frozen for prototype app development.
+Status: experimental temporary namespace, stable within `us.dsaslate.temp.*` compatibility rules.
 
-This reference is the supported read surface for apps built on the DSA AT Protocol foundation prototype. It freezes the read contract only. It does not grant write access.
+## Canonical XRPC
 
-## Stability rules
+- `us.dsaslate.temp.listEntities`
+- `us.dsaslate.temp.getEntity`
+- `us.dsaslate.temp.getOrgGraph`
+- `us.dsaslate.temp.resolveAuthority`
+- `us.dsaslate.temp.listActivity`
+- `us.dsaslate.temp.getSyncStatus`
+- `us.dsaslate.temp.submitForReview`
+- `us.dsaslate.temp.getReviewOperation`
 
-- Changes to this v1 contract should be additive by default.
-- Required fields should not be removed without a migration note and deprecation window.
-- Enum values should not be repurposed.
-- New optional response fields may be added.
-- Prototype fixture caveats remain part of the contract until production source-of-truth rules replace them.
+The generated Lexicon bindings are the field-level source of truth.
 
-## Read endpoints
+## REST adapter
 
-All endpoints return JSON and include `prototype: true` at the top level unless noted.
+- `GET /api/v1/entities`
+- `GET /api/v1/entities/:id`
+- `GET /api/v1/org-graph`
+- `GET /api/v1/records/resolve`
+- `GET /api/v1/activity`
+- `GET /api/v1/sync/status`
+- `GET|POST /api/v1/review/operations`
 
-| Endpoint | Purpose | Stable for apps |
-| --- | --- | --- |
-| `GET /api/entities` | Directory entities with filters. | Yes |
-| `GET /api/entities/:id` | Single directory entity. | Yes |
-| `GET /api/org-chart` | Public organizational graph projection. | Yes |
-| `GET /api/records/resolve?uri=...` | Authority, lifecycle, trust, dispute, revocation, archive, and revision context for a record URI. | Yes |
-| `GET /api/statements` / `GET /api/statements/:id` | Public statements. | Experimental app-layer read |
-| `GET /api/publications` / `GET /api/publications/:id` | Publication profiles. | Experimental app-layer read |
-| `GET /api/articles` / `GET /api/articles/:id` | Publication articles. | Experimental app-layer read |
-| `GET /api/endorsements` / `GET /api/endorsements/:id` | Public endorsements. | Experimental app-layer read |
-| `GET /api/events` / `GET /api/events/:id` | Public events. | Experimental app-layer read |
-| `GET /api/activity` | Mixed public activity feed. | Experimental app-layer read |
+REST returns `contractVersion: "v1"`, `data`, and an optional opaque `cursor`. List limits default to 50 and cap at 100.
 
-`POST /api/admin/fixtures/ingest` is not part of this contract. It is local/dev fixture tooling and must not be used by apps.
+## Core views
 
-## Directory entity shape
+`Provenance` describes source record URI/CID, repo DID/revision, stream sequence, observation time, and validation/sync status. `AuthorityDecision` describes the independently computed policy decision. `EntityView` combines entity URI, optional current profile/DSA unit, provenance, authority, and lifecycle.
 
-Directory entities expose a normalized current projection over chapter, caucus, org-unit, and opt-in public member-affiliation records.
+Consumers must not collapse authority, provenance, lifecycle, or workflow into one enum. `official` is impossible for the temporary namespace.
 
-Stable fields:
+The supported TypeScript consumer is `@dsaslate/foundation-client`. Its generated Lexicon types are the application boundary, and its `listAllEntities` and `listAllActivity` helpers consume opaque cursors without exposing their contents. An `EntityView` may include `profileProvenance`, `profileAuthority`, `dsaUnitProvenance`, and `dsaUnitAuthority` describing the records selected for those projections.
 
-- `id`
-- `recordUri`
-- `type`
-- `name`
-- `shortName`
-- `collection`
-- `handle`
-- `did`
-- `jurisdiction`
-- `trustLabel`
-- `verificationStatus`
-- `status`
-- `record`
+Projection selection requires an exact entity strong reference (`uri` and `cid`). Eligible profiles and DSA classifications are ranked by computed authority, then validated provenance and authenticated observation order; revisions are compared only within the same repository.
 
-Optional fields may include `jurisdictionState`, `jurisdictionType`, `focusArea`, `publicRole`, `memberHandle`, `organizationHandle`, `verifiedBy`, `verificationReason`, `website`, and `searchText`.
-
-Apps should link to `recordUri`, display `name`/`handle`, and use resolver data when authority or lifecycle context matters.
-
-## Resolver shape
-
-`GET /api/records/resolve?uri=...` returns:
-
-- `uri`
-- `record` when known
-- `revisions`
-- `authorityRecords`
-- `lifecycleState`
-- `trustLabel`
-- `supportingAuthorityRecords`
-- `activeDisputes`
-- `activeRevocations`
-- `archiveMarkers`
-- `status`
-- `caveats`
-- `fixtureSourceOfTruthCaveat`
-
-Resolver `status` values are:
-
-- `valid`
-- `expired`
-- `unresolved`
-- any canonical lifecycle state listed below when that state controls current interpretation.
-
-Apps should treat `activeDisputes`, `activeRevocations`, and `archiveMarkers` as first-class context, not as hidden implementation details.
-
-## Canonical vocabularies
-
-### Trust labels
-
-Trust labels describe confidence and institutional authority. They are not lifecycle states.
-
-- `official`
-- `verified-by-national`
-- `verified-by-chapter`
-- `verified-by-caucus`
-- `self-declared`
-- `community-submitted`
-- `secondary-source`
-- `uncertain`
-
-### Lifecycle states
-
-Lifecycle states describe currentness and record interpretation.
-
-- `active`
-- `inactive`
-- `superseded`
-- `deprecated`
-- `revoked`
-- `disputed`
-- `archived`
-- `tombstoned`
-
-### Record-family workflow states
-
-Some app-layer record families have their own workflow status values, such as `draft`, `published`, `withdrawn`, `cancelled`, `resolved`, or `scheduled`. These are not trust labels and should not be treated as canonical foundation lifecycle unless explicitly mapped by the API.
-
-## Fixture caveat
-
-For this prototype, the maintained fixture dataset is the source of truth. Apps must not present fixture data as externally validated production authority. Public UIs should preserve caveats for disputed, revoked, archived, uncertain, community-submitted, or fixture-only records.
-
-## Write boundary
-
-This v1 read contract does not include app writes. Future write APIs must use a dedicated `/api/write/*` surface with app registry scopes, idempotency, audit, and moderation. Write operations are private audit records, not public read projections. Apps must not use fixture replay/admin ingest as a write path.
+Legacy `/api/*` fixture responses are not part of this contract.

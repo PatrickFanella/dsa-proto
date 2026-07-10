@@ -1,0 +1,108 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.defs",
+  "defs": {
+    "provenance": {
+      "type": "object",
+      "required": ["uri", "cid", "repoDid", "repoRev", "sequence", "observedAt", "status"],
+      "properties": {
+        "uri": { "type": "string", "format": "at-uri" },
+        "cid": { "type": "string", "format": "cid" },
+        "repoDid": { "type": "string", "format": "did" },
+        "repoRev": { "type": "string", "format": "tid" },
+        "sequence": { "type": "integer", "minimum": 0 },
+        "observedAt": { "type": "string", "format": "datetime" },
+        "status": { "type": "string", "knownValues": ["verified", "unverified", "invalid", "desynchronized"] }
+      }
+    },
+    "authorityDecision": {
+      "type": "object",
+      "required": ["status", "policyUri", "policyVersion", "rootDid", "chain", "reasons", "evaluatedAt"],
+      "properties": {
+        "status": { "type": "string", "knownValues": ["unresolved", "provisional", "selfAsserted", "attested", "official", "disputed", "revoked", "expired"] },
+        "policyUri": { "type": "string", "format": "at-uri" },
+        "policyVersion": { "type": "string", "maxLength": 64 },
+        "rootDid": { "type": "string", "format": "did" },
+        "chain": {
+          "type": "array",
+          "maxLength": 32,
+          "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+        },
+        "reasons": {
+          "type": "array",
+          "maxLength": 32,
+          "items": { "type": "string", "maxLength": 500, "maxGraphemes": 250 }
+        },
+        "failedChecks": {
+          "type": "array",
+          "maxLength": 32,
+          "items": { "type": "string", "maxLength": 500, "maxGraphemes": 250 }
+        },
+        "activeDisputes": {
+          "type": "array",
+          "maxLength": 32,
+          "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+        },
+        "activeRevocations": {
+          "type": "array",
+          "maxLength": 32,
+          "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+        },
+        "evaluatedAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "entityView": {
+      "type": "object",
+      "required": ["entityUri", "provenance", "authority", "lifecycle"],
+      "properties": {
+        "entityUri": { "type": "string", "format": "at-uri" },
+        "profile": { "type": "unknown" },
+        "profileProvenance": { "type": "ref", "ref": "#provenance" },
+        "profileAuthority": { "type": "ref", "ref": "#authorityDecision" },
+        "dsaUnit": { "type": "unknown" },
+        "dsaUnitProvenance": { "type": "ref", "ref": "#provenance" },
+        "dsaUnitAuthority": { "type": "ref", "ref": "#authorityDecision" },
+        "provenance": { "type": "ref", "ref": "#provenance" },
+        "authority": { "type": "ref", "ref": "#authorityDecision" },
+        "lifecycle": { "type": "string", "knownValues": ["active", "inactive", "superseded", "archived", "tombstoned"] }
+      }
+    },
+    "activityView": {
+      "type": "object",
+      "required": ["uri", "collection", "record", "provenance", "authority"],
+      "properties": {
+        "uri": { "type": "string", "format": "at-uri" },
+        "collection": { "type": "string", "format": "nsid" },
+        "record": { "type": "unknown" },
+        "provenance": { "type": "ref", "ref": "#provenance" },
+        "authority": { "type": "ref", "ref": "#authorityDecision" }
+      }
+    },
+    "syncStatus": {
+      "type": "object",
+      "required": ["status", "enrolledRepoCount", "desynchronizedRepoCount", "lastSequence", "updatedAt"],
+      "properties": {
+        "did": { "type": "string", "format": "did" },
+        "status": { "type": "string", "knownValues": ["ready", "degraded", "desynchronized"] },
+        "enrolledRepoCount": { "type": "integer", "minimum": 0 },
+        "desynchronizedRepoCount": { "type": "integer", "minimum": 0 },
+        "lastSequence": { "type": "integer", "minimum": 0 },
+        "updatedAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "reviewOperation": {
+      "type": "object",
+      "required": ["operationId", "submitterDid", "collection", "status", "createdAt", "updatedAt"],
+      "properties": {
+        "operationId": { "type": "string", "maxLength": 128 },
+        "submitterDid": { "type": "string", "format": "did" },
+        "collection": { "type": "string", "format": "nsid" },
+        "status": { "type": "string", "knownValues": ["pending", "approved", "rejected", "published", "failed"] },
+        "record": { "type": "unknown" },
+        "reason": { "type": "string", "maxLength": 1000, "maxGraphemes": 500 },
+        "createdAt": { "type": "string", "format": "datetime" },
+        "updatedAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  }
+}

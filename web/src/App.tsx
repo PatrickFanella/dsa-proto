@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { buildChapterFixtureEnvelope, buildVerificationFixtureEnvelope, createDefaultChapterDraft, createDefaultVerificationDraft, type ChapterDraft, type VerificationDraft } from './publisher';
+import FoundationEventsApp from './FoundationEventsApp';
 
 export type DirectoryCard = {
   id: string;
   name: string;
   shortName: string;
-  type: 'chapter' | 'caucus' | 'member-affiliation';
+  type: 'chapter' | 'caucus' | 'org-unit' | 'member-affiliation';
   collection: string;
   handle: string;
   did: string;
@@ -163,13 +164,56 @@ export type ResolvedRecordAuthority = {
   caveats: string[];
 };
 
-export async function fetchResolvedAuthority(apiBase: string, recordUri: string) {
-  const url = new URL(`${apiBase}/api/records/resolve`);
+type FoundationEntityView = {
+  entityUri: string;
+  profile?: { displayName?: string; description?: string; links?: Array<{ uri?: string }> };
+  dsaUnit?: { unitKind?: string; jurisdiction?: { kind?: string; name?: string; region?: string } };
+  provenance: { repoDid: string; cid: string; observedAt: string };
+  authority: { status: string; chain: Array<{ uri: string; cid: string }>; reasons: string[] };
+  lifecycle: string;
+};
+
+function foundationEntityToCard(entity: FoundationEntityView): DirectoryCard {
+  const unitKind = entity.dsaUnit?.unitKind ?? 'other';
+  const type: DirectoryCard['type'] = unitKind === 'chapter' || unitKind === 'organizingCommittee' ? 'chapter' : unitKind === 'caucus' ? 'caucus' : 'org-unit';
+  const name = entity.profile?.displayName ?? entity.entityUri;
+  const jurisdiction = entity.dsaUnit?.jurisdiction;
+  return {
+    id: entity.entityUri,
+    name,
+    shortName: name,
+    type,
+    collection: 'us.dsaslate.temp.orgEntity',
+    handle: entity.provenance.repoDid,
+    did: entity.provenance.repoDid,
+    jurisdiction: jurisdiction ? [jurisdiction.name, jurisdiction.region].filter(Boolean).join(', ') : unitKind,
+    jurisdictionState: jurisdiction?.region,
+    jurisdictionType: jurisdiction?.kind,
+    trustLabel: entity.authority.status,
+    verificationStatus: entity.authority.status,
+    verificationReason: entity.authority.reasons.join('; '),
+    status: entity.lifecycle,
+    record: { record: entity.profile ?? {} },
+  };
+}
+
+export async function fetchResolvedAuthority(apiBase: string, recordUri: string, foundationV1 = false) {
+  const url = new URL(`${apiBase}${foundationV1 ? '/api/v1/records/resolve' : '/api/records/resolve'}`);
   url.searchParams.set('uri', recordUri);
   const response = await fetch(url.toString());
   if (!response.ok) return null;
-  const payload = await response.json() as { data?: ResolvedRecordAuthority };
-  return payload.data ?? null;
+  const payload = await response.json() as { data?: ResolvedRecordAuthority | { uri: string; provenance?: { cid: string; observedAt: string }; authority: { status: string; chain: Array<{ uri: string; cid: string }>; reasons: string[] } } };
+  if (!foundationV1) return payload.data as ResolvedRecordAuthority ?? null;
+  const data = payload.data as { uri: string; provenance?: { cid: string; observedAt: string }; authority: { status: string; chain: Array<{ uri: string; cid: string }>; reasons: string[] } } | undefined;
+  if (!data) return null;
+  const status = ['expired', 'revoked', 'disputed', 'unresolved'].includes(data.authority.status) ? data.authority.status as ResolvedRecordAuthority['status'] : 'valid';
+  return {
+    record: { uri: data.uri, collection: data.uri.split('/')[3] ?? 'unknown', trustLabel: data.authority.status, record: {} },
+    revisions: data.provenance ? [{ uri: data.uri, cid: data.provenance.cid, indexedAt: data.provenance.observedAt }] : [],
+    status,
+    authorityRecords: data.authority.chain.map((item) => ({ uri: item.uri, collection: item.uri.split('/')[3] ?? 'unknown', record: { cid: item.cid } })),
+    caveats: data.authority.reasons,
+  };
 }
 
 const orgChartKindLabels: Record<string, string> = {
@@ -324,25 +368,28 @@ function ReadOnlyBadge() {
   return <span className="rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-amber-200">Read-Only Demo</span>;
 }
 
-export default function App({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all', initialResolvedAuthority = null }: { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type']; initialResolvedAuthority?: ResolvedRecordAuthority | null }) {
+export type AppProps = { initialEntities?: DirectoryCard[]; initialOrgChart?: OrgChartPayload; initialRegistryHealth?: RegistryHealthPayload; initialSearch?: string; initialTypeFilter?: 'all' | DirectoryCard['type']; initialResolvedAuthority?: ResolvedRecordAuthority | null };
+
+function LegacyApp({ initialEntities = fallbackEntities, initialOrgChart = fallbackOrgChart, initialRegistryHealth = fallbackRegistryHealth, initialSearch = '', initialTypeFilter = 'all', initialResolvedAuthority = null }: AppProps) {
   const demoReadOnly = import.meta.env.VITE_DEMO_READ_ONLY === 'true';
-  const [entities, setEntities] = useState(initialEntities);
-  const [orgChart, setOrgChart] = useState(initialOrgChart);
+  const foundationV1 = import.meta.env.VITE_FOUNDATION_V1 === 'true';
+  const [entities, setEntities] = useState(foundationV1 ? [] : initialEntities);
+  const [orgChart, setOrgChart] = useState(foundationV1 ? { prototype: false, sourceUrl: '', updatedLabel: 'Tap-synchronized staging graph', units: [], relationships: [] } : initialOrgChart);
   const [registryHealth, setRegistryHealth] = useState(initialRegistryHealth);
   const [search, setSearch] = useState(initialSearch);
   const [typeFilter, setTypeFilter] = useState<'all' | DirectoryCard['type']>(initialTypeFilter);
   const [stateFilter, setStateFilter] = useState('all');
   const [jurisdictionTypeFilter, setJurisdictionTypeFilter] = useState('all');
-  const [selectedId, setSelectedId] = useState(initialEntities[0]?.id ?? '');
-  const [resolverTargetUri, setResolverTargetUri] = useState(initialEntities[0]?.id ?? '');
+  const [selectedId, setSelectedId] = useState(foundationV1 ? '' : initialEntities[0]?.id ?? '');
+  const [resolverTargetUri, setResolverTargetUri] = useState(foundationV1 ? '' : initialEntities[0]?.id ?? '');
   const [orgChartKindFilter, setOrgChartKindFilter] = useState<string>('all');
   const [orgChartSelectedUnit, setOrgChartSelectedUnit] = useState<string>('');
-  const [statements, setStatements] = useState(fallbackStatements);
-  const [publications, setPublications] = useState(fallbackPublications);
-  const [articles, setArticles] = useState(fallbackArticles);
-  const [endorsements, setEndorsements] = useState(fallbackEndorsements);
-  const [events, setEvents] = useState(fallbackEvents);
-  const [activity, setActivity] = useState(fallbackActivity);
+  const [statements, setStatements] = useState(foundationV1 ? [] : fallbackStatements);
+  const [publications, setPublications] = useState(foundationV1 ? [] : fallbackPublications);
+  const [articles, setArticles] = useState(foundationV1 ? [] : fallbackArticles);
+  const [endorsements, setEndorsements] = useState(foundationV1 ? [] : fallbackEndorsements);
+  const [events, setEvents] = useState(foundationV1 ? [] : fallbackEvents);
+  const [activity, setActivity] = useState(foundationV1 ? [] : fallbackActivity);
   const [draft, setDraft] = useState<ChapterDraft>(createDefaultChapterDraft());
   const [verificationDraft, setVerificationDraft] = useState<VerificationDraft>(createDefaultVerificationDraft());
   const [submitState, setSubmitState] = useState<string>('');
@@ -351,28 +398,40 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
   const verificationPreview = useMemo(() => buildVerificationFixtureEnvelope(verificationDraft), [verificationDraft]);
 
   useEffect(() => {
-    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/entities`);
-    if (typeFilter !== 'all') url.searchParams.set('type', typeFilter);
+    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}${foundationV1 ? '/api/v1/entities' : '/api/entities'}`);
+    if (typeFilter !== 'all') {
+      if (foundationV1 && typeFilter !== 'org-unit') url.searchParams.set('unitKind', typeFilter);
+      if (!foundationV1) url.searchParams.set('type', typeFilter);
+    }
     if (search.trim()) url.searchParams.set('q', search.trim());
     if (stateFilter !== 'all') url.searchParams.set('state', stateFilter);
     if (jurisdictionTypeFilter !== 'all') url.searchParams.set('jurisdictionType', jurisdictionTypeFilter);
-    url.searchParams.set('limit', '1000');
+    url.searchParams.set('limit', foundationV1 ? '100' : '1000');
     fetch(url.toString())
       .then((response) => response.json())
       .then((payload) => {
-        const nextEntities = payload.data ?? initialEntities;
+        const nextEntities = foundationV1 ? (payload.data ?? []).map(foundationEntityToCard) : payload.data ?? initialEntities;
         setEntities(nextEntities);
         setSelectedId((current) => (nextEntities.some((entity: DirectoryCard) => entity.id === current) ? current : nextEntities[0]?.id ?? ''));
       })
-      .catch(() => setEntities(initialEntities));
-  }, [initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
+      .catch(() => setEntities(foundationV1 ? [] : initialEntities));
+  }, [foundationV1, initialEntities, search, typeFilter, stateFilter, jurisdictionTypeFilter]);
 
   useEffect(() => {
-    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/org-chart`);
+    const url = new URL(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}${foundationV1 ? '/api/v1/org-graph' : '/api/org-chart'}`);
     if (orgChartKindFilter !== 'all') url.searchParams.set('kind', orgChartKindFilter);
     if (orgChartSelectedUnit) url.searchParams.set('unit', orgChartSelectedUnit);
-    fetch(url.toString()).then((response) => response.json()).then((payload) => setOrgChart(payload)).catch(() => setOrgChart(initialOrgChart));
-  }, [initialOrgChart, orgChartKindFilter, orgChartSelectedUnit]);
+    fetch(url.toString()).then((response) => response.json()).then((payload) => {
+      if (!foundationV1) return setOrgChart(payload);
+      const graph = payload.data ?? { entities: [], relationships: [] };
+      const units: OrgChartUnit[] = graph.entities.map((entity: FoundationEntityView) => {
+        const card = foundationEntityToCard(entity);
+        return { uri: card.id, name: card.name, shortName: card.shortName, kind: entity.dsaUnit?.unitKind ?? 'other', description: entity.profile?.description ?? '', status: card.status, website: entity.profile?.links?.[0]?.uri };
+      });
+      const relationships: OrgChartRelationship[] = graph.relationships.map((item: { uri: string; record: { subject?: string; object?: string; relationship?: string; description?: string; evidenceUris?: string[]; createdAt?: string } }) => ({ uri: item.uri, subjectUri: item.record.subject ?? '', relationship: item.record.relationship ?? 'relatedTo', objectUri: item.record.object ?? '', description: item.record.description ?? '', sourceUrl: item.record.evidenceUris?.[0] ?? '', status: 'active', createdAt: item.record.createdAt ?? new Date(0).toISOString() }));
+      setOrgChart({ prototype: false, sourceUrl: '', updatedLabel: 'Tap-synchronized staging graph', units, relationships });
+    }).catch(() => setOrgChart(foundationV1 ? { prototype: false, sourceUrl: '', updatedLabel: 'Tap unavailable', units: [], relationships: [] } : initialOrgChart));
+  }, [foundationV1, initialOrgChart, orgChartKindFilter, orgChartSelectedUnit]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/registry/health`).then((response) => response.json()).then((payload) => setRegistryHealth(payload)).catch(() => setRegistryHealth(initialRegistryHealth));
@@ -389,7 +448,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
     }
     let cancelled = false;
     const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
-    fetchResolvedAuthority(apiBase, resolverTargetUri)
+    fetchResolvedAuthority(apiBase, resolverTargetUri, foundationV1)
       .then((payload) => {
         if (!cancelled) setResolvedAuthority(payload);
       })
@@ -397,19 +456,32 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
         if (!cancelled) setResolvedAuthority(null);
       });
     return () => { cancelled = true; };
-  }, [resolverTargetUri]);
+  }, [foundationV1, resolverTargetUri]);
 
   useEffect(() => {
+    if (foundationV1) {
+      setStatements([]);
+      return;
+    }
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/statements`).then((response) => response.json()).then((payload) => setStatements(payload.data ?? fallbackStatements)).catch(() => setStatements(fallbackStatements));
-  }, []);
+  }, [foundationV1]);
 
   useEffect(() => {
+    if (foundationV1) {
+      setPublications([]); setArticles([]); setEndorsements([]);
+      fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/v1/activity`).then((response) => response.json()).then((payload) => {
+        const nextActivity: CivicActivityCard[] = (payload.data ?? []).map((item: { uri: string; collection: string; record: { title?: string; description?: string; hostEntity?: string; startsAt?: string; status?: string; topics?: string[] }; authority: { status: string } }) => ({ uri: item.uri, type: 'event', title: item.record.title ?? item.uri, summary: item.record.description ?? '', actorName: item.record.hostEntity ?? 'Unknown entity', actorUri: item.record.hostEntity, date: item.record.startsAt ?? new Date(0).toISOString(), status: item.record.status ?? 'unknown', topics: item.record.topics ?? [], relatedEntityUris: item.record.hostEntity ? [item.record.hostEntity] : [], collection: item.collection, trustLabel: item.authority.status }));
+        setActivity(nextActivity);
+        setEvents([]);
+      }).catch(() => { setActivity([]); setEvents([]); });
+      return;
+    }
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/publications`).then((response) => response.json()).then((payload) => setPublications(payload.data ?? fallbackPublications)).catch(() => setPublications(fallbackPublications));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/articles`).then((response) => response.json()).then((payload) => setArticles(payload.data ?? fallbackArticles)).catch(() => setArticles(fallbackArticles));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/endorsements`).then((response) => response.json()).then((payload) => setEndorsements(payload.data ?? fallbackEndorsements)).catch(() => setEndorsements(fallbackEndorsements));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/events`).then((response) => response.json()).then((payload) => setEvents(payload.data ?? fallbackEvents)).catch(() => setEvents(fallbackEvents));
     fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/activity`).then((response) => response.json()).then((payload) => setActivity(payload.data ?? fallbackActivity)).catch(() => setActivity(fallbackActivity));
-  }, []);
+  }, [foundationV1]);
 
   const chapterStates = useMemo(() => [...new Set(entities.filter((entity) => entity.type === 'chapter' && entity.jurisdictionState).map((entity) => entity.jurisdictionState as string))].sort(), [entities]);
   const totalCount = entities.length;
@@ -492,12 +564,13 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
               <h1 className="text-3xl font-bold tracking-tight">DSA Civic Data Layer</h1>
               <FoundationBadge />
               {demoReadOnly && <ReadOnlyBadge />}
+              {foundationV1 && <Badge color="amber">Provisional staging</Badge>}
             </div>
             <p className="mt-3 max-w-2xl text-lg text-zinc-300">
               A public foundation-layer dashboard for DSA organizational records. This substrate provides identity, authority, verification, and organizational graph records that other applications build upon.
             </p>
             <p className="mt-2 text-sm text-amber-300">
-              Verification labels are prototype trust metadata only — not real DSA legitimacy or membership proof.
+              {foundationV1 ? 'Every staging record is provisional. Official authority is disabled until formal organizational adoption and stable-namespace activation.' : 'Verification labels are prototype trust metadata only — not real DSA legitimacy or membership proof.'}
             </p>
           </div>
         </div>
@@ -615,7 +688,8 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                     <option value="all">All types</option>
                     <option value="chapter">Chapter</option>
                     <option value="caucus">Caucus</option>
-                    <option value="member-affiliation">Member affiliation</option>
+                    {!foundationV1 && <option value="member-affiliation">Member affiliation</option>}
+                    {foundationV1 && <option value="org-unit">Other organization unit</option>}
                   </select>
                 </label>
                 <label className="block">
@@ -702,7 +776,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
                 
                 {/* Trust & Status */}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="self-center text-xs font-medium uppercase tracking-wider text-zinc-500">Trust label</span>
+                  <span className="self-center text-xs font-medium uppercase tracking-wider text-zinc-500">{foundationV1 ? 'Authority' : 'Trust label'}</span>
                   <Badge color={selectedEntity.trustLabel === 'official' ? 'emerald' : selectedEntity.trustLabel === 'community-submitted' ? 'violet' : 'slate'}>
                     {selectedEntity.trustLabel}
                   </Badge>
@@ -972,7 +1046,7 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
       </section>
 
       {/* Developer Workbench (only when not read-only) */}
-      {!demoReadOnly && (
+      {!demoReadOnly && !foundationV1 && (
         <section className="mx-auto max-w-7xl px-6 pb-12">
           <div className="rounded-xl border border-fuchsia-400/30 bg-zinc-900/30 p-6">
             <div className="flex items-center gap-2">
@@ -1081,4 +1155,11 @@ export default function App({ initialEntities = fallbackEntities, initialOrgChar
       )}
     </main>
   );
+}
+
+export default function App(props: AppProps) {
+  if (import.meta.env.VITE_FOUNDATION_V1 === 'true') {
+    return <FoundationEventsApp apiBase={import.meta.env.VITE_API_URL ?? 'http://localhost:8080'} />;
+  }
+  return <LegacyApp {...props} />;
 }

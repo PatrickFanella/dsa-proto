@@ -1,32 +1,23 @@
-# DSA AT Protocol Prototype Docs
+# DSA Slate AT Protocol foundation docs
 
-This directory documents what is currently built in `dsa-proto`: a fixture-backed, read-focused civic data layer prototype using AT Protocol-shaped records.
+These documents describe the implemented `us.dsaslate.temp.*` AppView foundation and its explicit provisional boundary. The existing `org.dsa.*` fixture demo is retained as a read-only compatibility surface, not as the new protocol contract.
 
-The public demo is read-only. Local developer tooling can author and replay fixtures, but it is not a production write system.
+## Current sources of truth
 
-## Current built-state docs
-
-- [current-state.md](current-state.md) — concise implementation summary
-- [technical-architecture.md](technical-architecture.md) — built stack, storage, routes, and deployment posture
-- [foundation-layer.md](foundation-layer.md) — current foundation boundary and publication matrix
-- [foundation-contracts.md](foundation-contracts.md) — app-facing invariants implemented by the prototype
-- [lexicons.md](lexicons.md) — implemented record families and vocabularies
-- [governance.md](governance.md) — current trust, lifecycle, safety, and app-write governance rules
-- [local-demo.md](local-demo.md) — local run, fixture replay, and UI walkthrough
-- [production-demo-safety-guards.md](production-demo-safety-guards.md) — Almaz read-only guardrails
-- [org-chart-alignment.md](org-chart-alignment.md) — current org graph fixture mapping notes
+- [current-state.md](current-state.md) — implemented and externally pending work
+- [technical-architecture.md](technical-architecture.md) — PDS, Tap, AppView, OAuth, storage, and deployment
+- [foundation-layer.md](foundation-layer.md) — public-data and application boundaries
+- [foundation-contracts.md](foundation-contracts.md) — app-facing invariants
+- [lexicons.md](lexicons.md) — canonical temporary record and permission Lexicons
+- [governance.md](governance.md) — authority policy and activation gate
+- [local-demo.md](local-demo.md) — legacy demo and new local integration stack
+- [production-demo-safety-guards.md](production-demo-safety-guards.md) — preserved read-only demo controls
+- [../../deploy/almaz-staging/README.md](../../deploy/almaz-staging/README.md) — isolated staging runbook
 
 ## Stable references
 
-- [../reference/foundation-read-contract-v1.md](../reference/foundation-read-contract-v1.md) — supported app-facing read contract
-- [../reference/write-operations.md](../reference/write-operations.md) — fail-closed write gateway and operation rules
-- [../reference/stack.md](../reference/stack.md) — stack reference
+- [../reference/foundation-read-contract-v1.md](../reference/foundation-read-contract-v1.md)
+- [../reference/write-operations.md](../reference/write-operations.md)
+- [../reference/stack.md](../reference/stack.md)
 
-## Historical and future-reference notes
-
-These are not active implementation plans. They are retained for rationale or future production design context.
-
-- [../why-at-proto.md](../why-at-proto.md)
-- [authority-chain-validation.md](authority-chain-validation.md)
-- [atproto-ingestion-spike.md](atproto-ingestion-spike.md)
-- [app-ideas.md](app-ideas.md)
+`app-ideas.md`, `authority-chain-validation.md`, and `atproto-ingestion-spike.md` are historical design notes. They may describe discarded `org.dsa.*` or raw-firehose approaches and are not the current contract.

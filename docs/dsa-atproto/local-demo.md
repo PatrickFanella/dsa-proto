@@ -1,107 +1,50 @@
-# Local Demo
+# Local development
 
-This document describes the current local demo workflow for the built TypeScript/Postgres/Vite prototype.
+There are two local paths.
 
-The data is curated fixture data. It is not real DSA verification, membership verification, or an official roster.
+## Legacy fixture demo
 
-## Prerequisites
-
-- Docker and Docker Compose
-- pnpm 10.x when running checks outside Docker
-
-## Start locally
-
-From the repository root:
+The root `docker-compose.yml` preserves the existing API/web/Postgres demo. It is useful for reviewing the disposable `org.dsa.*` dataset and UI. Admin fixture ingest now defaults off; enable it explicitly only for local compatibility work:
 
 ```bash
-pnpm install --frozen-lockfile
+ENABLE_ADMIN_INGEST=true docker compose up --build
+```
+
+It is not a PDS publication path and must remain disabled on public deployments.
+
+## Foundation integration stack
+
+`deploy/local/docker-compose.yml` starts:
+
+- reference PDS;
+- Tap with acknowledged delivery;
+- AppView API and Tap worker;
+- AppView Postgres;
+- foundation-v1 web mode;
+- networked integration runner.
+
+Run:
+
+```bash
 make verify
-docker compose up --build
+make verify-integration
 ```
 
-Open:
+The offline gate never needs network access. The integration target pulls PDS/Tap images, creates a disposable local `did:plc` root account, publishes through its PDS, observes create/update/delete through Tap and the AppView, and proves the temporary namespace cannot return `official`. The test account and session stay in disposable Docker volumes. Browser OAuth consent remains an explicit staging step because the PDS account operator owns consent.
 
-- Web UI: <http://localhost:5173>
-- API health: <http://localhost:8080/health>
-- API readiness: <http://localhost:8080/ready>
-- Directory API: <http://localhost:8080/api/entities>
-- Registry health API: <http://localhost:8080/api/registry/health>
+## Events publishing flow
 
-The Compose stack starts Postgres, the backend API, and the web UI.
+In an OAuth-configured foundation environment, the Events app shows an organization publishing panel. Sign in with the controller handle, choose an organization profile authored by that DID, and publish deliberately public event content. Create/update/delete operations go to the controller PDS; the UI then waits separately for Tap and the AppView to observe the commit. Editing and deletion are shown only for records authored by the signed-in DID, and concurrent edits fail safely instead of overwriting a newer CID.
 
-## Fixture dataset
+The default local Compose configuration leaves OAuth disabled until an operator supplies a PDS account and OAuth configuration. This keeps ordinary local startup deterministic and prevents demo credentials from entering source control.
 
-The canonical dataset is `backend/fixtures/records.json`. Backend startup loads that file for the local/demo read model when Postgres is available. Tests and local fallback can use built-in records when needed.
+## Canonical migration publication
 
-Useful fixture commands:
+For an OAuth-configured root account:
 
-```bash
-make chapters-import
-make caucuses-import
-make registry-health
-make fixture-replay
-```
+1. Visit `/oauth/login?handle=registry.pds-staging.dsaslate.us&mode=registry`.
+2. Complete PDS consent for `authRegistryPublish`.
+3. Run `make foundation-publish`.
+4. Confirm records appear only after Tap delivers them to the AppView.
 
-Author local fixture examples:
-
-```bash
-pnpm --dir backend run fixtures:author -- --type chapter --name "West Side DSA" --shortName "WSDSA"
-pnpm --dir backend run fixtures:author -- --type verification --subjectUri at://did:plc:westside/org.dsa.profile.chapter/self --subjectDid did:plc:westside --issuerDid did:plc:nationaldsa --issuerHandle dsausa.org --assertion verified
-pnpm --dir backend run fixtures:replay -- fixtures/records.json
-```
-
-## Current UI walkthrough
-
-1. Open <http://localhost:5173>.
-2. Confirm the page presents the **DSA Civic Data Layer** dashboard and read-only/demo posture.
-3. Review the summary cards for entities, foundation graph records, app-layer records, and write posture.
-4. Search/filter the directory by text, entity type, state, and chapter kind.
-5. Select an entity and review:
-   - DID, handle, collection, record URI, status, and trust label;
-   - resolver status and fixture caveat;
-   - known revisions;
-   - supporting authority records;
-   - dispute, revocation, and archive markers when present.
-6. Use the Organization Graph Explorer for org units and governance relationships.
-7. Use the Public Activity Feed for statements, publication articles, endorsements, and events.
-8. In read-only demo mode, confirm publishing is unavailable.
-
-## Local admin fixture ingest
-
-When local admin ingest is enabled, the developer workbench can post fixture envelopes to:
-
-```http
-POST /api/admin/fixtures/ingest
-```
-
-This is local development tooling. It is unauthenticated fixture ingest, not production admin functionality and not an app write API. The Almaz demo disables it with environment flags and Caddy route blocking.
-
-## Write gateway preview
-
-The app-write gateway exists for controlled staging/dev experiments:
-
-```http
-POST /api/write/records
-GET /api/write/operations/:operationId
-```
-
-It is disabled by default and disabled on Almaz. When enabled outside demo mode, it validates app token, app scope, idempotency, optimistic-concurrency headers, schema, publication boundary, and subject/host constraints. The current registry app is review-required, so successful non-dry-run submissions become private `pending_review` operations rather than public records.
-
-## Reset local data
-
-Restart API to reload deterministic local data:
-
-```bash
-docker compose restart api
-```
-
-Destroy and rebuild the Postgres volume only when you intentionally want a clean local database:
-
-```bash
-docker compose down -v
-docker compose up --build
-```
-
-## Safety boundary
-
-Do not seed private organizing data. The fixture set should remain public, minimal, and safe to display in unrelated app views.
+Never seed private membership, contact, payment, grievance, ballot, or internal logistics data.

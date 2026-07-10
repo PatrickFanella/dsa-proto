@@ -1,0 +1,31 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.resolveAuthority",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["uri"],
+        "properties": {
+          "uri": { "type": "string", "format": "at-uri" },
+          "asOf": { "type": "string", "format": "datetime" },
+          "depth": { "type": "integer", "minimum": 0, "maximum": 32, "default": 16 }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["uri", "authority"],
+          "properties": {
+            "uri": { "type": "string", "format": "at-uri" },
+            "provenance": { "type": "ref", "ref": "us.dsaslate.temp.defs#provenance" },
+            "deletedAt": { "type": "string", "format": "datetime" },
+            "authority": { "type": "ref", "ref": "us.dsaslate.temp.defs#authorityDecision" }
+          }
+        }
+      }
+    }
+  }
+}

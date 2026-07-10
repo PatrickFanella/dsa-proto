@@ -5,6 +5,11 @@ import { createApp, createMemoryRepository, getConfig } from './server.js';
 import { replayFixtureRecords } from './fixture-replay.js';
 import { loadFixtureFile } from './fixture-files.js';
 import { InMemoryWriteOperationStore } from './write-operations.js';
+import type { AppRegistryEntry } from './app-registry.js';
+
+const legacyTestApp = {
+  appId: 'test-event-writer', displayName: 'Test event writer', token: 'test-only-token', allowedCollections: ['org.dsa.event.public'], allowedHostEntityUris: ['at://did:plc:nycdsa/org.dsa.profile.chapter/self'], allowedTrustLabels: ['community-submitted', 'uncertain'], reviewRequired: true, enabled: true,
+} satisfies AppRegistryEntry;
 
 describe('getConfig', () => {
   it('parses a port from env', () => {
@@ -107,6 +112,15 @@ describe('API responses', () => {
     expect(response.status).toBe(404);
   });
 
+  it('keeps admin fixture ingest disabled by default outside demo mode', async () => {
+    server = createApp(createMemoryRepository());
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing port');
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/admin/fixtures/ingest`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"records":[]}' });
+    expect(response.status).toBe(404);
+  });
+
   it('fails closed for the write gateway in demo/read-only mode', async () => {
     server = createApp(createMemoryRepository(), { DEMO_READ_ONLY: true, ENABLE_WRITE_GATEWAY: true });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
@@ -131,7 +145,7 @@ describe('API responses', () => {
     const repository = createMemoryRepository();
     const store = new InMemoryWriteOperationStore();
     const before = await repository.listEvents();
-    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: store });
+    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: store, appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
@@ -163,7 +177,7 @@ describe('API responses', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        authorization: 'Bearer demo-staging-event-token',
+        authorization: 'Bearer test-only-token',
         'idempotency-key': 'idem-1',
         'if-none-match': '*',
       },
@@ -179,14 +193,14 @@ describe('API responses', () => {
   });
 
   it('rejects non-dry-run writes when publish is disabled', async () => {
-    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: false, writeOperationStore: new InMemoryWriteOperationStore() });
+    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: false, writeOperationStore: new InMemoryWriteOperationStore(), appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
     const response = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-publish-disabled' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-publish-disabled' },
       body: JSON.stringify({ record: { uri: 'at://did:plc:demo/org.dsa.event.public/publish-disabled', cid: 'bafy-publish-disabled', did: 'did:plc:demo', handle: 'demo.example', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', record: { $type: 'org.dsa.event.public', title: 'Publish Disabled', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'NYC DSA', startsAt: '2026-07-10T18:00:00.000Z', mode: 'online', status: 'scheduled', topics: [], relatedEntityUris: [] } } }),
     });
 
@@ -197,14 +211,14 @@ describe('API responses', () => {
     const repository = createMemoryRepository();
     const before = await repository.listEvents();
     const store = new InMemoryWriteOperationStore();
-    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: true, writeOperationStore: store });
+    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: true, writeOperationStore: store, appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
     const response = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-pending-review', 'if-none-match': '*' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-pending-review', 'if-none-match': '*' },
       body: JSON.stringify({ record: { uri: 'at://did:plc:demo/org.dsa.event.public/pending-review', cid: 'bafy-pending-review', did: 'did:plc:demo', handle: 'demo.example', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', record: { $type: 'org.dsa.event.public', title: 'Pending Review', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'NYC DSA', startsAt: '2026-07-10T18:00:00.000Z', mode: 'online', status: 'scheduled', topics: [], relatedEntityUris: [] } } }),
     });
     const json = await response.json() as { data: { status: string } };
@@ -216,13 +230,13 @@ describe('API responses', () => {
   });
 
   it('returns the same operation for the same idempotency key and request', async () => {
-    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore() });
+    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore(), appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
     const body = { dryRun: true, record: { uri: 'at://did:plc:demo/org.dsa.event.public/idem-same', cid: 'bafy-idem-same', did: 'did:plc:demo', handle: 'demo.example', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', record: { $type: 'org.dsa.event.public', title: 'Same', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'NYC DSA', startsAt: '2026-07-10T18:00:00.000Z', mode: 'online', status: 'scheduled', topics: [], relatedEntityUris: [] } } };
-    const headers = { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-same', 'if-none-match': '*' };
+    const headers = { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-same', 'if-none-match': '*' };
     const first = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, { method: 'POST', headers, body: JSON.stringify(body) }).then((res) => res.json() as Promise<{ data: { operationId: string } }>);
     const second = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, { method: 'POST', headers, body: JSON.stringify(body) }).then((res) => res.json() as Promise<{ data: { operationId: string } }>);
 
@@ -230,12 +244,12 @@ describe('API responses', () => {
   });
 
   it('conflicts when the same idempotency key is reused with a different request', async () => {
-    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore() });
+    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore(), appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
-    const headers = { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-conflict', 'if-none-match': '*' };
+    const headers = { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-conflict', 'if-none-match': '*' };
     const firstBody = { dryRun: true, record: { uri: 'at://did:plc:demo/org.dsa.event.public/idem-1', cid: 'bafy-idem-1', did: 'did:plc:demo', handle: 'demo.example', collection: 'org.dsa.event.public', indexedAt: '2026-07-01T00:00:00.000Z', trustLabel: 'community-submitted', record: { $type: 'org.dsa.event.public', title: 'One', hostEntityUri: 'at://did:plc:nycdsa/org.dsa.profile.chapter/self', hostEntityName: 'NYC DSA', startsAt: '2026-07-10T18:00:00.000Z', mode: 'online', status: 'scheduled', topics: [], relatedEntityUris: [] } } };
     const secondBody = JSON.parse(JSON.stringify(firstBody)) as typeof firstBody;
     secondBody.record.cid = 'bafy-idem-2';
@@ -270,14 +284,14 @@ describe('API responses', () => {
       },
     } satisfies RecordEnvelope;
     await repository.ingestRecordEnvelopes([existing]);
-    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore() });
+    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: new InMemoryWriteOperationStore(), appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
     const response = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-existing', 'if-none-match': '*' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-existing', 'if-none-match': '*' },
       body: JSON.stringify({ dryRun: true, record: existing }),
     });
 
@@ -286,14 +300,14 @@ describe('API responses', () => {
 
   it('keeps the first writable family limited to public events', async () => {
     const store = new InMemoryWriteOperationStore();
-    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: true, writeOperationStore: store });
+    server = createApp(createMemoryRepository(), { ENABLE_WRITE_GATEWAY: true, ENABLE_WRITE_PUBLISH: true, writeOperationStore: store, appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
 
     const response = await fetch(`http://127.0.0.1:${address.port}/api/write/records`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer demo-staging-event-token', 'idempotency-key': 'idem-statement-blocked', 'if-none-match': '*' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer test-only-token', 'idempotency-key': 'idem-statement-blocked', 'if-none-match': '*' },
       body: JSON.stringify({
         record: {
           uri: 'at://did:plc:demo/org.dsa.statement.public/not-first-family',
@@ -317,7 +331,7 @@ describe('API responses', () => {
   it('stores rejected dry-runs for invalid host scope and exposes them to the same app only', async () => {
     const repository = createMemoryRepository();
     const store = new InMemoryWriteOperationStore();
-    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: store });
+    server = createApp(repository, { ENABLE_WRITE_GATEWAY: true, writeOperationStore: store, appRegistry: [legacyTestApp] });
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('missing port');
@@ -326,7 +340,7 @@ describe('API responses', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-dsa-app-token': 'demo-staging-event-token',
+        'x-dsa-app-token': 'test-only-token',
         'idempotency-key': 'idem-2',
         'if-match': 'bafy-current-cid',
       },
@@ -360,7 +374,7 @@ describe('API responses', () => {
       headers: { authorization: 'Bearer wrong-token' },
     });
     const allowed = await fetch(`http://127.0.0.1:${address.port}/api/write/operations/${json.data.operationId}`, {
-      headers: { authorization: 'Bearer demo-staging-event-token' },
+      headers: { authorization: 'Bearer test-only-token' },
     });
 
     expect(response.status).toBe(422);

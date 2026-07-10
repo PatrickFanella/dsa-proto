@@ -104,6 +104,16 @@ describe('App', () => {
     expect(html).not.toContain('/api/admin/fixtures/ingest');
   });
 
+  it('uses the isolated Events application entrypoint in foundation v1 mode', () => {
+    vi.stubEnv('VITE_FOUNDATION_V1', 'true');
+    const html = renderToString(<App />);
+    expect(html).toContain('DSA Slate Events');
+    expect(html).toContain('Loading the provisional AppView');
+    expect(html).not.toContain('Registry Health');
+    expect(html).not.toContain('Local Publisher Workbench');
+    expect(html).not.toContain('member affiliation');
+  });
+
   it('shows publisher workbench when not in read-only mode', () => {
     const html = renderToString(<App />);
 

@@ -1,14 +1,23 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import { z } from 'zod';
+import { ensureValidAtUri, ensureValidDid } from '@atproto/syntax';
 import { allSeedRecords, authorityDisputeRecordSchema, authorityRevocationRecordSchema, recordArchiveRecordSchema, endorsementPublicRecordSchema, governanceRelationshipRecordSchema, isDirectoryEntityRecord, matchesDirectoryEntity, orgUnitRecordSchema, publicEventRecordSchema, publicStatementRecordSchema, publicationArticleRecordSchema, publicationProfileRecordSchema, recordEnvelopeSchema, normalizeDirectoryEntity, type AuthorityResolverStatus, type DirectoryEntity, type DirectoryEntityFilters, type EndorsementPublicRecord, type GovernanceRelationshipRecord, type OrgUnitRecord, type PublicEventRecord, type PublicStatementRecord, type PublicationArticleRecord, type PublicationProfileRecord, type RecordEnvelope, type ResolvedRecordAuthority } from './domain.js';
 import { loadFixtureFile, type FixtureDatasetMetadata } from './fixture-files.js';
 import { replayFixtureRecords } from './fixture-replay.js';
-import { authenticateAppFromToken, validateRecordEnvelopeAgainstAppScope } from './app-registry.js';
+import { authenticateAppFromToken, validateRecordEnvelopeAgainstAppScope, type AppRegistryEntry } from './app-registry.js';
 import { getRegistryHealthSummary, loadRegistryHealthReport } from './registry-health.js';
 import { InMemoryWriteOperationStore, writeOperationSchema, type WriteOperation } from './write-operations.js';
+import { applyMigrations } from './migrations.js';
+import { migrateLegacyRecords } from './legacy-migration.js';
+import { DEFAULT_POLICY_VERSION, DEFAULT_PROVISIONAL_ROOT_DID } from './foundation-model.js';
+import { FoundationService, InvalidCursorError } from './foundation-service.js';
+import { FoundationPostgresPersistence } from './foundation-postgres.js';
+import { OAuthService, PdsWriteError, type OAuthServiceConfig, type SelfRecordWriteInput } from './oauth-service.js';
 
 const envFlagSchema = z.preprocess((value) => {
   if (typeof value === 'boolean') return value;
@@ -23,16 +32,33 @@ const envSchema = z.object({
   DATABASE_URL: z.string().default('postgres://dsa_proto:change-me@localhost:5432/dsa_proto?sslmode=disable'),
   CORS_ORIGIN: z.string().default('*'),
   DEMO_READ_ONLY: envFlagSchema.default(false),
-  ENABLE_ADMIN_INGEST: envFlagSchema.default(true),
+  ENABLE_ADMIN_INGEST: envFlagSchema.default(false),
   ENABLE_WRITE_GATEWAY: envFlagSchema.default(false),
   ENABLE_WRITE_PUBLISH: envFlagSchema.default(false),
+  ENABLE_REVIEW_SUBMISSIONS: envFlagSchema.default(false),
+  ENABLE_OAUTH: envFlagSchema.default(false),
   AUTO_REPLAY_FIXTURES: envFlagSchema.default(true),
   REQUIRE_POSTGRES: envFlagSchema.default(false),
+  PROVISIONAL_ROOT_DID: z.string().default(DEFAULT_PROVISIONAL_ROOT_DID),
+  PROVISIONAL_ROOT_DID_FILE: z.string().optional(),
+  PUBLIC_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
+  WRITE_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(30),
+  APP_PUBLIC_URL: z.string().url().default('https://app-staging.dsaslate.us'),
+  OAUTH_HANDLE_RESOLVER: z.string().url().default('https://pds-staging.dsaslate.us'),
+  OAUTH_PDS_INTERNAL_URL: z.string().url().optional(),
+  OAUTH_SERVICE_DID: z.string().default('did:web:api-staging.dsaslate.us'),
+  OAUTH_ENCRYPTION_KEY_FILE: z.string().optional(),
+  OAUTH_PRIVATE_KEY_FILE: z.string().optional(),
+  OAUTH_PRIVATE_KEY_ALG: z.enum(['ES256', 'ES256K']).default('ES256'),
+  OAUTH_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]+$/).default('dsaslate_oauth'),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
 
 export type DirectoryRepository = {
+  foundation: FoundationService;
+  foundationPersistence?: FoundationPostgresPersistence;
+  oauthService?: OAuthService;
   listEntities(filters?: DirectoryEntityFilters): Promise<DirectoryEntity[]>;
   getEntity(id: string): Promise<DirectoryEntity | undefined>;
   listStatements(entityUri?: string): Promise<Array<ReturnType<typeof normalizeStatementEnvelope>>>;
@@ -56,7 +82,10 @@ export type DirectoryRepository = {
 export type ActivityType = 'statement' | 'article' | 'endorsement' | 'event';
 
 export function getConfig(env: NodeJS.ProcessEnv = process.env) {
-  return envSchema.parse(env);
+  const rootDid = env.PROVISIONAL_ROOT_DID_FILE
+    ? readFileSync(env.PROVISIONAL_ROOT_DID_FILE, 'utf8').trim()
+    : env.PROVISIONAL_ROOT_DID;
+  return envSchema.parse({ ...env, ...(rootDid ? { PROVISIONAL_ROOT_DID: rootDid } : {}) });
 }
 
 function toJson(res: ServerResponse<IncomingMessage>, statusCode: number, body: unknown) {
@@ -71,14 +100,39 @@ function applyCors(req: IncomingMessage, res: ServerResponse<IncomingMessage>, c
     res.setHeader('access-control-allow-origin', '*');
   } else if (req.headers.origin === corsOrigin) {
     res.setHeader('access-control-allow-origin', corsOrigin);
+    res.setHeader('access-control-allow-credentials', 'true');
     res.setHeader('vary', 'Origin');
   }
-  res.setHeader('access-control-allow-headers', 'content-type, authorization, x-dsa-app-token, idempotency-key, if-match, if-none-match');
+  res.setHeader('access-control-allow-headers', 'content-type, authorization, dpop, x-request-id, x-dsa-app-token, idempotency-key, if-match, if-none-match');
   res.setHeader('access-control-allow-methods', allowedMethods);
 }
 
 function routeDisabled() {
   return { error: 'not_found' };
+}
+
+function apiError(res: ServerResponse<IncomingMessage>, statusCode: number, error: string, message: string) {
+  return toJson(res, statusCode, {
+    error,
+    message,
+    requestId: String(res.getHeader('x-request-id') ?? ''),
+    retryable: statusCode === 429 || statusCode >= 500,
+  });
+}
+
+function requestIdentity(req: IncomingMessage) {
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+function consumeRateLimit(store: Map<string, { window: number; count: number }>, key: string, limit: number) {
+  const window = Math.floor(Date.now() / 60_000);
+  const current = store.get(key);
+  if (!current || current.window !== window) {
+    store.set(key, { window, count: 1 });
+    return true;
+  }
+  current.count += 1;
+  return current.count <= limit;
 }
 
 function getRequestHeader(req: IncomingMessage, name: string) {
@@ -119,8 +173,19 @@ function hashWriteRequest(input: { mode: 'dry_run' | 'publish'; record: unknown;
 }
 
 async function readJsonBody(req: IncomingMessage) {
+  const declaredLength = Number(getRequestHeader(req, 'content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > 1024 * 1024) {
+    req.resume();
+    return Symbol.for('body-too-large');
+  }
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > 1024 * 1024) return Symbol.for('body-too-large');
+    chunks.push(buffer);
+  }
   const text = Buffer.concat(chunks).toString('utf8').trim();
   if (!text) return undefined;
   try {
@@ -130,11 +195,215 @@ async function readJsonBody(req: IncomingMessage) {
   }
 }
 
+function parseIntegerParam(url: URL, name: string, minimum: number, maximum: number) {
+  const value = url.searchParams.get(name);
+  if (value === null) return undefined;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) throw new Error(`${name} must be an integer from ${minimum} to ${maximum}`);
+  return parsed;
+}
+
+function validateAtUri(value: string, field: string) {
+  try {
+    ensureValidAtUri(value);
+  } catch {
+    throw new Error(`${field} must be a normalized AT URI`);
+  }
+  return value;
+}
+
+function publicReviewOperation(operation: ReturnType<FoundationService['submitForReview']>) {
+  return {
+    operationId: operation.operationId,
+    submitterDid: operation.submitterDid,
+    collection: operation.collection,
+    status: operation.status,
+    record: operation.record,
+    ...(operation.reason ? { reason: operation.reason } : {}),
+    createdAt: operation.createdAt,
+    updatedAt: operation.updatedAt,
+  };
+}
+
+type FoundationRouteOptions = {
+  enableReviewSubmissions: boolean;
+  authenticateReviewRequest?: (req: IncomingMessage) => string | Promise<string>;
+};
+
+async function refreshFoundationFromDurableStore(repository: DirectoryRepository) {
+  if (!repository.foundationPersistence) return;
+  const policy = repository.foundation.policy;
+  const refreshed = new FoundationService(await repository.foundationPersistence.loadRecords(), policy);
+  refreshed.restoreRepoStates(await repository.foundationPersistence.loadRepoStates());
+  refreshed.restoreIdentityStates(await repository.foundationPersistence.loadIdentityStates());
+  await repository.foundationPersistence.purgeExpiredReviewOperations();
+  refreshed.restoreReviewOperations(await repository.foundationPersistence.loadReviewOperations());
+  repository.foundation = refreshed;
+}
+
+async function handleFoundationRoute(
+  req: IncomingMessage,
+  res: ServerResponse<IncomingMessage>,
+  repository: DirectoryRepository,
+  options: FoundationRouteOptions,
+) {
+  if (!req.url) return false;
+  const url = new URL(req.url, 'http://localhost');
+  if (!url.pathname.startsWith('/xrpc/us.dsaslate.temp.') && !url.pathname.startsWith('/api/v1/')) return false;
+  await refreshFoundationFromDurableStore(repository);
+  const xrpc = url.pathname.startsWith('/xrpc/') ? url.pathname.slice('/xrpc/'.length) : undefined;
+
+  const listEntities = () => repository.foundation.listEntities({
+    cursor: url.searchParams.get('cursor') ?? undefined,
+    limit: parseIntegerParam(url, 'limit', 1, 100),
+    q: url.searchParams.get('q') ?? undefined,
+    unitKind: url.searchParams.get('unitKind') ?? undefined,
+  });
+  const getOrgGraph = () => repository.foundation.getOrgGraph({
+    cursor: url.searchParams.get('cursor') ?? undefined,
+    limit: parseIntegerParam(url, 'limit', 1, 100),
+  });
+  const listActivity = () => repository.foundation.listActivity({
+    cursor: url.searchParams.get('cursor') ?? undefined,
+    limit: parseIntegerParam(url, 'limit', 1, 100),
+    entity: url.searchParams.get('entity') ? validateAtUri(url.searchParams.get('entity')!, 'entity') : undefined,
+  });
+  const resolveAuthority = () => {
+    const uri = url.searchParams.get('uri');
+    if (!uri) throw new Error('uri is required');
+    const asOf = url.searchParams.get('asOf') ?? undefined;
+    if (asOf && Number.isNaN(Date.parse(asOf))) throw new Error('asOf must be an ISO datetime');
+    return repository.foundation.resolve(validateAtUri(uri, 'uri'), { asOf, depth: parseIntegerParam(url, 'depth', 0, 32) });
+  };
+  const syncStatus = () => {
+    const did = url.searchParams.get('did') ?? undefined;
+    if (did) ensureValidDid(did);
+    return repository.foundation.getSyncStatus(did);
+  };
+
+  try {
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.listEntities') return toJson(res, 200, listEntities()), true;
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.getEntity') {
+      const entityUri = url.searchParams.get('entityUri');
+      if (!entityUri) throw new Error('entityUri is required');
+      const entity = repository.foundation.getEntity(validateAtUri(entityUri, 'entityUri'));
+      if (!entity) return apiError(res, 404, 'NotFound', 'entity not found'), true;
+      return toJson(res, 200, { entity }), true;
+    }
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.getOrgGraph') return toJson(res, 200, getOrgGraph()), true;
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.resolveAuthority') return toJson(res, 200, resolveAuthority()), true;
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.listActivity') return toJson(res, 200, listActivity()), true;
+    if (req.method === 'GET' && xrpc === 'us.dsaslate.temp.getSyncStatus') return toJson(res, 200, { sync: syncStatus() }), true;
+
+    if (req.method === 'GET' && url.pathname === '/api/v1/entities') {
+      const page = listEntities();
+      return toJson(res, 200, { contractVersion: 'v1', data: page.entities, ...(page.cursor ? { cursor: page.cursor } : {}) }), true;
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/api/v1/entities/')) {
+      const entityUri = validateAtUri(decodeURIComponent(url.pathname.slice('/api/v1/entities/'.length)), 'entityUri');
+      const entity = repository.foundation.getEntity(entityUri);
+      if (!entity) return apiError(res, 404, 'not_found', 'entity not found'), true;
+      return toJson(res, 200, { contractVersion: 'v1', data: entity }), true;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/v1/org-graph') {
+      const graph = getOrgGraph();
+      return toJson(res, 200, { contractVersion: 'v1', data: { entities: graph.entities, relationships: graph.relationships }, ...(graph.cursor ? { cursor: graph.cursor } : {}) }), true;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/v1/records/resolve') return toJson(res, 200, { contractVersion: 'v1', data: resolveAuthority() }), true;
+    if (req.method === 'GET' && url.pathname === '/api/v1/activity') {
+      const page = listActivity();
+      return toJson(res, 200, { contractVersion: 'v1', data: page.items, ...(page.cursor ? { cursor: page.cursor } : {}) }), true;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/v1/sync/status') return toJson(res, 200, { contractVersion: 'v1', data: syncStatus() }), true;
+
+    const isReviewSubmit = req.method === 'POST' && (xrpc === 'us.dsaslate.temp.submitForReview' || url.pathname === '/api/v1/review/operations');
+    const isReviewGet = req.method === 'GET' && (xrpc === 'us.dsaslate.temp.getReviewOperation' || url.pathname === '/api/v1/review/operations');
+    const decisionMatch = req.method === 'POST' ? url.pathname.match(/^\/api\/v1\/review\/operations\/([^/]+)\/decision$/) : null;
+    if (decisionMatch) {
+      if (!options.enableReviewSubmissions) return apiError(res, 404, 'not_found', 'review API is disabled'), true;
+      if (!options.authenticateReviewRequest || !repository.oauthService) return apiError(res, 401, 'unauthorized', 'registry OAuth authentication is required'), true;
+      const actorDid = await options.authenticateReviewRequest(req);
+      if (actorDid !== repository.foundation.policy.rootDid) return apiError(res, 403, 'forbidden', 'only the provisional registry root may decide review operations'), true;
+      const operationId = decodeURIComponent(decisionMatch[1]);
+      const current = repository.foundation.getReviewOperation(operationId);
+      if (!current) return apiError(res, 404, 'not_found', 'review operation not found'), true;
+      if (current.status !== 'pending') throw new Error(`review operation is already ${current.status}`);
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('body-too-large')) return apiError(res, 413, 'payload_too_large', 'request body exceeds 1 MiB'), true;
+      if (body === Symbol.for('invalid-json') || !body || typeof body !== 'object' || Array.isArray(body)) throw new Error('decision body must be valid JSON');
+      const input = body as { decision?: unknown; reason?: unknown };
+      if ((input.decision !== 'approve' && input.decision !== 'reject') || typeof input.reason !== 'string' || !input.reason.trim()) throw new Error('decision must be approve or reject and reason is required');
+      const targetRef = current.record.target && typeof current.record.target === 'object'
+        && typeof (current.record.target as { uri?: unknown }).uri === 'string'
+        && typeof (current.record.target as { cid?: unknown }).cid === 'string'
+        ? current.record.target as { uri: string; cid: string }
+        : undefined;
+      const target = targetRef ? `${targetRef.uri}#${targetRef.cid}` : 'record content';
+      if (input.decision === 'reject') {
+        const rejected = repository.foundation.updateReviewOperation(operationId, { actorDid, status: 'rejected', decision: 'reject', reason: input.reason, target: targetRef, policyVersion: repository.foundation.policy.policyVersion, message: `${input.reason}; policy ${repository.foundation.policy.policyVersion}; target ${target}` });
+        await repository.foundationPersistence?.persistReviewOperation(rejected);
+        return toJson(res, 200, { contractVersion: 'v1', data: publicReviewOperation(rejected) }), true;
+      }
+      const approved = repository.foundation.updateReviewOperation(operationId, { actorDid, status: 'approved', decision: 'approve', reason: input.reason, target: targetRef, policyVersion: repository.foundation.policy.policyVersion, message: `${input.reason}; policy ${repository.foundation.policy.policyVersion}; target ${target}` });
+      await repository.foundationPersistence?.persistReviewOperation(approved);
+      try {
+        const publication = await repository.oauthService.publishRegistryRecord(actorDid, current.collection, current.record);
+        const published = repository.foundation.updateReviewOperation(operationId, { actorDid, status: 'published', message: `published ${publication.uri}#${publication.cid} under policy ${repository.foundation.policy.policyVersion}` });
+        await repository.foundationPersistence?.persistReviewOperation(published);
+        return toJson(res, 200, { contractVersion: 'v1', data: publicReviewOperation(published) }), true;
+      } catch (error) {
+        const failed = repository.foundation.updateReviewOperation(operationId, { actorDid, status: 'failed', message: error instanceof Error ? error.message : 'registry publication failed' });
+        await repository.foundationPersistence?.persistReviewOperation(failed);
+        return apiError(res, 502, 'registry_publication_failed', 'approved review could not be published'), true;
+      }
+    }
+    if (isReviewSubmit || isReviewGet) {
+      if (!options.enableReviewSubmissions) return apiError(res, 404, 'not_found', 'review API is disabled'), true;
+      if (!options.authenticateReviewRequest) return apiError(res, 401, 'unauthorized', 'OAuth DPoP authentication is required'), true;
+      let submitterDid: string;
+      try {
+        submitterDid = await options.authenticateReviewRequest(req);
+        ensureValidDid(submitterDid);
+      } catch {
+        return apiError(res, 401, 'unauthorized', 'OAuth DPoP authentication failed'), true;
+      }
+      if (isReviewSubmit) {
+        const body = await readJsonBody(req);
+        if (body === Symbol.for('body-too-large')) return apiError(res, 413, 'payload_too_large', 'request body exceeds 1 MiB'), true;
+        if (body === Symbol.for('invalid-json')) return apiError(res, 400, 'invalid_json', 'request body must be valid JSON'), true;
+        if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('request body must be an object');
+        const input = body as { collection?: unknown; record?: unknown; reason?: unknown };
+        if (typeof input.collection !== 'string' || !input.record || typeof input.record !== 'object') throw new Error('collection and record are required');
+        if (input.reason !== undefined && typeof input.reason !== 'string') throw new Error('reason must be a string');
+        const operation = repository.foundation.submitForReview({ submitterDid, collection: input.collection, record: input.record, reason: input.reason });
+        await repository.foundationPersistence?.persistReviewOperation(operation);
+        const output = { operation: publicReviewOperation(operation) };
+        return toJson(res, 202, xrpc ? output : { contractVersion: 'v1', data: output.operation }), true;
+      }
+      const operationId = url.searchParams.get('operationId');
+      if (!operationId) throw new Error('operationId is required');
+      const operation = repository.foundation.getReviewOperation(operationId, submitterDid);
+      if (!operation) return apiError(res, 404, xrpc ? 'NotFound' : 'not_found', 'review operation not found'), true;
+      const output = { operation: publicReviewOperation(operation) };
+      return toJson(res, 200, xrpc ? output : { contractVersion: 'v1', data: output.operation }), true;
+    }
+  } catch (error) {
+    if (error instanceof InvalidCursorError) return apiError(res, 400, 'InvalidCursor', error.message), true;
+    return apiError(res, 400, xrpc ? 'InvalidRequest' : 'invalid_request', error instanceof Error ? error.message : 'invalid request'), true;
+  }
+  return false;
+}
+
 export function createMemoryRepository(seed: RecordEnvelope[] = allSeedRecords, datasetMetadata?: FixtureDatasetMetadata): DirectoryRepository {
   const rawRecords = seed.map((record) => recordEnvelopeSchema.parse(record));
   const records = dedupeEntities(rawRecords);
   const recordRevisions = dedupeRecordRevisions(rawRecords);
+  const migration = migrateLegacyRecords(rawRecords);
+  const policyRecord = migration.records.find((record) => record.record.$type === 'us.dsaslate.temp.dsaPolicy');
+  if (!policyRecord) throw new Error('foundation migration did not produce a policy record');
+  const foundation = new FoundationService(migration.records, { rootDid: policyRecord.repoDid, policyUri: policyRecord.uri, policyCid: policyRecord.cid, policyVersion: String(policyRecord.record.policyVersion ?? DEFAULT_POLICY_VERSION) });
   return {
+    foundation,
     datasetMetadata,
     async listEntities(filters: DirectoryEntityFilters = {}) {
       const limited = records.filter((entity) => matchesDirectoryEntity(entity, filters));
@@ -194,11 +463,29 @@ function dedupeEntities(rawRecords: RecordEnvelope[]) {
   }, []);
 }
 
-export async function createPostgresRepository(databaseUrl: string): Promise<DirectoryRepository> {
+export async function createPostgresRepository(databaseUrl: string, options: { rootDid?: string; oauth?: OAuthServiceConfig } = {}): Promise<DirectoryRepository> {
   const pool = new Pool({ connectionString: databaseUrl });
   await pool.query('select 1');
+  await applyMigrations(pool);
   await ensurePrototypeSchema(pool);
+  const foundationPersistence = new FoundationPostgresPersistence(pool);
+  let foundationRecords = await foundationPersistence.loadRecords();
+  if (!foundationRecords.length) {
+    foundationRecords = migrateLegacyRecords([], { rootDid: options.rootDid }).records;
+    await foundationPersistence.replaceBootstrap(foundationRecords);
+  }
+  const policyRecord = foundationRecords.find((record) => record.record.$type === 'us.dsaslate.temp.dsaPolicy');
+  if (!policyRecord) throw new Error('foundation store does not contain a policy record');
+  const foundation = new FoundationService(foundationRecords, { rootDid: policyRecord.repoDid, policyUri: policyRecord.uri, policyCid: policyRecord.cid, policyVersion: String(policyRecord.record.policyVersion ?? DEFAULT_POLICY_VERSION) });
+  foundation.restoreRepoStates(await foundationPersistence.loadRepoStates());
+  foundation.restoreIdentityStates(await foundationPersistence.loadIdentityStates());
+  await foundationPersistence.purgeExpiredReviewOperations();
+  foundation.restoreReviewOperations(await foundationPersistence.loadReviewOperations());
+  const oauthService = options.oauth ? await OAuthService.create(pool, options.oauth) : undefined;
   return {
+    foundation,
+    foundationPersistence,
+    oauthService,
     async listEntities(filters: DirectoryEntityFilters = {}) {
       const assertions = await loadVerificationAssertions(pool);
       const limit = normalizeLimit(filters.limit);
@@ -330,58 +617,58 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       };
     },
     async listStatements(entityUri?: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.statement.public' order by indexed_at desc`);
-      return listStatementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection = 'org.dsa.statement.public' order by indexed_at desc`);
+      return listStatementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), entityUri);
     },
     async getStatement(id: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.statement.public' limit 1`, [id]);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.statement.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
+      return normalizeStatementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record });
     },
     async listPublications() {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.profile' order by indexed_at desc`);
-      return listPublicationProfileEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)));
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection = 'org.dsa.publication.profile' order by indexed_at desc`);
+      return listPublicationProfileEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)));
     },
     async getPublication(id: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.profile' limit 1`, [id]);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.profile' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizePublicationProfileEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
+      return normalizePublicationProfileEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record });
     },
     async listArticles(publicationUri?: string, entityUri?: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.publication.article' order by indexed_at desc`);
-      return listPublicationArticleEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), publicationUri, entityUri);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection = 'org.dsa.publication.article' order by indexed_at desc`);
+      return listPublicationArticleEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), publicationUri, entityUri);
     },
     async getArticle(id: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.article' limit 1`, [id]);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.publication.article' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizePublicationArticleEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
+      return normalizePublicationArticleEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record });
     },
     async listEndorsements(entityUri?: string, status?: EndorsementPublicRecord['status']) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.endorsement.public' order by indexed_at desc`);
-      return listEndorsementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri, status);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection = 'org.dsa.endorsement.public' order by indexed_at desc`);
+      return listEndorsementEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), entityUri, status);
     },
     async getEndorsement(id: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.endorsement.public' limit 1`, [id]);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.endorsement.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeEndorsementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
+      return normalizeEndorsementEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record });
     },
     async listEvents(entityUri?: string, status?: PublicEventRecord['status']) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection = 'org.dsa.event.public' order by indexed_at desc`);
-      return listEventEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), entityUri, status);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection = 'org.dsa.event.public' order by indexed_at desc`);
+      return listEventEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), entityUri, status);
     },
     async getEvent(id: string) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.event.public' limit 1`, [id]);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where uri = $1 and collection = 'org.dsa.event.public' limit 1`, [id]);
       const row = result.rows[0];
       if (!row) return undefined;
-      return normalizeEventEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record });
+      return normalizeEventEnvelope({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record });
     },
     async listActivity(filters = {}) {
-      const result = await pool.query(`select uri, cid, did, handle, collection, record, indexed_at from atproto_records where collection in ('org.dsa.statement.public', 'org.dsa.publication.article', 'org.dsa.endorsement.public', 'org.dsa.event.public') order by indexed_at desc`);
-      return listActivityEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), filters);
+      const result = await pool.query(`select uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_records where collection in ('org.dsa.statement.public', 'org.dsa.publication.article', 'org.dsa.endorsement.public', 'org.dsa.event.public') order by indexed_at desc`);
+      return listActivityEnvelopes(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), filters);
     },
     async ingestRecordEnvelopes(nextRecords) {
       const parsed = nextRecords.map((item) => recordEnvelopeSchema.parse(item));
@@ -404,10 +691,10 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
             throw new Error(`refusing to overwrite immutable record contents for ${rawRecord.uri} with same cid ${rawRecord.cid}`);
           }
           await client.query(
-            `insert into atproto_records (uri, cid, did, handle, collection, record, indexed_at)
-             values ($1, $2, $3, $4, $5, $6, $7)
-             on conflict (uri) do update set cid = excluded.cid, did = excluded.did, handle = excluded.handle, collection = excluded.collection, record = excluded.record, indexed_at = excluded.indexed_at`,
-            [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.indexedAt],
+            `insert into atproto_records (uri, cid, did, handle, collection, record, trust_label, indexed_at)
+             values ($1, $2, $3, $4, $5, $6, $7, $8)
+             on conflict (uri) do update set cid = excluded.cid, did = excluded.did, handle = excluded.handle, collection = excluded.collection, record = excluded.record, trust_label = excluded.trust_label, indexed_at = excluded.indexed_at`,
+            [rawRecord.uri, rawRecord.cid, rawRecord.did, rawRecord.handle, rawRecord.collection, rawRecord.record, rawRecord.trustLabel, rawRecord.indexedAt],
           );
           await client.query('commit');
         } catch (error) {
@@ -450,8 +737,8 @@ export async function createPostgresRepository(databaseUrl: string): Promise<Dir
       }
     },
     async getOrgChart(filters = {}) {
-      const result = await pool.query(`select uri, record, collection, indexed_at from atproto_records where collection in ('org.dsa.profile.orgUnit', 'org.dsa.relationship.governance') order by indexed_at asc`);
-      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: 'db', did: 'did:plc:db', handle: 'dsausa.org', collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: 'official', record: row.record } as RecordEnvelope)), filters);
+      const result = await pool.query(`select uri, cid, did, handle, record, collection, trust_label, indexed_at from atproto_records where collection in ('org.dsa.profile.orgUnit', 'org.dsa.relationship.governance') order by indexed_at asc`);
+      return buildOrgChartFromRecords(result.rows.map((row) => ({ uri: row.uri, cid: row.cid, did: row.did, handle: row.handle, collection: row.collection, indexedAt: new Date(row.indexed_at).toISOString(), trustLabel: row.trust_label, record: row.record } as RecordEnvelope)), filters);
     },
     async listRecordRevisions(uri: string) {
       const result = await pool.query(`select id, uri, cid, did, handle, collection, record, trust_label, indexed_at from atproto_record_revisions where uri = $1 order by indexed_at asc, id asc`, [uri]);
@@ -474,9 +761,12 @@ async function ensurePrototypeSchema(pool: Pool) {
       handle text not null,
       collection text not null,
       record jsonb not null,
+      trust_label text not null default 'uncertain',
       indexed_at timestamptz not null
     )
   `);
+  await pool.query(`alter table atproto_records add column if not exists trust_label text not null default 'uncertain'`);
+  await pool.query(`update atproto_records set trust_label = 'uncertain' where trust_label = 'official'`);
   await pool.query(`
     create table if not exists atproto_record_revisions (
       id bigserial primary key,
@@ -496,7 +786,8 @@ async function ensurePrototypeSchema(pool: Pool) {
   await pool.query('create index if not exists atproto_record_revisions_uri_idx on atproto_record_revisions(uri)');
   await pool.query('create index if not exists atproto_record_revisions_collection_idx on atproto_record_revisions(collection)');
   await pool.query('create index if not exists atproto_record_revisions_indexed_at_idx on atproto_record_revisions(indexed_at)');
-  await pool.query(`insert into atproto_record_revisions (uri, cid, did, handle, collection, record, trust_label, indexed_at) select uri, cid, did, handle, collection, record, 'official', indexed_at from atproto_records on conflict (uri, cid) do nothing`);
+  await pool.query(`insert into atproto_record_revisions (uri, cid, did, handle, collection, record, trust_label, indexed_at) select uri, cid, did, handle, collection, record, coalesce(trust_label, 'uncertain'), indexed_at from atproto_records on conflict (uri, cid) do nothing`);
+  await pool.query(`update atproto_record_revisions set trust_label = 'uncertain' where trust_label = 'official'`);
   await pool.query(`
     create table if not exists directory_entities (
       id text primary key,
@@ -519,6 +810,7 @@ async function ensurePrototypeSchema(pool: Pool) {
   await pool.query(`alter table directory_entities add column if not exists verification_status text not null default 'uncertain'`);
   await pool.query(`alter table directory_entities add column if not exists verified_by text`);
   await pool.query(`alter table directory_entities add column if not exists verification_reason text`);
+  await pool.query(`update directory_entities set trust_label = 'uncertain' where trust_label = 'official'`);
   await pool.query('create index if not exists directory_entities_entity_type_idx on directory_entities(entity_type)');
   await pool.query('create index if not exists directory_entities_search_text_idx on directory_entities(search_text)');
 }
@@ -636,20 +928,111 @@ function getSubjectUri(record: RecordEnvelope) {
   return undefined;
 }
 
-export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST' | 'ENABLE_WRITE_GATEWAY' | 'ENABLE_WRITE_PUBLISH'>> & { writeOperationStore?: InMemoryWriteOperationStore } = {}) {
+async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<IncomingMessage>, oauth: OAuthService | undefined, rootDid: string) {
+  if (!req.url) return false;
+  const url = new URL(req.url, 'http://localhost');
+  const isSession = req.method === 'GET' && url.pathname === '/api/v1/session';
+  const isOAuthPath = url.pathname.startsWith('/oauth/') || url.pathname === '/api/v1/self/records' || isSession;
+  if (!isOAuthPath) return false;
+  if (isSession && !oauth) return toJson(res, 200, { contractVersion: 'v1', data: { oauthEnabled: false, authenticated: false, capabilities: { selfWrite: false, reviewSubmission: false, registryReview: false, collections: [], actions: [] } } }), true;
+  if (!oauth) return apiError(res, 404, 'not_found', 'OAuth is disabled'), true;
+  try {
+    if (isSession) {
+      const session = await oauth.getBrowserSession(req);
+      return toJson(res, 200, { contractVersion: 'v1', data: {
+        oauthEnabled: true,
+        authenticated: !!session,
+        ...(session ? { did: session.did, expiresAt: session.expiresAt } : {}),
+        capabilities: {
+          selfWrite: !!session,
+          reviewSubmission: !!session,
+          registryReview: session?.did === rootDid,
+          collections: session ? ['us.dsaslate.temp.orgProfile', 'us.dsaslate.temp.publicEvent'] : [],
+          actions: session ? ['create', 'update', 'delete'] : [],
+        },
+      } }), true;
+    }
+    if (req.method === 'GET' && url.pathname === '/oauth/client-metadata.json') return toJson(res, 200, oauth.metadata), true;
+    if (req.method === 'GET' && url.pathname === '/oauth/jwks.json') return toJson(res, 200, oauth.jwks), true;
+    if (req.method === 'GET' && url.pathname === '/oauth/login') {
+      const handle = url.searchParams.get('handle');
+      if (!handle) throw new Error('handle is required');
+      const requestedMode = url.searchParams.get('mode');
+      const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : 'user';
+      const location = await oauth.begin(handle, mode);
+      res.writeHead(302, { location: location.toString(), 'cache-control': 'no-store' });
+      res.end();
+      return true;
+    }
+    if (req.method === 'GET' && url.pathname === '/oauth/callback') {
+      const session = await oauth.complete(url.searchParams);
+      res.writeHead(302, { location: '/', 'set-cookie': oauth.sessionCookie(session.token, session.expiresAt), 'cache-control': 'no-store' });
+      res.end();
+      return true;
+    }
+    if (req.method === 'POST' && url.pathname === '/oauth/logout') {
+      oauth.assertTrustedOrigin(req);
+      await oauth.logout(req);
+      res.setHeader('set-cookie', oauth.clearSessionCookie());
+      return toJson(res, 200, { status: 'signed_out' }), true;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/v1/self/records') {
+      oauth.assertTrustedOrigin(req);
+      const did = await oauth.authenticateRequest(req);
+      const body = await readJsonBody(req);
+      if (body === Symbol.for('body-too-large')) return apiError(res, 413, 'payload_too_large', 'request body exceeds 1 MiB'), true;
+      if (body === Symbol.for('invalid-json')) return apiError(res, 400, 'invalid_json', 'request body must be valid JSON'), true;
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('request body must be an object');
+      const input = body as SelfRecordWriteInput;
+      if (input.action !== 'create' && input.action !== 'update' && input.action !== 'delete') throw new Error('action must be create, update, or delete');
+      const output = await oauth.writeSelfAuthoredRecord(did, input);
+      return toJson(res, input.action === 'create' ? 201 : 200, { contractVersion: 'v1', data: output }), true;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'OAuth request failed';
+    if (error instanceof PdsWriteError) {
+      if (error.code === 'InvalidSwap') return apiError(res, 409, 'record_conflict', 'record CID changed; reload before retrying'), true;
+      if (error.code === 'RecordNotFound') return apiError(res, 404, 'record_not_found', 'record no longer exists'), true;
+      return apiError(res, 502, 'pds_write_failed', 'the PDS rejected the record operation'), true;
+    }
+    const unauthorized = message.includes('session') || message.includes('OAuth browser');
+    const forbidden = message.includes('origin is not allowed');
+    return apiError(res, unauthorized ? 401 : forbidden ? 403 : 400, unauthorized ? 'unauthorized' : forbidden ? 'forbidden' : 'invalid_request', message), true;
+  }
+  return apiError(res, 404, 'not_found', 'OAuth route not found'), true;
+}
+
+export function createApp(repository: DirectoryRepository, options: Partial<Pick<AppConfig, 'CORS_ORIGIN' | 'DEMO_READ_ONLY' | 'ENABLE_ADMIN_INGEST' | 'ENABLE_WRITE_GATEWAY' | 'ENABLE_WRITE_PUBLISH' | 'ENABLE_REVIEW_SUBMISSIONS' | 'PUBLIC_RATE_LIMIT_PER_MINUTE' | 'WRITE_RATE_LIMIT_PER_MINUTE'>> & { writeOperationStore?: InMemoryWriteOperationStore; appRegistry?: AppRegistryEntry[]; authenticateReviewRequest?: (req: IncomingMessage) => string | Promise<string> } = {}) {
   const corsOrigin = options.CORS_ORIGIN ?? '*';
   const demoReadOnly = options.DEMO_READ_ONLY ?? false;
-  const enableAdminIngest = !demoReadOnly && (options.ENABLE_ADMIN_INGEST ?? true);
+  const enableAdminIngest = !demoReadOnly && (options.ENABLE_ADMIN_INGEST ?? false);
   const enableWriteGateway = !demoReadOnly && (options.ENABLE_WRITE_GATEWAY ?? false);
   const enableWritePublish = !demoReadOnly && (options.ENABLE_WRITE_PUBLISH ?? false);
-  const writeOperationStore = options.writeOperationStore ?? new InMemoryWriteOperationStore();
+  const enableReviewSubmissions = !demoReadOnly && (options.ENABLE_REVIEW_SUBMISSIONS ?? false);
+  const writeOperationStore = options.writeOperationStore;
+  const appRegistry = options.appRegistry ?? [];
   const allowedMethods = demoReadOnly ? 'GET, OPTIONS' : 'GET, POST, OPTIONS';
-  return createServer(async (req, res) => {
+  const publicRateLimit = options.PUBLIC_RATE_LIMIT_PER_MINUTE ?? 120;
+  const writeRateLimit = options.WRITE_RATE_LIMIT_PER_MINUTE ?? 30;
+  const publicRateStore = new Map<string, { window: number; count: number }>();
+  const writeRateStore = new Map<string, { window: number; count: number }>();
+  const server = createServer(async (req, res) => {
+    const requestId = getRequestHeader(req, 'x-request-id')?.slice(0, 128) || randomUUID();
+    const startedAt = Date.now();
+    res.setHeader('x-request-id', requestId);
+    res.once('finish', () => console.info(JSON.stringify({ level: 'info', message: 'request', requestId, method: req.method, path: req.url?.split('?')[0], statusCode: res.statusCode, durationMs: Date.now() - startedAt })));
     applyCors(req, res, corsOrigin, allowedMethods);
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
       return;
+    }
+    const isWrite = req.method !== 'GET' && req.method !== 'HEAD';
+    const rateStore = isWrite ? writeRateStore : publicRateStore;
+    const rateLimit = isWrite ? writeRateLimit : publicRateLimit;
+    if (!consumeRateLimit(rateStore, requestIdentity(req), rateLimit)) {
+      res.setHeader('retry-after', '60');
+      return apiError(res, 429, 'rate_limit_exceeded', 'request rate limit exceeded');
     }
     if (req.url === '/health') return toJson(res, 200, { status: 'ok' });
     if (req.url === '/ready') {
@@ -660,6 +1043,9 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
         return toJson(res, 503, { status: 'not_ready', error: 'repository_unavailable' });
       }
     }
+    if (await handleOAuthRoute(req, res, repository.oauthService, repository.foundation.policy.rootDid)) return;
+    const authenticateReviewRequest = options.authenticateReviewRequest ?? (repository.oauthService ? repository.oauthService.authenticateRequest.bind(repository.oauthService) : undefined);
+    if (await handleFoundationRoute(req, res, repository, { enableReviewSubmissions, authenticateReviewRequest })) return;
     if (req.method === 'GET' && req.url === '/api/registry/health') {
       const report = await loadRegistryHealthReport(resolve('fixtures/records.json'));
       return toJson(res, 200, { prototype: true, ...getRegistryHealthSummary(report) });
@@ -667,6 +1053,7 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
     if (req.method === 'POST' && req.url === '/api/admin/fixtures/ingest') {
       if (!enableAdminIngest) return toJson(res, 404, routeDisabled());
       const body = await readJsonBody(req);
+      if (body === Symbol.for('body-too-large')) return apiError(res, 413, 'payload_too_large', 'request body exceeds 1 MiB');
       if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
       const records = Array.isArray(body) ? body : body && typeof body === 'object' && 'records' in body ? (body as { records?: unknown }).records : undefined;
       if (!Array.isArray(records)) return toJson(res, 400, { error: 'invalid_request_body', expected: '{ records: unknown[] }' });
@@ -675,11 +1062,13 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
     }
     if (req.method === 'POST' && req.url === '/api/write/records') {
       if (!enableWriteGateway) return toJson(res, 404, routeDisabled());
+      if (!writeOperationStore) return apiError(res, 503, 'legacy_write_store_unavailable', 'legacy write gateway requires an explicit operation store');
       const appToken = getAppToken(req);
       if (!appToken) return toJson(res, 401, { error: 'unauthorized' });
-      const auth = authenticateAppFromToken(appToken);
+      const auth = authenticateAppFromToken(appToken, appRegistry);
       if (!auth) return toJson(res, 401, { error: 'unauthorized' });
       const body = await readJsonBody(req);
+      if (body === Symbol.for('body-too-large')) return apiError(res, 413, 'payload_too_large', 'request body exceeds 1 MiB');
       if (body === Symbol.for('invalid-json')) return toJson(res, 400, { error: 'invalid_json' });
       const isDryRun = !!body && typeof body === 'object' && (body as { dryRun?: unknown }).dryRun === true;
       if (!isDryRun && !enableWritePublish) return toJson(res, 422, { error: 'write_publish_disabled' });
@@ -727,9 +1116,10 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
     }
     if (req.method === 'GET' && req.url?.startsWith('/api/write/operations/')) {
       if (!enableWriteGateway) return toJson(res, 404, routeDisabled());
+      if (!writeOperationStore) return apiError(res, 503, 'legacy_write_store_unavailable', 'legacy write gateway requires an explicit operation store');
       const appToken = getAppToken(req);
       if (!appToken) return toJson(res, 401, { error: 'unauthorized' });
-      const auth = authenticateAppFromToken(appToken);
+      const auth = authenticateAppFromToken(appToken, appRegistry);
       if (!auth) return toJson(res, 401, { error: 'unauthorized' });
       const operationId = decodeURIComponent(req.url.slice('/api/write/operations/'.length));
       const operation = writeOperationStore.getOperation(operationId);
@@ -823,6 +1213,10 @@ export function createApp(repository: DirectoryRepository, options: Partial<Pick
     }
     return toJson(res, 404, { error: 'not_found' });
   });
+  server.requestTimeout = 15_000;
+  server.headersTimeout = 10_000;
+  server.keepAliveTimeout = 60_000;
+  return server;
 }
 
 function buildOrgChartFromRecords(records: RecordEnvelope[], filters: { kind?: OrgUnitRecord['kind']; unit?: string } = {}) {
@@ -958,16 +1352,37 @@ async function loadCanonicalFixtureDataset() {
   return { metadata: fixture.metadata, records };
 }
 
-export async function bootstrapRepository(databaseUrl: string, options: Partial<Pick<AppConfig, 'AUTO_REPLAY_FIXTURES' | 'REQUIRE_POSTGRES'>> = {}) {
+async function oauthConfigFromAppConfig(options: Partial<AppConfig>): Promise<OAuthServiceConfig | undefined> {
+  if (!options.ENABLE_OAUTH) return undefined;
+  if (!options.OAUTH_ENCRYPTION_KEY_FILE || !options.OAUTH_PRIVATE_KEY_FILE) throw new Error('OAuth requires OAUTH_ENCRYPTION_KEY_FILE and OAUTH_PRIVATE_KEY_FILE mounted secrets');
+  const [encodedEncryptionKey, privateKey] = await Promise.all([
+    readFile(options.OAUTH_ENCRYPTION_KEY_FILE, 'utf8'),
+    readFile(options.OAUTH_PRIVATE_KEY_FILE, 'utf8'),
+  ]);
+  const encryptionKey = Buffer.from(encodedEncryptionKey.trim(), 'base64');
+  return {
+    appUrl: options.APP_PUBLIC_URL ?? 'https://app-staging.dsaslate.us',
+    handleResolver: options.OAUTH_HANDLE_RESOLVER ?? 'https://pds-staging.dsaslate.us',
+    internalPdsUrl: options.OAUTH_PDS_INTERNAL_URL,
+    serviceDid: options.OAUTH_SERVICE_DID ?? 'did:web:api-staging.dsaslate.us',
+    encryptionKey,
+    privateKey,
+    privateKeyAlg: options.OAUTH_PRIVATE_KEY_ALG ?? 'ES256',
+    cookieName: options.OAUTH_COOKIE_NAME ?? 'dsaslate_oauth',
+    allowHttp: (options.APP_PUBLIC_URL ?? '').startsWith('http://127.0.0.1'),
+  };
+}
+
+export async function bootstrapRepository(databaseUrl: string, options: Partial<AppConfig> = {}) {
   try {
-    const repo = await createPostgresRepository(databaseUrl);
+    const repo = await createPostgresRepository(databaseUrl, { rootDid: options.PROVISIONAL_ROOT_DID, oauth: await oauthConfigFromAppConfig(options) });
     if (options.AUTO_REPLAY_FIXTURES ?? true) {
       const fixture = await loadCanonicalFixtureDataset();
       await replayFixtureRecords(fixture.records, repo);
     }
     return repo;
   } catch (error) {
-    if (options.REQUIRE_POSTGRES) throw error;
+    if (options.REQUIRE_POSTGRES || options.ENABLE_OAUTH) throw error;
     const fixture = await loadCanonicalFixtureDataset();
     return createMemoryRepository(fixture.records, fixture.metadata);
   }

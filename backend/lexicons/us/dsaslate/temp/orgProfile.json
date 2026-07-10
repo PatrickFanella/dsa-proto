@@ -1,0 +1,33 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.orgProfile",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["entity", "displayName", "createdAt"],
+        "properties": {
+          "entity": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "displayName": { "type": "string", "maxLength": 160, "maxGraphemes": 80 },
+          "description": { "type": "string", "maxLength": 3000, "maxGraphemes": 1500 },
+          "links": {
+            "type": "array",
+            "maxLength": 12,
+            "items": { "type": "ref", "ref": "#link" }
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "label": { "type": "string", "maxLength": 80, "maxGraphemes": 40 }
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "pnpm -r run build",
+    "lexicons": "pnpm --dir backend run lexicons && pnpm --dir packages/foundation-client run lexicons",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
     "format": "pnpm -r --if-present run format"

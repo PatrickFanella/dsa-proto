@@ -1,0 +1,22 @@
+http://pds-staging.dsaslate.us {
+  encode zstd gzip
+  reverse_proxy pds:3000
+}
+
+http://api-staging.dsaslate.us {
+  encode zstd gzip
+
+  @did path /.well-known/did.json
+  header @did Content-Type application/did+json
+  respond @did `{"@context":["https://www.w3.org/ns/did/v1"],"id":"did:web:api-staging.dsaslate.us","service":[{"id":"did:web:api-staging.dsaslate.us#dsaslate_appview","type":"DSASlateAppView","serviceEndpoint":"https://api-staging.dsaslate.us"}]}` 200
+
+  reverse_proxy api:8080
+}
+
+http://app-staging.dsaslate.us {
+  encode zstd gzip
+
+  @backend path /oauth/* /api/* /xrpc/* /health /ready
+  reverse_proxy @backend api:8080
+  reverse_proxy web:80
+}

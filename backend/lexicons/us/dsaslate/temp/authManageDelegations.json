@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.authManageDelegations",
+  "defs": {
+    "main": {
+      "type": "permission-set",
+      "title": "DSA Slate delegation management",
+      "detail": "Create, update, or remove scoped authority delegations issued by an organization controller. AppView validation still requires an active parent chain to the provisional root.",
+      "permissions": [
+        {
+          "type": "permission",
+          "resource": "repo",
+          "collection": ["us.dsaslate.temp.authorityDelegation"],
+          "action": ["create", "update", "delete"]
+        }
+      ]
+    }
+  }
+}

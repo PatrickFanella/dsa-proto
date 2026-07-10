@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.dsaPolicy",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["policyVersion", "rootDid", "mode", "permittedUnitKinds", "createdAt"],
+        "properties": {
+          "policyVersion": { "type": "string", "maxLength": 64 },
+          "rootDid": { "type": "string", "format": "did" },
+          "mode": { "type": "string", "knownValues": ["provisional", "official"] },
+          "permittedUnitKinds": {
+            "type": "array",
+            "maxLength": 32,
+            "items": { "type": "string", "maxLength": 64 }
+          },
+          "adoptionEvidence": { "type": "ref", "ref": "#adoptionEvidence" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "adoptionEvidence": {
+      "type": "object",
+      "required": ["uri", "digest", "decisionDate"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "digest": { "type": "string", "maxLength": 128 },
+        "decisionDate": { "type": "string", "format": "datetime" }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.authorityAction",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["target", "action", "reason", "effectiveAt"],
+        "properties": {
+          "target": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "action": {
+            "type": "string",
+            "knownValues": ["dispute", "revoke", "archive", "supersede"]
+          },
+          "reason": { "type": "string", "maxLength": 1000, "maxGraphemes": 500 },
+          "replacement": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "effectiveAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

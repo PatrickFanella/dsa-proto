@@ -1,50 +1,17 @@
-# Foundation Layer
+# Foundation layer
 
-The foundation layer is the shared public data base that downstream apps consume. In the current prototype it is implemented with curated ATProtocol-shaped fixtures, a resolver, graph validation, registry health checks, and read APIs.
+The foundation is a reusable public organizational vocabulary plus a separate DSA policy layer. Apps consume entity, graph, provenance, lifecycle, and authority views rather than recreating those decisions.
 
-## What the prototype proves now
+| Data class | Public v1 stance |
+| --- | --- |
+| Stable non-person organization identity/profile | Included |
+| Directed organization relationships | Included |
+| Delegations, attestations, disputes, revocations, archives, supersession | Included |
+| DSA unit classification and provisional policy | Included in policy layer |
+| Deliberately public events | First app-writable family |
+| Statements/publications/articles/endorsements | Deferred one family at a time |
+| People, membership, interests, contacts, payments, grievances, ballots, private logistics | Rejected |
 
-- Public organizational identities can be represented as ATProto-shaped records.
-- DIDs, handles, record URIs, and stable fixture IDs can support identity continuity.
-- Authority, verification, dispute, revocation, archive, and lifecycle context can be attached to public records.
-- Chapters, caucuses, org units, governance relationships, and opt-in public member-affiliation examples can be indexed into useful app views.
-- App-layer public records can consume the foundation instead of redefining identity and authority.
+The canonical staging dataset is produced deterministically from legacy fixtures, but it is published to the registry PDS and learned through Tap. Fixture trust labels and timestamps are not authority. Bootstrap source URL, row hash, and import time are provenance only.
 
-## Source of truth
-
-For this prototype, `backend/fixtures/records.json` is the canonical dataset. External public knowledge may inform fixture authorship, but the prototype does not model external citation/proof-chain records.
-
-## Publication matrix
-
-| Data class | Built stance | Current representation |
-| --- | --- | --- |
-| Public organizational identity | In scope | Chapter, caucus, org-unit profiles |
-| Public organizational relationships | In scope | Governance relationship records and org-chart projection |
-| Public verification/trust state | In scope | Verification assertion and authority records |
-| Identity continuity | In scope | `org.dsa.identity.continuity` fixture records and projection helper |
-| Optional public member affiliation | In scope with minimization | Opt-in public affiliation examples only |
-| Public civic records | App-layer examples | Statements, publication profiles/articles, endorsements, events |
-| Private/member/internal data | Out of scope | Rejected by policy; obvious unsafe payload keys rejected by guardrails |
-| External citation/proof chains | Out of scope | Not modeled as records |
-| Election/ballot systems | Out of scope | Not modeled as records or routes |
-
-## Trust labels
-
-Current trust labels are:
-
-- `official`
-- `verified-by-national`
-- `verified-by-chapter`
-- `verified-by-caucus`
-- `self-declared`
-- `community-submitted`
-- `secondary-source`
-- `uncertain`
-
-`revoked`, `disputed`, `archived`, `superseded`, and `tombstoned` are lifecycle or resolver states, not trust labels.
-
-## App boundary
-
-Apps may consume foundation identities, graph relationships, lifecycle, trust labels, and resolver context. Apps should not self-upgrade trust labels, rewrite foundation identity, or publish foundation families through ordinary app-write paths.
-
-The write gateway preview currently permits only scoped app-layer event submissions to become private pending-review operations for the demo registry app. The public Almaz demo keeps that gateway disabled.
+The old read-only demo remains available during staging. There is no dual-write path between `org.dsa.*` and `us.dsaslate.temp.*`.

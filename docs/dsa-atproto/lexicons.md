@@ -1,56 +1,38 @@
-# Implemented Record Families
+# Temporary Lexicons
 
-The prototype uses AT Protocol-shaped records under an `org.dsa.*` namespace. These are TypeScript/Zod schemas in `backend/src/domain.ts`, not complete production Lexicon JSON files.
+Canonical JSON lives under `backend/lexicons/`; `backend/src/lexicons/` is generated and must not be hand-edited. The namespace is experimental and disposable: `us.dsaslate.temp.*`.
 
-## Canonical vocabularies
+## Records
 
-| Concept | Current values |
-| --- | --- |
-| Trust labels | `official`, `verified-by-national`, `verified-by-chapter`, `verified-by-caucus`, `self-declared`, `community-submitted`, `secondary-source`, `uncertain` |
-| Lifecycle states | `active`, `inactive`, `superseded`, `deprecated`, `revoked`, `disputed`, `archived`, `tombstoned` |
-| Resolver status | `valid`, `expired`, `unresolved`, or a lifecycle state when that state controls interpretation |
-| App/write operation status | `dry_run`, `pending_review`, `accepted`, `rejected`, `conflict` |
+- `us.dsaslate.temp.orgEntity`
+- `us.dsaslate.temp.orgProfile`
+- `us.dsaslate.temp.orgRelationship`
+- `us.dsaslate.temp.authorityDelegation`
+- `us.dsaslate.temp.authorityAttestation`
+- `us.dsaslate.temp.authorityAction`
+- `us.dsaslate.temp.identityTransition`
+- `us.dsaslate.temp.dsaUnit`
+- `us.dsaslate.temp.dsaPolicy`
+- `us.dsaslate.temp.publicEvent`
 
-## Foundation families
+Authority targets use `com.atproto.repo.strongRef`. Organizational relationships use stable AT URIs where following the current entity is intended. Generic organizational records do not hardcode DSA unit categories; `dsaUnit` and `dsaPolicy` provide that policy layer.
 
-Implemented foundation record families:
+## Permission sets
 
-- `org.dsa.profile.chapter`
-- `org.dsa.profile.caucus`
-- `org.dsa.affiliation.member`
-- `org.dsa.profile.orgUnit`
-- `org.dsa.relationship.governance`
-- `org.dsa.verification.assertion`
-- `org.dsa.identity.continuity`
-- `org.dsa.authority.delegation`
-- `org.dsa.authority.mandate`
-- `org.dsa.authority.charter`
-- `org.dsa.authority.revocation`
-- `org.dsa.authority.dispute`
-- `org.dsa.record.archive`
+- `authSelfPublish`: controller profile and public-event creates/updates/deletes.
+- `authReviewSubmit`: AppView review submission/status RPCs with inherited audience.
+- `authRegistryPublish`: restricted provisional root publication for all temporary foundation collections.
+- `authManageDelegations`: lets an organization controller manage delegation records in its own repository; AppView still requires an exact parent strong reference and a non-expanding chain to the root.
 
-These families support directory identity, public member-affiliation examples, organizational graph projection, verification/status display, resolver context, identity continuity, disputes, revocations, and archive markers.
+## Generation and evolution
 
-## App-layer public families
+```bash
+make lexicons
+make lexicons-check
+```
 
-Implemented app-layer public record families:
+The verification gate regenerates bindings, fails on a dirty diff, and compares existing schemas with the merge-base version. Existing required fields, types, formats, refs, keys, and definitions cannot be removed or repurposed; new fields must be optional.
 
-- `org.dsa.statement.public`
-- `org.dsa.publication.profile`
-- `org.dsa.publication.article`
-- `org.dsa.endorsement.public`
-- `org.dsa.event.public`
+The DNS authority record for this group is `_lexicon.temp.dsaslate.us TXT "did=<registry-root-did>"`. Each schema is published from that DID as a `com.atproto.lexicon.schema` record whose rkey equals the NSID. DNS and live publication are operator actions and have not been performed by repository changes.
 
-These records are readable through app-layer endpoints and the public activity feed. They are not ordinary directory cards.
-
-## Write eligibility
-
-Ordinary app-write preview is intentionally narrower than the read model.
-
-- First scoped app-writable family: `org.dsa.event.public`.
-- Foundation identity, authority, verification, org graph, archive, dispute, revocation, and member-affiliation families are closed to ordinary app writes.
-- Statements, articles, and endorsements are currently read-only demo data.
-
-## Removed / not implemented families
-
-The current prototype does not implement election/ballot records, external proof-chain records, private member records, or production PDS account records.
+Deferred families—`publicStatement`, `publication`, `publicationArticle`, and `publicEndorsement`—should be introduced one family at a time after staging stability. `org.dsa.affiliation.member` is never migrated.

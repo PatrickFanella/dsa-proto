@@ -1,0 +1,119 @@
+name: dsa-slate-foundation-staging
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:17}
+    env_file: [./secrets/postgres.env]
+    volumes:
+      - appview-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [private]
+
+  pds:
+    image: ${PDS_IMAGE:?set a digest-pinned PDS_IMAGE}
+    dns: [1.1.1.1, 1.0.0.1]
+    env_file: [./secrets/pds.env]
+    volumes:
+      - pds-data:/pds
+    ports:
+      - "127.0.0.1:${PDS_LOOPBACK_PORT:-13000}:3000"
+    restart: unless-stopped
+    networks: [edge, private]
+
+  tap:
+    image: ${TAP_IMAGE:?set a digest-pinned TAP_IMAGE}
+    env_file: [./secrets/tap.env]
+    environment:
+      TAP_DATABASE_URL: sqlite:///data/tap.db
+      TAP_BIND: :2480
+      TAP_COLLECTION_FILTERS: us.dsaslate.temp.*
+      TAP_DISABLE_ACKS: "false"
+      TAP_NO_REPLAY: "false"
+      TAP_METRICS_LISTEN: :2481
+    volumes:
+      - tap-data:/data
+    restart: unless-stopped
+    networks: [edge, private]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    dns: [1.1.1.1, 1.0.0.1]
+    env_file: [./secrets/appview.env]
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      CORS_ORIGIN: https://app-staging.dsaslate.us
+      APP_PUBLIC_URL: https://app-staging.dsaslate.us
+      OAUTH_HANDLE_RESOLVER: https://pds-staging.dsaslate.us
+      OAUTH_PDS_INTERNAL_URL: http://pds:3000
+      OAUTH_SERVICE_DID: did:web:api-staging.dsaslate.us
+      OAUTH_ENCRYPTION_KEY_FILE: /run/secrets/oauth_encryption_key
+      OAUTH_PRIVATE_KEY_FILE: /run/secrets/oauth_private_key
+      ENABLE_OAUTH: "true"
+      ENABLE_REVIEW_SUBMISSIONS: "true"
+      ENABLE_ADMIN_INGEST: "false"
+      ENABLE_WRITE_GATEWAY: "false"
+      AUTO_REPLAY_FIXTURES: "false"
+      REQUIRE_POSTGRES: "true"
+      PROVISIONAL_ROOT_DID: ${PROVISIONAL_ROOT_DID:?set PROVISIONAL_ROOT_DID}
+    secrets: [oauth_encryption_key, oauth_private_key]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_LOOPBACK_PORT:-18090}:8080"
+    restart: unless-stopped
+    networks: [edge, private]
+
+  tap-worker:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/foundation-tap-worker.js"]
+    env_file: [./secrets/appview.env, ./secrets/tap.env]
+    environment:
+      TAP_URL: http://tap:2480
+      AUTO_REPLAY_FIXTURES: "false"
+      REQUIRE_POSTGRES: "true"
+      PROVISIONAL_ROOT_DID: ${PROVISIONAL_ROOT_DID:?set PROVISIONAL_ROOT_DID}
+    depends_on: [tap, api]
+    restart: unless-stopped
+    networks: [edge, private]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: web/Dockerfile
+      args:
+        VITE_API_URL: https://api-staging.dsaslate.us
+        VITE_DEMO_READ_ONLY: "false"
+        VITE_FOUNDATION_V1: "true"
+    ports:
+      - "127.0.0.1:${WEB_LOOPBACK_PORT:-18091}:80"
+    restart: unless-stopped
+    networks: [edge]
+
+volumes:
+  appview-postgres:
+  pds-data:
+  tap-data:
+
+networks:
+  edge:
+    name: dsaslate_staging_edge
+  private:
+    name: dsaslate_staging_private
+    internal: true
+
+secrets:
+  oauth_encryption_key:
+    file: ./secrets/oauth-encryption-key.base64
+  oauth_private_key:
+    file: ./secrets/oauth-private-key.pem
