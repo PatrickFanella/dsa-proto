@@ -104,11 +104,15 @@ async function createOrResumeAccount(fetchHandler: typeof fetch, config: Organiz
   await mkdir(memberDirectory, { recursive: true, mode: 0o700 });
   const password = await passwordAt(join(memberDirectory, 'password'));
   let response = await postJson(fetchHandler, `${config.pdsUrl}/xrpc/com.atproto.server.createAccount`, {
-    email: `${config.organizationSlug}+${member.id}@example.invalid`,
+    email: `${config.organizationSlug}+${member.id}@dsaslate.us`,
     handle,
     password,
   });
-  if (response.status === 400 || response.status === 409) {
+  if (!response.ok) {
+    const failure = z.object({ error: z.string().optional(), message: z.string().optional() }).parse(await response.json().catch(() => ({})));
+    if (failure.error !== 'HandleNotAvailable') {
+      throw new Error(`account ${handle} failed with HTTP ${response.status} ${failure.error ?? 'unknown'}: ${failure.message ?? 'account creation failed'}`);
+    }
     response = await postJson(fetchHandler, `${config.pdsUrl}/xrpc/com.atproto.server.createSession`, { identifier: handle, password });
   }
   if (!response.ok) throw new Error(`account ${handle} failed with HTTP ${response.status}: ${await response.text()}`);
