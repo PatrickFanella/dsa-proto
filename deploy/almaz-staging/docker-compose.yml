@@ -23,7 +23,10 @@ services:
     ports:
       - "127.0.0.1:${PDS_LOOPBACK_PORT:-13000}:3000"
     restart: unless-stopped
-    networks: [edge, private]
+    networks:
+      edge:
+        aliases: [dsa-staging-pds]
+      private:
 
   tap:
     image: ${TAP_IMAGE:?set a digest-pinned TAP_IMAGE}
@@ -71,7 +74,10 @@ services:
     ports:
       - "127.0.0.1:${API_LOOPBACK_PORT:-18090}:8080"
     restart: unless-stopped
-    networks: [edge, private]
+    networks:
+      edge:
+        aliases: [dsa-staging-api]
+      private:
 
   tap-worker:
     build:
@@ -99,7 +105,9 @@ services:
     ports:
       - "127.0.0.1:${WEB_LOOPBACK_PORT:-18091}:80"
     restart: unless-stopped
-    networks: [edge]
+    networks:
+      edge:
+        aliases: [dsa-staging-web]
 
 volumes:
   appview-postgres:
