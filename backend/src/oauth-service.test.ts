@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { computeRecordCid, type FoundationRecordValue } from './foundation-model.js';
-import { buildOAuthScopes, createOAuthFetch, decryptJson, encryptJson, parseEncryptionKey, PdsWriteError, writeSelfAuthoredRecord } from './oauth-service.js';
+import { buildOAuthScopes, createOAuthFetch, createPkceChallenge, decryptJson, encryptJson, parseEncryptionKey, PdsWriteError, validateHandoffReturnUri, writeDelegationRecord, writeSelfAuthoredRecord } from './oauth-service.js';
 
 const did = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa';
 const uri = `at://${did}/us.dsaslate.temp.publicEvent/event`;
@@ -46,6 +46,13 @@ describe('encrypted OAuth state', () => {
     expect(parseEncryptionKey(randomBytes(32))).toHaveLength(32);
   });
 
+  it('binds handoff returns to an allowlisted HTTPS origin and PKCE verifier', () => {
+    expect(validateHandoffReturnUri('https://organize.example.test/oauth/callback', ['https://organize.example.test'])).toBe('https://organize.example.test/oauth/callback');
+    expect(() => validateHandoffReturnUri('https://evil.example.test/oauth/callback', ['https://organize.example.test'])).toThrow('allowlisted');
+    expect(() => validateHandoffReturnUri('http://organize.example.test/oauth/callback', ['https://organize.example.test'])).toThrow('HTTPS');
+    expect(createPkceChallenge('a'.repeat(43))).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  });
+
   it('creates, updates, and deletes through the PDS with CID concurrency', async () => {
     const updated = { ...record, title: 'Updated public event' };
     const updatedCid = computeRecordCid(updated);
@@ -61,6 +68,16 @@ describe('encrypted OAuth state', () => {
     expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ repo: did, collection: 'us.dsaslate.temp.publicEvent', record });
     expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toEqual({ repo: did, collection: 'us.dsaslate.temp.publicEvent', rkey: 'event', record: updated, swapRecord: cid });
     expect(JSON.parse(String(fetch.mock.calls[2][1]?.body))).toEqual({ repo: did, collection: 'us.dsaslate.temp.publicEvent', rkey: 'event', swapRecord: updatedCid });
+  });
+
+  it('limits handoff writes to authority delegations', async () => {
+    const delegation = { $type: 'us.dsaslate.temp.authorityDelegation' as const, delegateDid: 'did:plc:bbbbbbbbbbbbbbbbbbbbbbbb', entityUris: ['at://did:plc:aaaaaaaaaaaaaaaaaaaaaaaa/us.dsaslate.temp.orgEntity/chapter'], collections: ['us.dsaslate.temp.publicEvent'], actions: ['create'], effectiveFrom: '2026-07-10T00:00:00.000Z', createdAt: '2026-07-10T00:00:00.000Z' };
+    const delegationCid = computeRecordCid(delegation);
+    const delegationUri = `at://${did}/us.dsaslate.temp.authorityDelegation/delegation`;
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ uri: delegationUri, cid: delegationCid }), { status: 200 }));
+
+    await expect(writeDelegationRecord(fetch, did, { action: 'create', collection: 'us.dsaslate.temp.authorityDelegation', record: delegation })).resolves.toMatchObject({ uri: delegationUri, cid: delegationCid });
+    await expect(writeDelegationRecord(fetch, did, { action: 'create', collection: 'us.dsaslate.temp.publicEvent', record })).rejects.toThrow('not writable for this authorization');
   });
 
   it('rejects envelope fields, foreign targets, and PDS swap conflicts', async () => {

@@ -14,6 +14,9 @@ This is a separate Compose project from `deploy/almaz`, which remains the read-o
 8. Publish `_atproto.registry.pds-staging.dsaslate.us TXT "did=<registry-root-did>"` for the registry handle, then `_lexicon.temp.dsaslate.us TXT "did=<registry-root-did>"` only after the registry account and recovery material are verified. PDS account handles under `.pds-staging.dsaslate.us` use DNS TXT resolution and do not require wildcard HTTP ingress.
 9. Publish the Lexicon records and the canonical migrated dataset through the registry PDS. The operator flow is `/oauth/login?handle=registry.pds-staging.dsaslate.us&mode=registry`, followed by `make foundation-publish`; the AppView must learn these records from Tap, not direct SQL.
 
+Set `OAUTH_HANDOFF_RETURN_ORIGINS` to the comma-separated HTTPS origins allowed
+to receive delegation-management handoffs before recreating the AppView service.
+
 For Almaz's locally managed tunnel configuration, `install-tunnel-routes.py` inserts the three origin routes immediately before the existing catch-all and is idempotent. Back up the live Cloudflared configuration before running it, then restart Cloudflared and verify every pre-existing hostname remains present.
 
 `create-registry-account.sh` creates or resumes the staging registry account and stores its password/session only under the ignored `secrets/` directory. Run it only after public PDS TLS succeeds. Its output intentionally contains only the handle and DID; the password file and PDS/PLC recovery material require a separate encrypted custody workflow.

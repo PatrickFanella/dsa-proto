@@ -54,6 +54,7 @@ services:
       OAUTH_HANDLE_RESOLVER: https://pds-staging.dsaslate.us
       OAUTH_PDS_INTERNAL_URL: http://pds:3000
       OAUTH_SERVICE_DID: did:web:api-staging.dsaslate.us
+      OAUTH_HANDOFF_RETURN_ORIGINS: ${OAUTH_HANDOFF_RETURN_ORIGINS:-}
       OAUTH_ENCRYPTION_KEY_FILE: /run/secrets/oauth_encryption_key
       OAUTH_PRIVATE_KEY_FILE: /run/secrets/oauth_private_key
       ENABLE_OAUTH: "true"

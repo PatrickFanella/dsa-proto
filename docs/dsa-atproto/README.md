@@ -11,6 +11,7 @@ These documents describe the implemented `us.dsaslate.temp.*` AppView foundation
 - [lexicons.md](lexicons.md) — canonical temporary record and permission Lexicons
 - [governance.md](governance.md) — authority policy and activation gate
 - [local-demo.md](local-demo.md) — legacy demo and new local integration stack
+- [oauth-handoff.md](oauth-handoff.md) — one-time delegation OAuth handoff for external apps
 - [production-demo-safety-guards.md](production-demo-safety-guards.md) — preserved read-only demo controls
 - [../../deploy/almaz-staging/README.md](../../deploy/almaz-staging/README.md) — isolated staging runbook
 

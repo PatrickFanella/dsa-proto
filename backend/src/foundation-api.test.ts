@@ -116,6 +116,31 @@ describe('foundation XRPC and REST contracts', () => {
     await expect(conflicted.json()).resolves.toMatchObject({ error: 'record_conflict', retryable: false });
   });
 
+  it('routes PKCE delegation handoff exchange and one-time writes', async () => {
+    const begin = vi.fn().mockResolvedValue(new URL('https://pds.example.test/authorize'));
+    const exchangeHandoff = vi.fn().mockResolvedValue({ accessToken: 'handoff-token', did: 'did:plc:chapter', expiresIn: 300 });
+    const writeHandoffDelegation = vi.fn().mockResolvedValue({ action: 'create', uri: 'at://did:plc:chapter/us.dsaslate.temp.authorityDelegation/organizer', cid: 'bafyreidelegation' });
+    const repository = createMemoryRepository();
+    repository.oauthService = { begin, exchangeHandoff, writeHandoffDelegation } as unknown as OAuthService;
+    const origin = await start({}, repository);
+    const login = await fetch(`${origin}/oauth/login?handle=chapter.example.test&mode=delegations&handoff_return_uri=${encodeURIComponent('https://organize.example.test/oauth/callback')}&handoff_state=client-state-1234&handoff_challenge=${'a'.repeat(43)}`, { redirect: 'manual' });
+    expect(login.status).toBe(302);
+    expect(begin).toHaveBeenCalledWith('chapter.example.test', 'delegations', {
+      returnUri: 'https://organize.example.test/oauth/callback',
+      clientState: 'client-state-1234',
+      codeChallenge: 'a'.repeat(43),
+    });
+
+    const exchanged = await fetch(`${origin}/oauth/handoff/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'one-time-code', verifier: 'v'.repeat(43) }) });
+    expect(exchanged.status).toBe(200);
+    await expect(exchanged.json()).resolves.toMatchObject({ access_token: 'handoff-token', did: 'did:plc:chapter', scope: 'us.dsaslate.temp.authManageDelegations' });
+
+    const input = { action: 'create', collection: 'us.dsaslate.temp.authorityDelegation', record: { $type: 'us.dsaslate.temp.authorityDelegation' } };
+    const published = await fetch(`${origin}/api/v1/delegation-handoff/records`, { method: 'POST', headers: { authorization: 'Bearer handoff-token', 'content-type': 'application/json' }, body: JSON.stringify(input) });
+    expect(published.status).toBe(201);
+    expect(writeHandoffDelegation).toHaveBeenCalledWith('handoff-token', input);
+  });
+
   it('accepts record content for private review and rejects client authority fields', async () => {
     const submitterDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa';
     const origin = await start({ ENABLE_REVIEW_SUBMISSIONS: true, authenticateReviewRequest: () => submitterDid });

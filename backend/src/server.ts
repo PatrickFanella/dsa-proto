@@ -51,6 +51,7 @@ const envSchema = z.object({
   OAUTH_PRIVATE_KEY_FILE: z.string().optional(),
   OAUTH_PRIVATE_KEY_ALG: z.enum(['ES256', 'ES256K']).default('ES256'),
   OAUTH_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]+$/).default('dsaslate_oauth'),
+  OAUTH_HANDOFF_RETURN_ORIGINS: z.string().default(''),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
@@ -932,7 +933,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
   if (!req.url) return false;
   const url = new URL(req.url, 'http://localhost');
   const isSession = req.method === 'GET' && url.pathname === '/api/v1/session';
-  const isOAuthPath = url.pathname.startsWith('/oauth/') || url.pathname === '/api/v1/self/records' || isSession;
+  const isOAuthPath = url.pathname.startsWith('/oauth/') || url.pathname === '/api/v1/self/records' || url.pathname === '/api/v1/delegation-handoff/records' || isSession;
   if (!isOAuthPath) return false;
   if (isSession && !oauth) return toJson(res, 200, { contractVersion: 'v1', data: { oauthEnabled: false, authenticated: false, capabilities: { selfWrite: false, reviewSubmission: false, registryReview: false, collections: [], actions: [] } } }), true;
   if (!oauth) return apiError(res, 404, 'not_found', 'OAuth is disabled'), true;
@@ -959,16 +960,45 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       if (!handle) throw new Error('handle is required');
       const requestedMode = url.searchParams.get('mode');
       const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : 'user';
-      const location = await oauth.begin(handle, mode);
+      const returnUri = url.searchParams.get('handoff_return_uri');
+      const clientState = url.searchParams.get('handoff_state');
+      const codeChallenge = url.searchParams.get('handoff_challenge');
+      const hasHandoff = returnUri !== null || clientState !== null || codeChallenge !== null;
+      if (hasHandoff && (!returnUri || !clientState || !codeChallenge)) throw new Error('OAuth handoff requires return URI, state, and challenge');
+      const location = await oauth.begin(handle, mode, hasHandoff ? { returnUri: returnUri!, clientState: clientState!, codeChallenge: codeChallenge! } : undefined);
       res.writeHead(302, { location: location.toString(), 'cache-control': 'no-store' });
       res.end();
       return true;
     }
     if (req.method === 'GET' && url.pathname === '/oauth/callback') {
       const session = await oauth.complete(url.searchParams);
+      if ('handoff' in session && session.handoff) {
+        res.writeHead(302, { location: session.handoff.location, 'cache-control': 'no-store' });
+        res.end();
+        return true;
+      }
       res.writeHead(302, { location: '/', 'set-cookie': oauth.sessionCookie(session.token, session.expiresAt), 'cache-control': 'no-store' });
       res.end();
       return true;
+    }
+    if (req.method === 'POST' && url.pathname === '/oauth/handoff/exchange') {
+      const body = await readJsonBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('request body must be an object');
+      const { code, verifier } = body as { code?: unknown; verifier?: unknown };
+      if (typeof code !== 'string' || typeof verifier !== 'string') throw new Error('handoff code and verifier are required');
+      const exchanged = await oauth.exchangeHandoff(code, verifier);
+      return toJson(res, 200, { access_token: exchanged.accessToken, token_type: 'Bearer', expires_in: exchanged.expiresIn, did: exchanged.did, scope: 'us.dsaslate.temp.authManageDelegations' }), true;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/v1/delegation-handoff/records') {
+      const authorization = getRequestHeader(req, 'authorization');
+      const token = authorization?.startsWith('Bearer ') ? authorization.slice('Bearer '.length).trim() : undefined;
+      if (!token) throw new Error('missing OAuth handoff token');
+      const body = await readJsonBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('request body must be an object');
+      const input = body as SelfRecordWriteInput;
+      if (input.action !== 'create' && input.action !== 'update' && input.action !== 'delete') throw new Error('action must be create, update, or delete');
+      const output = await oauth.writeHandoffDelegation(token, input);
+      return toJson(res, input.action === 'create' ? 201 : 200, { contractVersion: 'v1', data: output }), true;
     }
     if (req.method === 'POST' && url.pathname === '/oauth/logout') {
       oauth.assertTrustedOrigin(req);
@@ -995,7 +1025,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       if (error.code === 'RecordNotFound') return apiError(res, 404, 'record_not_found', 'record no longer exists'), true;
       return apiError(res, 502, 'pds_write_failed', 'the PDS rejected the record operation'), true;
     }
-    const unauthorized = message.includes('session') || message.includes('OAuth browser');
+    const unauthorized = message.includes('session') || message.includes('OAuth browser') || message.includes('handoff token');
     const forbidden = message.includes('origin is not allowed');
     return apiError(res, unauthorized ? 401 : forbidden ? 403 : 400, unauthorized ? 'unauthorized' : forbidden ? 'forbidden' : 'invalid_request', message), true;
   }
@@ -1369,6 +1399,7 @@ async function oauthConfigFromAppConfig(options: Partial<AppConfig>): Promise<OA
     privateKey,
     privateKeyAlg: options.OAUTH_PRIVATE_KEY_ALG ?? 'ES256',
     cookieName: options.OAUTH_COOKIE_NAME ?? 'dsaslate_oauth',
+    handoffReturnOrigins: (options.OAUTH_HANDOFF_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
     allowHttp: (options.APP_PUBLIC_URL ?? '').startsWith('http://127.0.0.1'),
   };
 }

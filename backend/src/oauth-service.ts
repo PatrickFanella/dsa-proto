@@ -18,6 +18,7 @@ import type { FoundationRecord } from './foundation-model.js';
 import { publishFoundationRecords } from './foundation-publisher.js';
 
 const SELF_WRITABLE_COLLECTIONS = new Set<FoundationCollection>(['us.dsaslate.temp.orgProfile', 'us.dsaslate.temp.publicEvent']);
+const DELEGATION_WRITABLE_COLLECTIONS = new Set<FoundationCollection>(['us.dsaslate.temp.authorityDelegation']);
 const FORBIDDEN_RECORD_FIELDS = ['uri', 'cid', 'rkey', 'repoDid', 'repoRev', 'sequence', 'trustLabel', 'authority', 'provenance', 'official'];
 
 export type SelfRecordWriteInput =
@@ -42,8 +43,8 @@ export class PdsWriteError extends Error {
   }
 }
 
-function validateSelfRecord(collection: string, recordInput: unknown) {
-  if (!SELF_WRITABLE_COLLECTIONS.has(collection as FoundationCollection)) throw new Error(`collection ${collection} is not self-writable`);
+function validateWritableRecord(collection: string, recordInput: unknown, allowedCollections: ReadonlySet<FoundationCollection>) {
+  if (!allowedCollections.has(collection as FoundationCollection)) throw new Error(`collection ${collection} is not writable for this authorization`);
   if (!recordInput || typeof recordInput !== 'object' || Array.isArray(recordInput)) throw new Error('record must be an object');
   const record = recordInput as FoundationRecordValue;
   if (record.$type !== collection) throw new Error('collection must match record $type');
@@ -53,11 +54,11 @@ function validateSelfRecord(collection: string, recordInput: unknown) {
   return record;
 }
 
-function parseSelfTarget(did: string, uriValue: string) {
+function parseWritableTarget(did: string, uriValue: string, allowedCollections: ReadonlySet<FoundationCollection>) {
   ensureValidAtUri(uriValue);
   const uri = new AtUri(uriValue);
   if (uri.host !== did) throw new Error('record URI authority must match the authenticated DID');
-  if (!SELF_WRITABLE_COLLECTIONS.has(uri.collection as FoundationCollection)) throw new Error(`collection ${uri.collection} is not self-writable`);
+  if (!allowedCollections.has(uri.collection as FoundationCollection)) throw new Error(`collection ${uri.collection} is not writable for this authorization`);
   return uri;
 }
 
@@ -73,25 +74,25 @@ async function pdsOutput(response: Response, action: SelfRecordWriteInput['actio
   return output;
 }
 
-export async function writeSelfAuthoredRecord(fetchHandler: PdsFetchHandler, did: string, input: SelfRecordWriteInput): Promise<SelfRecordWriteResult> {
+async function writeAuthorizedRecord(fetchHandler: PdsFetchHandler, did: string, input: SelfRecordWriteInput, allowedCollections: ReadonlySet<FoundationCollection>): Promise<SelfRecordWriteResult> {
   ensureValidDid(did);
   if (input.action === 'create') {
-    const record = validateSelfRecord(input.collection, input.record);
+    const record = validateWritableRecord(input.collection, input.record, allowedCollections);
     const response = await fetchHandler('/xrpc/com.atproto.repo.createRecord', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ repo: did, collection: input.collection, record }),
     });
     const output = await pdsOutput(response, input.action);
     if (typeof output.uri !== 'string' || typeof output.cid !== 'string') throw new Error('PDS returned an invalid createRecord response');
-    const outputUri = parseSelfTarget(did, output.uri);
+    const outputUri = parseWritableTarget(did, output.uri, allowedCollections);
     if (outputUri.collection !== input.collection) throw new Error('PDS returned a record in the wrong collection');
     validateExpectedCid(output.cid);
     return { action: input.action, uri: output.uri, cid: output.cid, ...(output.commit ? { commit: output.commit } : {}), ...(typeof output.validationStatus === 'string' ? { validationStatus: output.validationStatus } : {}) };
   }
 
-  const uri = parseSelfTarget(did, input.uri);
+  const uri = parseWritableTarget(did, input.uri, allowedCollections);
   const expectedCid = validateExpectedCid(input.expectedCid);
   if (input.action === 'update') {
-    const record = validateSelfRecord(uri.collection, input.record);
+    const record = validateWritableRecord(uri.collection, input.record, allowedCollections);
     const response = await fetchHandler('/xrpc/com.atproto.repo.putRecord', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ repo: did, collection: uri.collection, rkey: uri.rkey, record, swapRecord: expectedCid }),
     });
@@ -108,6 +109,14 @@ export async function writeSelfAuthoredRecord(fetchHandler: PdsFetchHandler, did
   return { action: input.action, uri: input.uri, ...(output.commit ? { commit: output.commit } : {}) };
 }
 
+export function writeSelfAuthoredRecord(fetchHandler: PdsFetchHandler, did: string, input: SelfRecordWriteInput) {
+  return writeAuthorizedRecord(fetchHandler, did, input, SELF_WRITABLE_COLLECTIONS);
+}
+
+export function writeDelegationRecord(fetchHandler: PdsFetchHandler, did: string, input: SelfRecordWriteInput) {
+  return writeAuthorizedRecord(fetchHandler, did, input, DELEGATION_WRITABLE_COLLECTIONS);
+}
+
 export type OAuthServiceConfig = {
   appUrl: string;
   handleResolver: string;
@@ -118,8 +127,25 @@ export type OAuthServiceConfig = {
   privateKeyAlg: 'ES256' | 'ES256K';
   cookieName?: string;
   browserSessionTtlSeconds?: number;
+  handoffReturnOrigins?: string[];
+  handoffCodeTtlSeconds?: number;
+  handoffTokenTtlSeconds?: number;
   allowHttp?: boolean;
 };
+
+export function createPkceChallenge(verifier: string) {
+  if (!/^[A-Za-z0-9._~-]{43,128}$/.test(verifier)) throw new Error('PKCE verifier is invalid');
+  return createHash('sha256').update(verifier).digest('base64url');
+}
+
+export function validateHandoffReturnUri(returnUri: string, allowedOrigins: readonly string[]) {
+  const url = new URL(returnUri);
+  if (url.protocol !== 'https:') throw new Error('OAuth handoff return URI must use HTTPS');
+  const allowed = new Set(allowedOrigins.map((origin) => new URL(origin).origin));
+  if (!allowed.has(url.origin)) throw new Error('OAuth handoff return origin is not allowlisted');
+  url.hash = '';
+  return url.toString();
+}
 
 export function createOAuthFetch(publicPdsUrl: string, internalPdsUrl: string, baseFetch: typeof fetch = globalThis.fetch) {
   const publicOrigin = new URL(publicPdsUrl).origin;
@@ -259,14 +285,52 @@ export class OAuthService {
     return this.client.jwks;
   }
 
-  async begin(handle: string, mode: 'user' | 'registry' | 'delegations' = 'user') {
+  async begin(handle: string, mode: 'user' | 'registry' | 'delegations' = 'user', handoff?: { returnUri: string; clientState: string; codeChallenge: string }) {
     const state = randomBytes(24).toString('base64url');
     const scope = mode === 'registry' ? this.registryScope : mode === 'delegations' ? this.delegationScope : this.userScope;
-    return this.client.authorize(handle, { state, prompt: 'consent', scope: scope as AtprotoOAuthScope });
+    if (handoff) {
+      if (mode !== 'delegations') throw new Error('OAuth handoff is only available for delegation management');
+      const returnUri = validateHandoffReturnUri(handoff.returnUri, this.config.handoffReturnOrigins ?? []);
+      if (!/^[A-Za-z0-9._~-]{16,256}$/.test(handoff.clientState)) throw new Error('OAuth handoff client state is invalid');
+      if (!/^[A-Za-z0-9_-]{43}$/.test(handoff.codeChallenge)) throw new Error('OAuth handoff PKCE challenge is invalid');
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      await this.pool.query('delete from oauth_handoff_requests_v1 where expires_at <= now()');
+      await this.pool.query(
+        'insert into oauth_handoff_requests_v1 (state_hash,return_uri,client_state,code_challenge,expires_at) values ($1,$2,$3,$4,$5)',
+        [keyHash('handoff-state', state), returnUri, handoff.clientState, handoff.codeChallenge, expiresAt],
+      );
+    }
+    try {
+      return await this.client.authorize(handle, { state, prompt: 'consent', scope: scope as AtprotoOAuthScope });
+    } catch (error) {
+      if (handoff) await this.pool.query('delete from oauth_handoff_requests_v1 where state_hash = $1', [keyHash('handoff-state', state)]).catch(() => undefined);
+      throw error;
+    }
   }
 
   async complete(params: URLSearchParams) {
+    const state = params.get('state');
     const { session } = await this.client.callback(params);
+    const handoff = state ? await this.pool.query(
+      `delete from oauth_handoff_requests_v1
+       where state_hash = $1 and expires_at > now()
+       returning return_uri, client_state, code_challenge`,
+      [keyHash('handoff-state', state)],
+    ) : undefined;
+    const handoffRow = handoff?.rows[0] as { return_uri: string; client_state: string; code_challenge: string } | undefined;
+    if (handoffRow) {
+      const code = randomBytes(32).toString('base64url');
+      const expiresAt = new Date(Date.now() + (this.config.handoffCodeTtlSeconds ?? 60) * 1000);
+      await this.pool.query('delete from oauth_handoff_codes_v1 where expires_at <= now() or consumed_at is not null');
+      await this.pool.query(
+        'insert into oauth_handoff_codes_v1 (code_hash,account_did,return_uri,code_challenge,expires_at) values ($1,$2,$3,$4,$5)',
+        [keyHash('handoff-code', code), session.did, handoffRow.return_uri, handoffRow.code_challenge, expiresAt],
+      );
+      const location = new URL(handoffRow.return_uri);
+      location.searchParams.set('code', code);
+      location.searchParams.set('state', handoffRow.client_state);
+      return { did: session.did, handoff: { location: location.toString() } };
+    }
     const token = randomBytes(32).toString('base64url');
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlSeconds * 1000);
@@ -276,6 +340,50 @@ export class OAuthService {
       [this.hashBrowserToken(token), session.did, now.toISOString(), expiresAt.toISOString()],
     );
     return { did: session.did, token, expiresAt: expiresAt.toISOString() };
+  }
+
+  async exchangeHandoff(code: string, verifier: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      const result = await client.query(
+        `select account_did, code_challenge
+         from oauth_handoff_codes_v1
+         where code_hash = $1 and consumed_at is null and expires_at > now()
+         for update`,
+        [keyHash('handoff-code', code)],
+      );
+      const row = result.rows[0] as { account_did?: string; code_challenge?: string } | undefined;
+      if (!row?.account_did || row.code_challenge !== createPkceChallenge(verifier)) throw new Error('OAuth handoff code is invalid or expired');
+      await client.query('update oauth_handoff_codes_v1 set consumed_at = now() where code_hash = $1', [keyHash('handoff-code', code)]);
+      const accessToken = randomBytes(32).toString('base64url');
+      const expiresIn = this.config.handoffTokenTtlSeconds ?? 300;
+      await client.query(
+        'insert into oauth_handoff_tokens_v1 (token_hash,account_did,expires_at) values ($1,$2,$3)',
+        [keyHash('handoff-token', accessToken), row.account_did, new Date(Date.now() + expiresIn * 1000)],
+      );
+      await client.query('commit');
+      return { accessToken, did: row.account_did, expiresIn };
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async consumeHandoffToken(token: string) {
+    const result = await this.pool.query(
+      `update oauth_handoff_tokens_v1
+       set consumed_at = now()
+       where token_hash = $1 and consumed_at is null and expires_at > now()
+       returning account_did`,
+      [keyHash('handoff-token', token)],
+    );
+    const did = result.rows[0]?.account_did as string | undefined;
+    if (!did) throw new Error('OAuth handoff token is invalid or expired');
+    ensureValidDid(did);
+    return did;
   }
 
   async authenticateRequest(req: IncomingMessage) {
@@ -322,6 +430,12 @@ export class OAuthService {
   async writeSelfAuthoredRecord(did: string, input: SelfRecordWriteInput) {
     const session = await this.client.restore(did);
     return writeSelfAuthoredRecord(session.fetchHandler.bind(session), did, input);
+  }
+
+  async writeHandoffDelegation(token: string, input: SelfRecordWriteInput) {
+    const did = await this.consumeHandoffToken(token);
+    const session = await this.client.restore(did);
+    return writeDelegationRecord(session.fetchHandler.bind(session), did, input);
   }
 
   async publishRegistryRecords(rootDid: string, records: FoundationRecord[]) {
