@@ -23,6 +23,20 @@ For Almaz's locally managed tunnel configuration, `install-tunnel-routes.py` ins
 
 After the real root DID is configured and the Tap worker is running, `pds-roundtrip.sh` creates a disposable root-authored organization, waits for the public AppView to resolve it as provisional, deletes it with CID concurrency, and waits for the AppView tombstone. It refreshes the registry session first and never prints tokens or passwords.
 
+`pnpm --dir backend organization:seed` creates an idempotent synthetic chapter
+whose people are real staging-PDS accounts. Each identity receives a normal
+handle, DID, password-protected repository, refreshable session, and
+`app.bsky.actor.profile`, so it can authenticate to other ATProto applications.
+The registry root publishes the organization entity and root-to-chapter
+delegation. Private application roles are written only to the local seed
+manifest and are never published as member-affiliation records. Passwords,
+sessions, and the manifest remain under the ignored `secrets/organization-seed`
+directory with mode `0600`. Supply a `dsaslate.us`-scoped
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ZONE_ID`; the seed publishes each
+account's `_atproto.<handle>` TXT record so external ATProto clients can resolve
+the handle to its DID. `SEED_CREATED_AT` is stable across reruns, preserving the
+root delegation CID used by downstream strong references.
+
 Root-only staging sets Tap's relay URL to the authoritative staging PDS so commit delivery is immediate and deterministic. Before enrolling repositories hosted by other PDSs, expand synchronization to a public relay or additional Tap feed and rerun gap/recovery acceptance.
 
 The PDS and AppView API use explicit Cloudflare resolvers inside their containers. Almaz's primary Docker upstream resolver currently times out before the PDS's DID-resolution deadline; this per-service override preserves Docker service discovery and avoids changing host-wide DNS.

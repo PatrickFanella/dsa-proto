@@ -11,6 +11,7 @@
     "fixtures:replay": "tsx src/fixtures-replay.ts",
     "fixtures:author": "tsx src/fixtures-author.ts",
     "registry:health": "tsx src/registry-health.ts",
+    "organization:seed": "tsx src/organization-seed.ts",
     "chapters:import": "tsx src/chapters-csv-import.ts",
     "caucuses:import": "tsx src/caucuses-csv-import.ts",
     "lexicons": "lex build --lexicons lexicons --out src/lexicons --clear --pretty=false --index-file",
