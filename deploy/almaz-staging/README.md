@@ -41,6 +41,14 @@ Root-only staging sets Tap's relay URL to the authoritative staging PDS so commi
 
 The PDS and AppView API use explicit Cloudflare resolvers inside their containers. Almaz's primary Docker upstream resolver currently times out before the PDS's DID-resolution deadline; this per-service override preserves Docker service discovery and avoids changing host-wide DNS.
 
+The staging edge normalizes `Sec-Fetch-Site: same-site` to `cross-site` only for
+top-level document navigations to `/oauth/authorize`. The upstream OAuth
+provider accepts same-origin, cross-site, and direct navigations but rejects
+same-site navigations; without this narrow rule, sibling applications such as
+`app-staging.dsaslate.us` cannot open the PDS consent screen. The matcher also
+requires `Sec-Fetch-Mode: navigate` and `Sec-Fetch-Dest: document`; no API or
+background request receives the normalization.
+
 ## Operations
 
 - Run `backup.sh` daily and set `BACKUP_REMOTE` to encrypted off-host storage. `BACKUP_RECOVERY_ARCHIVE` may point to a separately encrypted recovery bundle.

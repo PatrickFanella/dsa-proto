@@ -1,5 +1,20 @@
 http://pds-staging.dsaslate.us {
   encode zstd gzip
+
+  # The OAuth provider rejects `same-site` navigations even though it accepts
+  # equivalent `cross-site` top-level navigations. Our staging applications and
+  # PDS intentionally use sibling dsaslate.us hosts, so normalize only the
+  # authorization-page document navigation. All other fetch-metadata checks
+  # remain untouched inside the provider.
+  @same_site_oauth_navigation {
+    path /oauth/authorize
+    header Sec-Fetch-Site same-site
+    header Sec-Fetch-Mode navigate
+    header Sec-Fetch-Dest document
+  }
+  reverse_proxy @same_site_oauth_navigation pds:3000 {
+    header_up Sec-Fetch-Site cross-site
+  }
   reverse_proxy pds:3000
 }
 
