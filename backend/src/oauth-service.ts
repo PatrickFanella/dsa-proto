@@ -176,6 +176,8 @@ export function buildOAuthScopes(serviceDid: string) {
   return { userScope, registryScope, delegationScope, declaredScope: `${userScope} include:us.dsaslate.temp.authRegistryPublish include:us.dsaslate.temp.authManageDelegations` };
 }
 
+export type HandoffPermissionSet = 'us.dsaslate.temp.authManageDelegations' | 'us.dsaslate.temp.authSelfPublish';
+
 type EncryptedPayload = { iv: Buffer; authTag: Buffer; ciphertext: Buffer };
 
 function keyHash(namespace: string, key: string) {
@@ -285,19 +287,20 @@ export class OAuthService {
     return this.client.jwks;
   }
 
-  async begin(handle: string, mode: 'user' | 'registry' | 'delegations' = 'user', handoff?: { returnUri: string; clientState: string; codeChallenge: string }) {
+  async begin(handle: string, mode: 'user' | 'registry' | 'delegations' | 'events' = 'user', handoff?: { returnUri: string; clientState: string; codeChallenge: string }) {
     const state = randomBytes(24).toString('base64url');
     const scope = mode === 'registry' ? this.registryScope : mode === 'delegations' ? this.delegationScope : this.userScope;
     if (handoff) {
-      if (mode !== 'delegations') throw new Error('OAuth handoff is only available for delegation management');
+      if (mode !== 'delegations' && mode !== 'events') throw new Error('OAuth handoff mode is invalid');
+      const permissionSet: HandoffPermissionSet = mode === 'delegations' ? 'us.dsaslate.temp.authManageDelegations' : 'us.dsaslate.temp.authSelfPublish';
       const returnUri = validateHandoffReturnUri(handoff.returnUri, this.config.handoffReturnOrigins ?? []);
       if (!/^[A-Za-z0-9._~-]{16,256}$/.test(handoff.clientState)) throw new Error('OAuth handoff client state is invalid');
       if (!/^[A-Za-z0-9_-]{43}$/.test(handoff.codeChallenge)) throw new Error('OAuth handoff PKCE challenge is invalid');
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
       await this.pool.query('delete from oauth_handoff_requests_v1 where expires_at <= now()');
       await this.pool.query(
-        'insert into oauth_handoff_requests_v1 (state_hash,return_uri,client_state,code_challenge,expires_at) values ($1,$2,$3,$4,$5)',
-        [keyHash('handoff-state', state), returnUri, handoff.clientState, handoff.codeChallenge, expiresAt],
+        'insert into oauth_handoff_requests_v1 (state_hash,return_uri,client_state,code_challenge,permission_set,expires_at) values ($1,$2,$3,$4,$5,$6)',
+        [keyHash('handoff-state', state), returnUri, handoff.clientState, handoff.codeChallenge, permissionSet, expiresAt],
       );
     }
     try {
@@ -316,17 +319,17 @@ export class OAuthService {
     const handoff = state ? await this.pool.query(
       `delete from oauth_handoff_requests_v1
        where state_hash = $1 and expires_at > now()
-       returning return_uri, client_state, code_challenge`,
+       returning return_uri, client_state, code_challenge, permission_set`,
       [keyHash('handoff-state', state)],
     ) : undefined;
-    const handoffRow = handoff?.rows[0] as { return_uri: string; client_state: string; code_challenge: string } | undefined;
+    const handoffRow = handoff?.rows[0] as { return_uri: string; client_state: string; code_challenge: string; permission_set: HandoffPermissionSet } | undefined;
     if (handoffRow) {
       const code = randomBytes(32).toString('base64url');
       const expiresAt = new Date(Date.now() + (this.config.handoffCodeTtlSeconds ?? 60) * 1000);
       await this.pool.query('delete from oauth_handoff_codes_v1 where expires_at <= now() or consumed_at is not null');
       await this.pool.query(
-        'insert into oauth_handoff_codes_v1 (code_hash,account_did,return_uri,code_challenge,expires_at) values ($1,$2,$3,$4,$5)',
-        [keyHash('handoff-code', code), session.did, handoffRow.return_uri, handoffRow.code_challenge, expiresAt],
+        'insert into oauth_handoff_codes_v1 (code_hash,account_did,return_uri,code_challenge,permission_set,expires_at) values ($1,$2,$3,$4,$5,$6)',
+        [keyHash('handoff-code', code), session.did, handoffRow.return_uri, handoffRow.code_challenge, handoffRow.permission_set, expiresAt],
       );
       const location = new URL(handoffRow.return_uri);
       location.searchParams.set('code', code);
@@ -349,23 +352,23 @@ export class OAuthService {
     try {
       await client.query('begin');
       const result = await client.query(
-        `select account_did, code_challenge
+        `select account_did, code_challenge, permission_set
          from oauth_handoff_codes_v1
          where code_hash = $1 and consumed_at is null and expires_at > now()
          for update`,
         [keyHash('handoff-code', code)],
       );
-      const row = result.rows[0] as { account_did?: string; code_challenge?: string } | undefined;
+      const row = result.rows[0] as { account_did?: string; code_challenge?: string; permission_set?: HandoffPermissionSet } | undefined;
       if (!row?.account_did || row.code_challenge !== createPkceChallenge(verifier)) throw new Error('OAuth handoff code is invalid or expired');
       await client.query('update oauth_handoff_codes_v1 set consumed_at = now() where code_hash = $1', [keyHash('handoff-code', code)]);
       const accessToken = randomBytes(32).toString('base64url');
       const expiresIn = this.config.handoffTokenTtlSeconds ?? 300;
       await client.query(
-        'insert into oauth_handoff_tokens_v1 (token_hash,account_did,expires_at) values ($1,$2,$3)',
-        [keyHash('handoff-token', accessToken), row.account_did, new Date(Date.now() + expiresIn * 1000)],
+        'insert into oauth_handoff_tokens_v1 (token_hash,account_did,permission_set,expires_at) values ($1,$2,$3,$4)',
+        [keyHash('handoff-token', accessToken), row.account_did, row.permission_set, new Date(Date.now() + expiresIn * 1000)],
       );
       await client.query('commit');
-      return { accessToken, did: row.account_did, expiresIn };
+      return { accessToken, did: row.account_did, expiresIn, permissionSet: row.permission_set };
     } catch (error) {
       await client.query('rollback');
       throw error;
@@ -374,16 +377,17 @@ export class OAuthService {
     }
   }
 
-  async consumeHandoffToken(token: string) {
+  async consumeHandoffToken(token: string, expectedPermissionSet: HandoffPermissionSet) {
     const result = await this.pool.query(
       `update oauth_handoff_tokens_v1
        set consumed_at = now()
        where token_hash = $1 and consumed_at is null and expires_at > now()
-       returning account_did`,
+       returning account_did, permission_set`,
       [keyHash('handoff-token', token)],
     );
-    const did = result.rows[0]?.account_did as string | undefined;
-    if (!did) throw new Error('OAuth handoff token is invalid or expired');
+    const row = result.rows[0] as { account_did?: string; permission_set?: string } | undefined;
+    const did = row?.account_did;
+    if (!did || row.permission_set !== expectedPermissionSet) throw new Error('OAuth handoff token is invalid, expired, or out of scope');
     ensureValidDid(did);
     return did;
   }
@@ -435,9 +439,17 @@ export class OAuthService {
   }
 
   async writeHandoffDelegation(token: string, input: SelfRecordWriteInput) {
-    const did = await this.consumeHandoffToken(token);
+    const did = await this.consumeHandoffToken(token, 'us.dsaslate.temp.authManageDelegations');
     const session = await this.client.restore(did);
     return writeDelegationRecord(session.fetchHandler.bind(session), did, input);
+  }
+
+  async writeHandoffEvent(token: string, input: SelfRecordWriteInput) {
+    const did = await this.consumeHandoffToken(token, 'us.dsaslate.temp.authSelfPublish');
+    const collection = input.action === 'create' ? input.collection : new AtUri(input.uri).collection;
+    if (collection !== 'us.dsaslate.temp.publicEvent') throw new Error('collection is not writable for event handoff authorization');
+    const session = await this.client.restore(did);
+    return writeSelfAuthoredRecord(session.fetchHandler.bind(session), did, input);
   }
 
   async publishRegistryRecords(rootDid: string, records: FoundationRecord[]) {

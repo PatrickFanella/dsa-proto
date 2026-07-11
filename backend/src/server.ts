@@ -933,7 +933,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
   if (!req.url) return false;
   const url = new URL(req.url, 'http://localhost');
   const isSession = req.method === 'GET' && url.pathname === '/api/v1/session';
-  const isOAuthPath = url.pathname.startsWith('/oauth/') || url.pathname === '/api/v1/self/records' || url.pathname === '/api/v1/delegation-handoff/records' || isSession;
+  const isOAuthPath = url.pathname.startsWith('/oauth/') || url.pathname === '/api/v1/self/records' || url.pathname === '/api/v1/delegation-handoff/records' || url.pathname === '/api/v1/event-handoff/records' || isSession;
   if (!isOAuthPath) return false;
   if (isSession && !oauth) return toJson(res, 200, { contractVersion: 'v1', data: { oauthEnabled: false, authenticated: false, capabilities: { selfWrite: false, reviewSubmission: false, registryReview: false, collections: [], actions: [] } } }), true;
   if (!oauth) return apiError(res, 404, 'not_found', 'OAuth is disabled'), true;
@@ -959,7 +959,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       const handle = url.searchParams.get('handle');
       if (!handle) throw new Error('handle is required');
       const requestedMode = url.searchParams.get('mode');
-      const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : 'user';
+      const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : requestedMode === 'events' ? 'events' : 'user';
       const returnUri = url.searchParams.get('handoff_return_uri');
       const clientState = url.searchParams.get('handoff_state');
       const codeChallenge = url.searchParams.get('handoff_challenge');
@@ -987,7 +987,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       const { code, verifier } = body as { code?: unknown; verifier?: unknown };
       if (typeof code !== 'string' || typeof verifier !== 'string') throw new Error('handoff code and verifier are required');
       const exchanged = await oauth.exchangeHandoff(code, verifier);
-      return toJson(res, 200, { access_token: exchanged.accessToken, token_type: 'Bearer', expires_in: exchanged.expiresIn, did: exchanged.did, scope: 'us.dsaslate.temp.authManageDelegations' }), true;
+      return toJson(res, 200, { access_token: exchanged.accessToken, token_type: 'Bearer', expires_in: exchanged.expiresIn, did: exchanged.did, scope: exchanged.permissionSet }), true;
     }
     if (req.method === 'POST' && url.pathname === '/api/v1/delegation-handoff/records') {
       const authorization = getRequestHeader(req, 'authorization');
@@ -998,6 +998,17 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       const input = body as SelfRecordWriteInput;
       if (input.action !== 'create' && input.action !== 'update' && input.action !== 'delete') throw new Error('action must be create, update, or delete');
       const output = await oauth.writeHandoffDelegation(token, input);
+      return toJson(res, input.action === 'create' ? 201 : 200, { contractVersion: 'v1', data: output }), true;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/v1/event-handoff/records') {
+      const authorization = getRequestHeader(req, 'authorization');
+      const token = authorization?.startsWith('Bearer ') ? authorization.slice('Bearer '.length).trim() : undefined;
+      if (!token) throw new Error('missing OAuth handoff token');
+      const body = await readJsonBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('request body must be an object');
+      const input = body as SelfRecordWriteInput;
+      if (input.action !== 'create' && input.action !== 'update' && input.action !== 'delete') throw new Error('action must be create, update, or delete');
+      const output = await oauth.writeHandoffEvent(token, input);
       return toJson(res, input.action === 'create' ? 201 : 200, { contractVersion: 'v1', data: output }), true;
     }
     if (req.method === 'POST' && url.pathname === '/oauth/logout') {
