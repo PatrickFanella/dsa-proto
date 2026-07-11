@@ -3,6 +3,7 @@
 ATProto OAuth with PKCE and DPoP replaces source-controlled app bearer tokens.
 
 - `authSelfPublish` grants controller PDS writes for `orgProfile` and `publicEvent` only.
+- `authPublishEvents` grants a one-use organizer handoff writes for `publicEvent` only.
 - `GET /api/v1/session` reports whether OAuth is enabled, the signed-in DID when present, and the actions and collections available to the browser session.
 - `POST /api/v1/self/records` accepts record content only for creates; the PDS selects URI, CID, commit, and revision.
 - `authReviewSubmit` grants review submission/status RPCs to the AppView audience.

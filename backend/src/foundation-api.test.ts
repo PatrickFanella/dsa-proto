@@ -143,7 +143,7 @@ describe('foundation XRPC and REST contracts', () => {
 
   it('routes a distinct one-time event publication handoff', async () => {
     const begin = vi.fn().mockResolvedValue(new URL('https://pds.example.test/authorize'));
-    const exchangeHandoff = vi.fn().mockResolvedValue({ accessToken: 'event-token', did: 'did:plc:organizer', expiresIn: 300, permissionSet: 'us.dsaslate.temp.authSelfPublish' });
+    const exchangeHandoff = vi.fn().mockResolvedValue({ accessToken: 'event-token', did: 'did:plc:organizer', expiresIn: 300, permissionSet: 'us.dsaslate.temp.authPublishEvents' });
     const writeHandoffEvent = vi.fn().mockResolvedValue({ action: 'create', uri: 'at://did:plc:organizer/us.dsaslate.temp.publicEvent/event', cid: 'bafyreievent' });
     const repository = createMemoryRepository();
     repository.oauthService = { begin, exchangeHandoff, writeHandoffEvent } as unknown as OAuthService;
@@ -152,7 +152,7 @@ describe('foundation XRPC and REST contracts', () => {
     expect(login.status).toBe(302);
     expect(begin).toHaveBeenCalledWith('organizer.example.test', 'events', expect.objectContaining({ returnUri: 'https://organize.example.test/oauth/events/callback' }));
     const exchanged = await fetch(`${origin}/oauth/handoff/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'one-time-code', verifier: 'v'.repeat(43) }) });
-    await expect(exchanged.json()).resolves.toMatchObject({ scope: 'us.dsaslate.temp.authSelfPublish' });
+    await expect(exchanged.json()).resolves.toMatchObject({ scope: 'us.dsaslate.temp.authPublishEvents' });
     const input = { action: 'create', collection: 'us.dsaslate.temp.publicEvent', record: { $type: 'us.dsaslate.temp.publicEvent' } };
     const published = await fetch(`${origin}/api/v1/event-handoff/records`, { method: 'POST', headers: { authorization: 'Bearer event-token', 'content-type': 'application/json' }, body: JSON.stringify(input) });
     expect(published.status).toBe(201);

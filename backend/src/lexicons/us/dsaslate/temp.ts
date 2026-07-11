@@ -3,6 +3,7 @@
  */
 
 export * as authManageDelegations from "./temp/authManageDelegations.js";
+export * as authPublishEvents from "./temp/authPublishEvents.js";
 export * as authRegistryPublish from "./temp/authRegistryPublish.js";
 export * as authReviewSubmit from "./temp/authReviewSubmit.js";
 export * as authSelfPublish from "./temp/authSelfPublish.js";

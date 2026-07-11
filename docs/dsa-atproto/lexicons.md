@@ -20,6 +20,7 @@ Authority targets use `com.atproto.repo.strongRef`. Organizational relationships
 ## Permission sets
 
 - `authSelfPublish`: controller profile and public-event creates/updates/deletes.
+- `authPublishEvents`: organizer public-event creates/updates/deletes.
 - `authReviewSubmit`: AppView review submission/status RPCs with inherited audience.
 - `authRegistryPublish`: restricted provisional root publication for all temporary foundation collections.
 - `authManageDelegations`: lets an organization controller manage delegation records in its own repository; AppView still requires an exact parent strong reference and a non-expanding chain to the root.

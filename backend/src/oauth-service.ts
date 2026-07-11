@@ -171,13 +171,13 @@ export function buildOAuthScopes(serviceDid: string) {
   ensureValidDid(serviceDid);
   const audience = encodeURIComponent(`${serviceDid}#dsaslate_appview`);
   const userScope = `atproto include:us.dsaslate.temp.authSelfPublish include:us.dsaslate.temp.authReviewSubmit?aud=${audience}`;
-  const eventScope = 'atproto include:us.dsaslate.temp.authSelfPublish';
+  const eventScope = 'atproto include:us.dsaslate.temp.authPublishEvents';
   const registryScope = 'atproto include:us.dsaslate.temp.authRegistryPublish';
   const delegationScope = 'atproto include:us.dsaslate.temp.authManageDelegations';
-  return { userScope, eventScope, registryScope, delegationScope, declaredScope: `${userScope} include:us.dsaslate.temp.authRegistryPublish include:us.dsaslate.temp.authManageDelegations` };
+  return { userScope, eventScope, registryScope, delegationScope, declaredScope: `${userScope} include:us.dsaslate.temp.authPublishEvents include:us.dsaslate.temp.authRegistryPublish include:us.dsaslate.temp.authManageDelegations` };
 }
 
-export type HandoffPermissionSet = 'us.dsaslate.temp.authManageDelegations' | 'us.dsaslate.temp.authSelfPublish';
+export type HandoffPermissionSet = 'us.dsaslate.temp.authManageDelegations' | 'us.dsaslate.temp.authPublishEvents';
 
 type EncryptedPayload = { iv: Buffer; authTag: Buffer; ciphertext: Buffer };
 
@@ -293,7 +293,7 @@ export class OAuthService {
     const scope = mode === 'registry' ? this.registryScope : mode === 'delegations' ? this.delegationScope : mode === 'events' ? this.eventScope : this.userScope;
     if (handoff) {
       if (mode !== 'delegations' && mode !== 'events') throw new Error('OAuth handoff mode is invalid');
-      const permissionSet: HandoffPermissionSet = mode === 'delegations' ? 'us.dsaslate.temp.authManageDelegations' : 'us.dsaslate.temp.authSelfPublish';
+      const permissionSet: HandoffPermissionSet = mode === 'delegations' ? 'us.dsaslate.temp.authManageDelegations' : 'us.dsaslate.temp.authPublishEvents';
       const returnUri = validateHandoffReturnUri(handoff.returnUri, this.config.handoffReturnOrigins ?? []);
       if (!/^[A-Za-z0-9._~-]{16,256}$/.test(handoff.clientState)) throw new Error('OAuth handoff client state is invalid');
       if (!/^[A-Za-z0-9_-]{43}$/.test(handoff.codeChallenge)) throw new Error('OAuth handoff PKCE challenge is invalid');
@@ -446,7 +446,7 @@ export class OAuthService {
   }
 
   async writeHandoffEvent(token: string, input: SelfRecordWriteInput) {
-    const did = await this.consumeHandoffToken(token, 'us.dsaslate.temp.authSelfPublish');
+    const did = await this.consumeHandoffToken(token, 'us.dsaslate.temp.authPublishEvents');
     const collection = input.action === 'create' ? input.collection : new AtUri(input.uri).collection;
     if (collection !== 'us.dsaslate.temp.publicEvent') throw new Error('collection is not writable for event handoff authorization');
     const session = await this.client.restore(did);

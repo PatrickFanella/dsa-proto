@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "us.dsaslate.temp.authPublishEvents",
+  "defs": {
+    "main": {
+      "type": "permission-set",
+      "title": "DSA Slate event publication",
+      "detail": "Create, update, or remove public event records from the organizer's repository.",
+      "permissions": [
+        {
+          "type": "permission",
+          "resource": "repo",
+          "collection": ["us.dsaslate.temp.publicEvent"],
+          "action": ["create", "update", "delete"]
+        }
+      ]
+    }
+  }
+}
