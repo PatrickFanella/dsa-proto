@@ -171,9 +171,10 @@ export function buildOAuthScopes(serviceDid: string) {
   ensureValidDid(serviceDid);
   const audience = encodeURIComponent(`${serviceDid}#dsaslate_appview`);
   const userScope = `atproto include:us.dsaslate.temp.authSelfPublish include:us.dsaslate.temp.authReviewSubmit?aud=${audience}`;
+  const eventScope = 'atproto include:us.dsaslate.temp.authSelfPublish';
   const registryScope = 'atproto include:us.dsaslate.temp.authRegistryPublish';
   const delegationScope = 'atproto include:us.dsaslate.temp.authManageDelegations';
-  return { userScope, registryScope, delegationScope, declaredScope: `${userScope} include:us.dsaslate.temp.authRegistryPublish include:us.dsaslate.temp.authManageDelegations` };
+  return { userScope, eventScope, registryScope, delegationScope, declaredScope: `${userScope} include:us.dsaslate.temp.authRegistryPublish include:us.dsaslate.temp.authManageDelegations` };
 }
 
 export type HandoffPermissionSet = 'us.dsaslate.temp.authManageDelegations' | 'us.dsaslate.temp.authSelfPublish';
@@ -237,7 +238,7 @@ export class OAuthService {
   readonly metadata: OAuthClientMetadataInput;
   private readonly sessionTtlSeconds: number;
 
-  private constructor(private readonly pool: Pool, private readonly client: NodeOAuthClient, private readonly config: OAuthServiceConfig, metadata: OAuthClientMetadataInput, private readonly userScope: string, private readonly registryScope: string, private readonly delegationScope: string) {
+  private constructor(private readonly pool: Pool, private readonly client: NodeOAuthClient, private readonly config: OAuthServiceConfig, metadata: OAuthClientMetadataInput, private readonly userScope: string, private readonly eventScope: string, private readonly registryScope: string, private readonly delegationScope: string) {
     this.cookieName = config.cookieName ?? 'dsaslate_oauth';
     this.sessionTtlSeconds = config.browserSessionTtlSeconds ?? 7 * 24 * 60 * 60;
     this.metadata = metadata;
@@ -280,7 +281,7 @@ export class OAuthService {
       keyset: [key],
       ...(config.internalPdsUrl ? { fetch: createOAuthFetch(config.handleResolver, config.internalPdsUrl) } : {}),
     });
-    return new OAuthService(pool, client, config, metadata, scopes.userScope, scopes.registryScope, scopes.delegationScope);
+    return new OAuthService(pool, client, config, metadata, scopes.userScope, scopes.eventScope, scopes.registryScope, scopes.delegationScope);
   }
 
   get jwks() {
@@ -289,7 +290,7 @@ export class OAuthService {
 
   async begin(handle: string, mode: 'user' | 'registry' | 'delegations' | 'events' = 'user', handoff?: { returnUri: string; clientState: string; codeChallenge: string }) {
     const state = randomBytes(24).toString('base64url');
-    const scope = mode === 'registry' ? this.registryScope : mode === 'delegations' ? this.delegationScope : this.userScope;
+    const scope = mode === 'registry' ? this.registryScope : mode === 'delegations' ? this.delegationScope : mode === 'events' ? this.eventScope : this.userScope;
     if (handoff) {
       if (mode !== 'delegations' && mode !== 'events') throw new Error('OAuth handoff mode is invalid');
       const permissionSet: HandoffPermissionSet = mode === 'delegations' ? 'us.dsaslate.temp.authManageDelegations' : 'us.dsaslate.temp.authSelfPublish';

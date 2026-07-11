@@ -17,6 +17,7 @@ describe('encrypted OAuth state', () => {
     expect(scopes.userScope).not.toContain('authManageDelegations');
     expect(scopes.registryScope).toBe('atproto include:us.dsaslate.temp.authRegistryPublish');
     expect(scopes.delegationScope).toBe('atproto include:us.dsaslate.temp.authManageDelegations');
+    expect(scopes.eventScope).toBe('atproto include:us.dsaslate.temp.authSelfPublish');
   });
 
   it('routes only the configured public PDS origin over the private service network', async () => {
