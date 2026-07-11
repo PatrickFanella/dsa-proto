@@ -309,8 +309,10 @@ export class OAuthService {
   }
 
   async complete(params: URLSearchParams) {
-    const state = params.get('state');
-    const { session } = await this.client.callback(params);
+    // The OAuth client owns the protocol state and returns our state option as
+    // application state after validating the callback. Hashing the raw query
+    // state here would compare two different values and strand every handoff.
+    const { session, state } = await this.client.callback(params);
     const handoff = state ? await this.pool.query(
       `delete from oauth_handoff_requests_v1
        where state_hash = $1 and expires_at > now()
