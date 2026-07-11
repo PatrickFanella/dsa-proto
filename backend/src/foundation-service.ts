@@ -556,6 +556,14 @@ export class FoundationService {
       return { status: 'attested', policyUri: this.policy.policyUri, policyVersion: this.policy.policyVersion, rootDid: this.policy.rootDid, chain: followed.chain, reasons: ['attestation issued by an enrolled non-root repository'], activeDisputes, activeRevocations, evaluatedAt };
     }
 
+    if (record.record.$type === 'us.dsaslate.temp.authorityDelegation') {
+      const followed = this.followDelegationChain(record, authorityRecords, asOf, Math.min(32, Math.max(0, options.depth ?? 16)));
+      if (followed.valid) return { status: this.officialAllowed(record) ? 'official' : 'provisional', policyUri: this.policy.policyUri, policyVersion: this.policy.policyVersion, rootDid: this.policy.rootDid, chain: followed.chain, reasons: [this.officialAllowed(record) ? 'complete delegated chain to formally activated root' : 'complete delegated chain to provisional staging root'], activeDisputes, activeRevocations, evaluatedAt };
+      if (followed.cycle) return unresolved('delegation chain contains a cycle', { chain: followed.chain, failedChecks: ['cycle detected'], activeDisputes, activeRevocations });
+      if (followed.depthExceeded) return unresolved('delegation chain exceeds resolver depth', { chain: followed.chain, failedChecks: ['maximum resolver depth reached'], activeDisputes, activeRevocations });
+      return unresolved('delegation chain is invalid', { chain: followed.chain, failedChecks: followed.failure ? [followed.failure] : [], activeDisputes, activeRevocations });
+    }
+
     const delegations = authorityRecords.filter((candidate) => candidate.record.$type === 'us.dsaslate.temp.authorityDelegation'
       && candidate.record.delegateDid === record.repoDid
       && stringArray(candidate.record.collections).includes(record.record.$type)

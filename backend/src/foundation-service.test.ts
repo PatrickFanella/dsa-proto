@@ -186,6 +186,10 @@ describe('foundation AppView service', () => {
     const service = new FoundationService([entity, policy, rootDelegation, chapterDelegation, event], { rootDid: DEFAULT_PROVISIONAL_ROOT_DID, policyUri: policy.uri, policyCid: policy.cid, policyVersion: DEFAULT_POLICY_VERSION });
 
     expect(service.listEnrolledRepos()).toEqual([DEFAULT_PROVISIONAL_ROOT_DID, chapterDid, organizerDid].sort());
+    expect(service.resolve(chapterDelegation.uri).authority).toMatchObject({
+      status: 'provisional',
+      chain: [{ uri: chapterDelegation.uri, cid: chapterDelegation.cid }, { uri: rootDelegation.uri, cid: rootDelegation.cid }],
+    });
     expect(service.resolve(event.uri).authority).toMatchObject({
       status: 'provisional',
       chain: [{ uri: chapterDelegation.uri, cid: chapterDelegation.cid }, { uri: rootDelegation.uri, cid: rootDelegation.cid }],
