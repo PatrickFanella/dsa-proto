@@ -1,4 +1,4 @@
-# Delegation OAuth Handoff
+# Scoped OAuth handoff
 
 External organizing applications can request a one-time delegation-management
 handoff without receiving the AppView browser cookie or ATProto refresh token.
@@ -17,3 +17,12 @@ comma-separated HTTPS allowlist. Codes expire after 60 seconds by default;
 write bearers expire after five minutes and are consumed on first use. The
 handoff never exposes AppView's browser session or the underlying ATProto OAuth
 session to the external application.
+
+## Participant identity handoff
+
+External applications can use the same state, HTTPS return-origin, PKCE, and
+one-time-code flow with `mode=participant`. This mode requests only the base
+`atproto` scope. Its exchange returns the authenticated DID and no bearer token
+or record-write capability. The external application must still independently
+prove control of any private contact channel before linking that DID to private
+supporter data.

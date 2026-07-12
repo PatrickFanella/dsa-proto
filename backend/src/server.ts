@@ -959,7 +959,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       const handle = url.searchParams.get('handle');
       if (!handle) throw new Error('handle is required');
       const requestedMode = url.searchParams.get('mode');
-      const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : requestedMode === 'events' ? 'events' : 'user';
+      const mode = requestedMode === 'registry' ? 'registry' : requestedMode === 'delegations' ? 'delegations' : requestedMode === 'events' ? 'events' : requestedMode === 'participant' ? 'participant' : 'user';
       const returnUri = url.searchParams.get('handoff_return_uri');
       const clientState = url.searchParams.get('handoff_state');
       const codeChallenge = url.searchParams.get('handoff_challenge');
@@ -987,7 +987,7 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       const { code, verifier } = body as { code?: unknown; verifier?: unknown };
       if (typeof code !== 'string' || typeof verifier !== 'string') throw new Error('handoff code and verifier are required');
       const exchanged = await oauth.exchangeHandoff(code, verifier);
-      return toJson(res, 200, { access_token: exchanged.accessToken, token_type: 'Bearer', expires_in: exchanged.expiresIn, did: exchanged.did, scope: exchanged.permissionSet }), true;
+      return toJson(res, 200, { ...(exchanged.accessToken ? { access_token: exchanged.accessToken, token_type: 'Bearer' } : {}), expires_in: exchanged.expiresIn, did: exchanged.did, scope: exchanged.permissionSet }), true;
     }
     if (req.method === 'POST' && url.pathname === '/api/v1/delegation-handoff/records') {
       const authorization = getRequestHeader(req, 'authorization');

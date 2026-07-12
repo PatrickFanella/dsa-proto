@@ -159,6 +159,19 @@ describe('foundation XRPC and REST contracts', () => {
     expect(writeHandoffEvent).toHaveBeenCalledWith('event-token', input);
   });
 
+  it('routes an identity-only participant handoff without a record-write endpoint', async () => {
+    const begin = vi.fn().mockResolvedValue(new URL('https://pds.example.test/oauth/authorize'));
+    const exchangeHandoff = vi.fn().mockResolvedValue({ did: 'did:plc:participant', expiresIn: 300, permissionSet: 'atproto' });
+    const repository = createMemoryRepository();
+    repository.oauthService = { begin, exchangeHandoff } as unknown as OAuthService;
+    const origin = await start({}, repository);
+    const login = await fetch(`${origin}/oauth/login?handle=member.example.test&mode=participant&handoff_return_uri=${encodeURIComponent('https://organize.example.test/oauth/participant/callback')}&handoff_state=client-state-1234&handoff_challenge=${'a'.repeat(43)}`, { redirect: 'manual' });
+    expect(login.status).toBe(302);
+    expect(begin).toHaveBeenCalledWith('member.example.test', 'participant', expect.any(Object));
+    const exchanged = await fetch(`${origin}/oauth/handoff/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'one-time-code', verifier: 'v'.repeat(43) }) });
+    await expect(exchanged.json()).resolves.toEqual({ did: 'did:plc:participant', expires_in: 300, scope: 'atproto' });
+  });
+
   it('accepts record content for private review and rejects client authority fields', async () => {
     const submitterDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa';
     const origin = await start({ ENABLE_REVIEW_SUBMISSIONS: true, authenticateReviewRequest: () => submitterDid });
