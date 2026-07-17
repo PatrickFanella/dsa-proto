@@ -58,4 +58,46 @@ describe('FoundationClient', () => {
     const stalled = new FoundationClient('https://api.example', { fetch: vi.fn().mockImplementation(async () => jsonResponse({ uri, authority: { status: 'unresolved' } })) });
     await expect(stalled.waitForObservation({ action: 'create', uri, cid: 'bafy-missing' }, { intervalMs: 0, timeoutMs: 1 })).rejects.toMatchObject({ code: 'observation_timeout', retryable: true });
   });
+
+  it('generates a 128-bit state and S256 PKCE identity handoff, and validates exact exchange payloads', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(jsonResponse({ did: 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa', audience: 'https://chat.example.test', authenticatedAt: '2026-07-16T00:00:00.000Z', expiresIn: 60 }))
+      .mockResolvedValueOnce(jsonResponse({ did: 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa', audience: 'https://chat.example.test', authenticatedAt: '2026-07-16T00:00:00.000Z', expiresIn: 60, accessToken: 'forbidden' }));
+    const client = new FoundationClient('https://api.example', { fetch });
+    const begin = await client.beginIdentityHandoff({ handle: 'chapter.example', audience: 'https://chat.example.test', returnUri: 'https://chat.example.test/callback' });
+    expect(begin.state).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(begin.verifier).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(Buffer.from(begin.state, 'base64url')).toHaveLength(16);
+    expect(Buffer.from(begin.verifier, 'base64url')).toHaveLength(32);
+    expect(begin.authorizationUrl.searchParams.get('code_challenge')).toBe(Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(begin.verifier))).toString('base64url'));
+    await expect(client.exchangeIdentityHandoff({ code: 'c'.repeat(43), verifier: begin.verifier, audience: 'https://chat.example.test' })).resolves.toEqual(expect.objectContaining({ expiresIn: 60 }));
+    await expect(client.exchangeIdentityHandoff({ code: 'c'.repeat(43), verifier: begin.verifier, audience: 'https://chat.example.test' })).rejects.toMatchObject({ code: 'invalid_response' });
+  });
+
+  it('validates identity handoff inputs before constructing its authorization URL', async () => {
+    const client = new FoundationClient('https://api.example');
+    await expect(client.beginIdentityHandoff({ handle: '', audience: 'https://chat.example.test', returnUri: 'https://chat.example.test/callback' })).rejects.toMatchObject({ code: 'invalid_request' });
+    await expect(client.beginIdentityHandoff({ handle: 'chapter.example', audience: 'http://chat.example.test', returnUri: 'https://chat.example.test/callback' })).rejects.toMatchObject({ code: 'invalid_request' });
+    await expect(client.beginIdentityHandoff({ handle: 'chapter.example', audience: 'https://chat.example.test/path', returnUri: 'https://chat.example.test/callback' })).rejects.toMatchObject({ code: 'invalid_request' });
+    await expect(client.beginIdentityHandoff({ handle: 'chapter.example', audience: 'https://chat.example.test', returnUri: 'https://other.example.test/callback' })).rejects.toMatchObject({ code: 'invalid_request' });
+
+    const begin = await client.beginIdentityHandoff({ handle: ' chapter.example ', audience: 'https://chat.example.test', returnUri: 'https://chat.example.test/callback?next=home#discarded' });
+    expect(begin.authorizationUrl.searchParams.get('handle')).toBe('chapter.example');
+    expect(begin.authorizationUrl.searchParams.get('return_uri')).toBe('https://chat.example.test/callback?next=home');
+  });
+
+  it('rejects an identity response bound to a different audience', async () => {
+    const client = new FoundationClient('https://api.example', { fetch: vi.fn().mockResolvedValue(jsonResponse({ did: 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa', audience: 'https://other.example.test', authenticatedAt: '2026-07-16T00:00:00.000Z', expiresIn: 60 })) });
+    await expect(client.exchangeIdentityHandoff({ code: 'c'.repeat(43), verifier: 'v'.repeat(43), audience: 'https://chat.example.test' })).rejects.toMatchObject({ code: 'invalid_response' });
+  });
+
+  it.each([
+    [{ code: 'short', verifier: 'v'.repeat(43), audience: 'https://chat.example.test' }],
+    [{ code: 'c'.repeat(43), verifier: 'short', audience: 'https://chat.example.test' }],
+    [{ code: 'c'.repeat(43), verifier: 'v'.repeat(43), audience: 'https://chat.example.test/path' }],
+  ])('rejects invalid identity exchange input locally before fetch', async (input) => {
+    const fetch = vi.fn();
+    const client = new FoundationClient('https://api.example', { fetch });
+    await expect(client.exchangeIdentityHandoff(input)).rejects.toMatchObject<Partial<FoundationClientError>>({ status: 400, code: 'invalid_request', retryable: false });
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

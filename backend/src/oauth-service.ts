@@ -130,6 +130,7 @@ export type OAuthServiceConfig = {
   handoffReturnOrigins?: string[];
   handoffCodeTtlSeconds?: number;
   handoffTokenTtlSeconds?: number;
+  identityReturnOrigins?: string[];
   allowHttp?: boolean;
 };
 
@@ -145,6 +146,40 @@ export function validateHandoffReturnUri(returnUri: string, allowedOrigins: read
   if (!allowed.has(url.origin)) throw new Error('OAuth handoff return origin is not allowlisted');
   url.hash = '';
   return url.toString();
+}
+
+export class IdentityHandoffError extends Error {
+  constructor(readonly code: 'invalid_request' | 'invalid_correlation' | 'invalid_code') {
+    super(code);
+    this.name = 'IdentityHandoffError';
+  }
+}
+
+export type IdentityHandoffResult = { did: string; audience: string; authenticatedAt: string; expiresIn: 60 };
+
+type IdentityOAuthClient = Pick<NodeOAuthClient, 'authorize' | 'callback'>;
+
+export function validateIdentityAudience(audienceValue: string) {
+  let audience: URL;
+  try { audience = new URL(audienceValue); } catch { throw new IdentityHandoffError('invalid_request'); }
+  if (audience.protocol !== 'https:' || audienceValue !== audience.origin) throw new IdentityHandoffError('invalid_request');
+  return audience.origin;
+}
+
+export function validateIdentityHandoff(input: { audience: string; returnUri: string; clientState: string; codeChallenge: string }, allowedOrigins: readonly string[]) {
+  const audience = validateIdentityAudience(input.audience);
+  const allowed = new Set(allowedOrigins.map((origin) => new URL(origin).origin));
+  if (!allowed.has(audience)) throw new IdentityHandoffError('invalid_request');
+  let returnUrl: URL;
+  try { returnUrl = new URL(input.returnUri); } catch { throw new IdentityHandoffError('invalid_request'); }
+  if (returnUrl.protocol !== 'https:' || returnUrl.origin !== audience) throw new IdentityHandoffError('invalid_request');
+  returnUrl.hash = '';
+  if (!/^[A-Za-z0-9_-]{22}$/.test(input.clientState) || !/^[A-Za-z0-9_-]{43}$/.test(input.codeChallenge)) throw new IdentityHandoffError('invalid_request');
+  return { audience, returnUri: returnUrl.toString() };
+}
+
+export function createNonPersistentIdentitySessionStore(): NodeSavedSessionStore {
+  return { get: async () => undefined, set: async () => undefined, del: async () => undefined };
 }
 
 export function createOAuthFetch(publicPdsUrl: string, internalPdsUrl: string, baseFetch: typeof fetch = globalThis.fetch) {
@@ -205,12 +240,22 @@ export function decryptJson<T>(payload: EncryptedPayload, keyInput: Uint8Array, 
   return JSON.parse(Buffer.concat([decipher.update(payload.ciphertext), decipher.final()]).toString('utf8')) as T;
 }
 
-class EncryptedPostgresStore<T extends object> {
-  constructor(private readonly pool: Pool, private readonly namespace: string, private readonly encryptionKey: Uint8Array) {}
+export class EncryptedPostgresStore<T extends object> {
+  constructor(private readonly pool: Pool, private readonly namespace: string, private readonly encryptionKey: Uint8Array, private readonly ttlMilliseconds?: number) {}
+
+  private async deleteExpired() {
+    if (this.ttlMilliseconds === undefined) return;
+    await this.pool.query("delete from oauth_encrypted_store_v1 where namespace = $1 and updated_at <= now() - ($2 * interval '1 millisecond')", [this.namespace, this.ttlMilliseconds]);
+  }
 
   async get(key: string): Promise<T | undefined> {
     const hash = keyHash(this.namespace, key);
-    const result = await this.pool.query('select iv, auth_tag, ciphertext from oauth_encrypted_store_v1 where namespace = $1 and key_hash = $2', [this.namespace, hash]);
+    await this.deleteExpired();
+    const query = this.ttlMilliseconds === undefined
+      ? 'select iv, auth_tag, ciphertext from oauth_encrypted_store_v1 where namespace = $1 and key_hash = $2'
+      : "select iv, auth_tag, ciphertext from oauth_encrypted_store_v1 where namespace = $1 and key_hash = $2 and updated_at > now() - ($3 * interval '1 millisecond')";
+    const parameters = this.ttlMilliseconds === undefined ? [this.namespace, hash] : [this.namespace, hash, this.ttlMilliseconds];
+    const result = await this.pool.query(query, parameters);
     const row = result.rows[0] as { iv: Buffer; auth_tag: Buffer; ciphertext: Buffer } | undefined;
     return row ? decryptJson<T>({ iv: row.iv, authTag: row.auth_tag, ciphertext: row.ciphertext }, this.encryptionKey, `${this.namespace}:${hash}`) : undefined;
   }
@@ -218,6 +263,7 @@ class EncryptedPostgresStore<T extends object> {
   async set(key: string, value: T) {
     const hash = keyHash(this.namespace, key);
     const encrypted = encryptJson(value, this.encryptionKey, `${this.namespace}:${hash}`);
+    await this.deleteExpired();
     await this.pool.query(
       `insert into oauth_encrypted_store_v1 (namespace,key_hash,iv,auth_tag,ciphertext,updated_at) values ($1,$2,$3,$4,$5,now())
        on conflict (namespace,key_hash) do update set iv=excluded.iv,auth_tag=excluded.auth_tag,ciphertext=excluded.ciphertext,updated_at=now()`,
@@ -233,12 +279,14 @@ class EncryptedPostgresStore<T extends object> {
 export class OAuthService {
   readonly cookieName: string;
   readonly metadata: OAuthClientMetadataInput;
+  readonly identityMetadata: OAuthClientMetadataInput;
   private readonly sessionTtlSeconds: number;
 
-  private constructor(private readonly pool: Pool, private readonly client: NodeOAuthClient, private readonly config: OAuthServiceConfig, metadata: OAuthClientMetadataInput, private readonly userScope: string, private readonly registryScope: string, private readonly delegationScope: string) {
+  private constructor(private readonly pool: Pool, private readonly client: NodeOAuthClient, private readonly identityClient: IdentityOAuthClient, private readonly config: OAuthServiceConfig, metadata: OAuthClientMetadataInput, identityMetadata: OAuthClientMetadataInput, private readonly userScope: string, private readonly registryScope: string, private readonly delegationScope: string) {
     this.cookieName = config.cookieName ?? 'dsaslate_oauth';
     this.sessionTtlSeconds = config.browserSessionTtlSeconds ?? 7 * 24 * 60 * 60;
     this.metadata = metadata;
+    this.identityMetadata = identityMetadata;
   }
 
   static async create(pool: Pool, config: OAuthServiceConfig) {
@@ -266,6 +314,14 @@ export class OAuthService {
       jwks_uri: jwksUri,
       scope: scopes.declaredScope,
     } as OAuthClientMetadataInput;
+    const identityMetadata = {
+      ...metadata,
+      client_id: new URL('/oauth/identity/v1/client-metadata.json', appUrl).toString(),
+      client_name: 'DSA Slate identity handoff',
+      redirect_uris: [new URL('/oauth/identity/v1/callback', appUrl).toString()],
+      grant_types: ['authorization_code'],
+      scope: 'atproto',
+    } as OAuthClientMetadataInput;
     const stateStore = new EncryptedPostgresStore<NodeSavedState>(pool, 'state', config.encryptionKey) as NodeSavedStateStore;
     const sessionStore = new EncryptedPostgresStore<NodeSavedSession>(pool, 'session', config.encryptionKey) as NodeSavedSessionStore;
     const client = new NodeOAuthClient({
@@ -278,7 +334,15 @@ export class OAuthService {
       keyset: [key],
       ...(config.internalPdsUrl ? { fetch: createOAuthFetch(config.handleResolver, config.internalPdsUrl) } : {}),
     });
-    return new OAuthService(pool, client, config, metadata, scopes.userScope, scopes.registryScope, scopes.delegationScope);
+    const identityStateStore = new EncryptedPostgresStore<NodeSavedState>(pool, 'identity-state', config.encryptionKey, 5 * 60 * 1000) as NodeSavedStateStore;
+    const identitySessionStore = createNonPersistentIdentitySessionStore();
+    const identityClient = new NodeOAuthClient({ clientMetadata: identityMetadata, responseMode: 'query', handleResolver: config.handleResolver, allowHttp, stateStore: identityStateStore, sessionStore: identitySessionStore, keyset: [key], ...(config.internalPdsUrl ? { fetch: createOAuthFetch(config.handleResolver, config.internalPdsUrl) } : {}) });
+    return new OAuthService(pool, client, identityClient, config, metadata, identityMetadata, scopes.userScope, scopes.registryScope, scopes.delegationScope);
+  }
+
+  /** Narrow construction seam for deterministic identity-handoff tests. */
+  static forIdentityTesting(pool: Pool, identityClient: IdentityOAuthClient) {
+    return new OAuthService(pool, undefined as unknown as NodeOAuthClient, identityClient, {} as OAuthServiceConfig, {} as OAuthClientMetadataInput, {} as OAuthClientMetadataInput, '', '', '');
   }
 
   get jwks() {
@@ -306,6 +370,61 @@ export class OAuthService {
       if (handoff) await this.pool.query('delete from oauth_handoff_requests_v1 where state_hash = $1', [keyHash('handoff-state', state)]).catch(() => undefined);
       throw error;
     }
+  }
+
+  async beginIdentity(handle: string, handoff: { audience: string; returnUri: string; clientState: string; codeChallenge: string }) {
+    const validated = validateIdentityHandoff(handoff, this.config.identityReturnOrigins ?? []);
+    const state = randomBytes(24).toString('base64url');
+    await this.pool.query('delete from oauth_identity_requests_v1 where expires_at <= now()');
+    await this.pool.query(`insert into oauth_identity_requests_v1 (state_hash,audience,return_uri,client_state,code_challenge,expires_at) values ($1,$2,$3,$4,$5,now() + interval '5 minutes')`, [keyHash('identity-state', state), validated.audience, validated.returnUri, handoff.clientState, handoff.codeChallenge]);
+    try { return await this.identityClient.authorize(handle, { state, prompt: 'consent', scope: 'atproto' as AtprotoOAuthScope }); }
+    catch (error) { await this.pool.query('delete from oauth_identity_requests_v1 where state_hash = $1', [keyHash('identity-state', state)]).catch(() => undefined); throw error; }
+  }
+
+  async completeIdentity(params: URLSearchParams) {
+    const callback = await this.identityClient.callback(params);
+    const state = callback.state;
+    if (typeof state !== 'string') throw new IdentityHandoffError('invalid_correlation');
+    const code = randomBytes(32).toString('base64url');
+    const client = await this.pool.connect();
+    let row: { return_uri: string; client_state: string } | undefined;
+    try {
+      await client.query('begin');
+      await client.query('delete from oauth_identity_codes_v1 where expires_at <= now()');
+      const request = await client.query(`with request as (
+        delete from oauth_identity_requests_v1 where state_hash = $1 and expires_at > now()
+        returning audience,return_uri,client_state,code_challenge
+      ), issued as (
+        insert into oauth_identity_codes_v1 (code_hash,account_did,audience,return_uri,code_challenge,authenticated_at,expires_at)
+        select $2,$3,audience,return_uri,code_challenge,now(),now() + interval '60 seconds' from request
+      ) select return_uri,client_state from request`, [keyHash('identity-state', state), keyHash('identity-code', code), callback.session.did]);
+      row = request.rows[0] as { return_uri: string; client_state: string } | undefined;
+      if (!row) throw new IdentityHandoffError('invalid_correlation');
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally { client.release(); }
+    const location = new URL(row.return_uri);
+    location.searchParams.set('code', code);
+    location.searchParams.set('state', row.client_state);
+    return location.toString();
+  }
+
+  async exchangeIdentity(code: string, verifier: string, audience: string): Promise<IdentityHandoffResult> {
+    if (!/^[A-Za-z0-9._~-]{43,128}$/.test(verifier) || !/^[A-Za-z0-9_-]{43}$/.test(code)) throw new IdentityHandoffError('invalid_request');
+    const canonicalAudience = validateIdentityAudience(audience);
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      await client.query('delete from oauth_identity_codes_v1 where expires_at <= now()');
+      const result = await client.query(`select account_did,audience,code_challenge,authenticated_at from oauth_identity_codes_v1 where code_hash=$1 and expires_at > now() for update`, [keyHash('identity-code', code)]);
+      const row = result.rows[0] as { account_did?: string; audience?: string; code_challenge?: string; authenticated_at?: Date | string } | undefined;
+      if (!row?.account_did || row.audience !== canonicalAudience || row.code_challenge !== createPkceChallenge(verifier) || !row.authenticated_at) throw new IdentityHandoffError('invalid_code');
+      await client.query('delete from oauth_identity_codes_v1 where code_hash=$1', [keyHash('identity-code', code)]);
+      await client.query('commit');
+      return { did: row.account_did, audience: row.audience, authenticatedAt: new Date(row.authenticated_at).toISOString(), expiresIn: 60 };
+    } catch (error) { await client.query('rollback'); throw error; } finally { client.release(); }
   }
 
   async complete(params: URLSearchParams) {

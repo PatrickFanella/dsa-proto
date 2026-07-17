@@ -17,7 +17,7 @@ import { migrateLegacyRecords } from './legacy-migration.js';
 import { DEFAULT_POLICY_VERSION, DEFAULT_PROVISIONAL_ROOT_DID } from './foundation-model.js';
 import { FoundationService, InvalidCursorError } from './foundation-service.js';
 import { FoundationPostgresPersistence } from './foundation-postgres.js';
-import { OAuthService, PdsWriteError, type OAuthServiceConfig, type SelfRecordWriteInput } from './oauth-service.js';
+import { IdentityHandoffError, OAuthService, PdsWriteError, type OAuthServiceConfig, type SelfRecordWriteInput } from './oauth-service.js';
 
 const envFlagSchema = z.preprocess((value) => {
   if (typeof value === 'boolean') return value;
@@ -52,6 +52,7 @@ const envSchema = z.object({
   OAUTH_PRIVATE_KEY_ALG: z.enum(['ES256', 'ES256K']).default('ES256'),
   OAUTH_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]+$/).default('dsaslate_oauth'),
   OAUTH_HANDOFF_RETURN_ORIGINS: z.string().default(''),
+  OAUTH_IDENTITY_RETURN_ORIGINS: z.string().default(''),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
@@ -954,6 +955,10 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       } }), true;
     }
     if (req.method === 'GET' && url.pathname === '/oauth/client-metadata.json') return toJson(res, 200, oauth.metadata), true;
+    if (req.method === 'GET' && url.pathname === '/oauth/identity/v1/client-metadata.json') {
+      res.setHeader('cache-control', 'no-store'); res.setHeader('referrer-policy', 'no-referrer');
+      return toJson(res, 200, oauth.identityMetadata), true;
+    }
     if (req.method === 'GET' && url.pathname === '/oauth/jwks.json') return toJson(res, 200, oauth.jwks), true;
     if (req.method === 'GET' && url.pathname === '/oauth/login') {
       const handle = url.searchParams.get('handle');
@@ -970,6 +975,12 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       res.end();
       return true;
     }
+    if (req.method === 'GET' && url.pathname === '/oauth/identity/v1/authorize') {
+      const handle = url.searchParams.get('handle'); const audience = url.searchParams.get('audience'); const returnUri = url.searchParams.get('return_uri'); const clientState = url.searchParams.get('state'); const codeChallenge = url.searchParams.get('code_challenge');
+      if (!handle || !audience || !returnUri || !clientState || !codeChallenge) throw new IdentityHandoffError('invalid_request');
+      const location = await oauth.beginIdentity(handle, { audience, returnUri, clientState, codeChallenge });
+      res.writeHead(302, { location: location.toString(), 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' }); res.end(); return true;
+    }
     if (req.method === 'GET' && url.pathname === '/oauth/callback') {
       const session = await oauth.complete(url.searchParams);
       if ('handoff' in session && session.handoff) {
@@ -980,6 +991,18 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       res.writeHead(302, { location: '/', 'set-cookie': oauth.sessionCookie(session.token, session.expiresAt), 'cache-control': 'no-store' });
       res.end();
       return true;
+    }
+    if (req.method === 'GET' && url.pathname === '/oauth/identity/v1/callback') {
+      const location = await oauth.completeIdentity(url.searchParams);
+      res.writeHead(302, { location, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' }); res.end(); return true;
+    }
+    if (req.method === 'POST' && url.pathname === '/oauth/identity/v1/exchange') {
+      const body = await readJsonBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new IdentityHandoffError('invalid_request');
+      const { code, verifier, audience } = body as { code?: unknown; verifier?: unknown; audience?: unknown };
+      if (typeof code !== 'string' || typeof verifier !== 'string' || typeof audience !== 'string') throw new IdentityHandoffError('invalid_request');
+      res.setHeader('cache-control', 'no-store'); res.setHeader('referrer-policy', 'no-referrer');
+      return toJson(res, 200, await oauth.exchangeIdentity(code, verifier, audience)), true;
     }
     if (req.method === 'POST' && url.pathname === '/oauth/handoff/exchange') {
       const body = await readJsonBody(req);
@@ -1019,6 +1042,14 @@ async function handleOAuthRoute(req: IncomingMessage, res: ServerResponse<Incomi
       return toJson(res, input.action === 'create' ? 201 : 200, { contractVersion: 'v1', data: output }), true;
     }
   } catch (error) {
+    if (error instanceof IdentityHandoffError) {
+      res.setHeader('cache-control', 'no-store'); res.setHeader('referrer-policy', 'no-referrer');
+      return toJson(res, error.code === 'invalid_request' ? 400 : 401, { contractVersion: 'v1', error: error.code }), true;
+    }
+    if (url.pathname.startsWith('/oauth/identity/v1/')) {
+      res.setHeader('cache-control', 'no-store'); res.setHeader('referrer-policy', 'no-referrer');
+      return toJson(res, 500, { contractVersion: 'v1', error: 'internal_error' }), true;
+    }
     const message = error instanceof Error ? error.message : 'OAuth request failed';
     if (error instanceof PdsWriteError) {
       if (error.code === 'InvalidSwap') return apiError(res, 409, 'record_conflict', 'record CID changed; reload before retrying'), true;
@@ -1400,6 +1431,7 @@ async function oauthConfigFromAppConfig(options: Partial<AppConfig>): Promise<OA
     privateKeyAlg: options.OAUTH_PRIVATE_KEY_ALG ?? 'ES256',
     cookieName: options.OAUTH_COOKIE_NAME ?? 'dsaslate_oauth',
     handoffReturnOrigins: (options.OAUTH_HANDOFF_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
+    identityReturnOrigins: (options.OAUTH_IDENTITY_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
     allowHttp: (options.APP_PUBLIC_URL ?? '').startsWith('http://127.0.0.1'),
   };
 }

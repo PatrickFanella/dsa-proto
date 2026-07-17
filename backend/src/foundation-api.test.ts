@@ -141,6 +141,34 @@ describe('foundation XRPC and REST contracts', () => {
     expect(writeHandoffDelegation).toHaveBeenCalledWith('handoff-token', input);
   });
 
+  it('keeps identity handoff routes separate and returns only its versioned identity result', async () => {
+    const beginIdentity = vi.fn().mockResolvedValue(new URL('https://pds.example.test/authorize'));
+    const exchangeIdentity = vi.fn().mockResolvedValue({ did: 'did:plc:chapter', audience: 'https://chat.example.test', authenticatedAt: '2026-07-16T00:00:00.000Z', expiresIn: 60 });
+    const repository = createMemoryRepository();
+    repository.oauthService = { beginIdentity, exchangeIdentity, identityMetadata: { scope: 'atproto' } } as unknown as OAuthService;
+    const origin = await start({}, repository);
+    const begin = await fetch(`${origin}/oauth/identity/v1/authorize?handle=chapter.example&audience=https%3A%2F%2Fchat.example.test&return_uri=https%3A%2F%2Fchat.example.test%2Fcallback&state=${'a'.repeat(22)}&code_challenge=${'b'.repeat(43)}`, { redirect: 'manual' });
+    expect(begin.status).toBe(302);
+    expect(begin.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(beginIdentity).toHaveBeenCalledWith('chapter.example', { audience: 'https://chat.example.test', returnUri: 'https://chat.example.test/callback', clientState: 'a'.repeat(22), codeChallenge: 'b'.repeat(43) });
+    const exchanged = await fetch(`${origin}/oauth/identity/v1/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'c'.repeat(43), verifier: 'v'.repeat(43), audience: 'https://chat.example.test' }) });
+    expect(exchanged.headers.get('cache-control')).toBe('no-store');
+    await expect(exchanged.json()).resolves.toEqual({ did: 'did:plc:chapter', audience: 'https://chat.example.test', authenticatedAt: '2026-07-16T00:00:00.000Z', expiresIn: 60 });
+  });
+
+  it('keeps expected identity errors 4xx but hides unexpected identity failures behind v1 internal_error', async () => {
+    const repository = createMemoryRepository();
+    repository.oauthService = { exchangeIdentity: vi.fn().mockRejectedValue(new Error('database password leaked')) } as unknown as OAuthService;
+    const origin = await start({}, repository);
+    const unexpected = await fetch(`${origin}/oauth/identity/v1/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'c'.repeat(43), verifier: 'v'.repeat(43), audience: 'https://chat.example.test' }) });
+    expect(unexpected.status).toBe(500);
+    await expect(unexpected.json()).resolves.toEqual({ contractVersion: 'v1', error: 'internal_error' });
+
+    const expected = await fetch(`${origin}/oauth/identity/v1/exchange`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    expect(expected.status).toBe(400);
+    await expect(expected.json()).resolves.toEqual({ contractVersion: 'v1', error: 'invalid_request' });
+  });
+
   it('accepts record content for private review and rejects client authority fields', async () => {
     const submitterDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa';
     const origin = await start({ ENABLE_REVIEW_SUBMISSIONS: true, authenticateReviewRequest: () => submitterDid });

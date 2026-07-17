@@ -68,6 +68,10 @@ export type SelfRecordWriteInput =
 
 export type SelfRecordWriteResult = { action: SelfRecordWriteInput['action']; uri: string; cid?: string; commit?: unknown; validationStatus?: string };
 export type ObservationOptions = FoundationRequestOptions & { timeoutMs?: number; intervalMs?: number };
+export type BeginIdentityHandoffInput = { handle: string; audience: string; returnUri: string };
+export type BeginIdentityHandoffResult = { authorizationUrl: URL; verifier: string; state: string };
+export type ExchangeIdentityHandoffInput = { code: string; verifier: string; audience: string };
+export type IdentityHandoffResult = { did: string; audience: string; authenticatedAt: string; expiresIn: 60 };
 
 export class FoundationClientError extends Error {
   constructor(
@@ -147,6 +151,33 @@ export class FoundationClient {
     return this.rest<{ status: 'signed_out' }>('oauth/logout', { method: 'POST', signal: options.signal });
   }
 
+  async beginIdentityHandoff(input: BeginIdentityHandoffInput): Promise<BeginIdentityHandoffResult> {
+    const handle = input.handle.trim();
+    if (!handle) throw new FoundationClientError(400, 'invalid_request', 'Identity handoff handle must not be empty');
+    const audience = canonicalIdentityAudience(input.audience);
+    const returnUri = canonicalIdentityReturnUri(input.returnUri, audience);
+    const verifier = bytesToBase64Url(randomBytes(32));
+    const challenge = bytesToBase64Url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+    const state = bytesToBase64Url(randomBytes(16));
+    const authorizationUrl = new URL('oauth/identity/v1/authorize', this.baseUrl);
+    authorizationUrl.searchParams.set('handle', handle);
+    authorizationUrl.searchParams.set('audience', audience);
+    authorizationUrl.searchParams.set('return_uri', returnUri);
+    authorizationUrl.searchParams.set('state', state);
+    authorizationUrl.searchParams.set('code_challenge', challenge);
+    return { authorizationUrl, verifier, state };
+  }
+
+  async exchangeIdentityHandoff(input: ExchangeIdentityHandoffInput, options: FoundationRequestOptions = {}): Promise<IdentityHandoffResult> {
+    if (!/^[A-Za-z0-9_-]{43}$/.test(input.code)) throw new FoundationClientError(400, 'invalid_request', 'Identity handoff code must be exactly 43 base64url characters');
+    if (!/^[A-Za-z0-9._~-]{43,128}$/.test(input.verifier)) throw new FoundationClientError(400, 'invalid_request', 'Identity handoff verifier must be 43-128 unreserved PKCE characters');
+    const canonicalAudience = canonicalIdentityAudience(input.audience);
+    const payload = await this.rest<unknown>('oauth/identity/v1/exchange', { method: 'POST', signal: options.signal, headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) });
+    if (!isIdentityHandoffResult(payload)) throw new FoundationClientError(502, 'invalid_response', 'Foundation returned an invalid identity handoff response', undefined, true);
+    if (payload.audience !== canonicalAudience) throw new FoundationClientError(502, 'invalid_response', 'Foundation returned an identity handoff for a different audience', undefined, true);
+    return payload;
+  }
+
   writeRecord(input: SelfRecordWriteInput, options: FoundationRequestOptions = {}) {
     return this.rest<{ contractVersion: 'v1'; data: SelfRecordWriteResult }>('api/v1/self/records', { method: 'POST', signal: options.signal, headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) }).then((output) => output.data);
   }
@@ -222,4 +253,43 @@ export class FoundationClient {
     if (payload === undefined) throw new FoundationClientError(502, 'invalid_response', 'Foundation returned an empty or non-JSON response', response.headers.get('x-request-id') ?? undefined, true);
     return payload as T;
   }
+}
+
+function randomBytes(length: number) {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+function bytesToBase64Url(bytes: Uint8Array) {
+  let value = '';
+  for (const byte of bytes) value += String.fromCharCode(byte);
+  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function canonicalIdentityAudience(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'https:' && url.origin === value) return url.origin;
+  } catch { /* converted to the stable client error below */ }
+  throw new FoundationClientError(400, 'invalid_request', 'Identity handoff audience must be a canonical HTTPS origin');
+}
+
+function canonicalIdentityReturnUri(value: string, audience: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.origin !== audience) throw new Error('invalid return URI');
+    url.hash = '';
+    return url.toString();
+  } catch {
+    throw new FoundationClientError(400, 'invalid_request', 'Identity handoff return URI must use HTTPS and match the audience origin');
+  }
+}
+
+function isIdentityHandoffResult(value: unknown): value is IdentityHandoffResult {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).length !== 4 || !Object.keys(record).every((key) => ['did', 'audience', 'authenticatedAt', 'expiresIn'].includes(key))) return false;
+  if (typeof record.did !== 'string' || !/^did:[a-z0-9]+:.+$/i.test(record.did) || typeof record.audience !== 'string' || typeof record.authenticatedAt !== 'string' || record.expiresIn !== 60 || Number.isNaN(Date.parse(record.authenticatedAt))) return false;
+  try { const url = new URL(record.audience); return url.protocol === 'https:' && url.origin === record.audience; } catch { return false; }
 }

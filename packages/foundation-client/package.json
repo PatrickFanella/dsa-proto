@@ -1,8 +1,14 @@
 {
   "name": "@dsaslate/foundation-client",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://git.subcult.tv/subculture-collective/dsa-proto.git",
+    "directory": "packages/foundation-client"
+  },
   "type": "module",
+  "engines": { "node": ">=20" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,10 +17,12 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": { "access": "public", "registry": "https://git.subcult.tv/api/packages/subculture-collective/npm/" },
   "scripts": {
     "lexicons": "lex build --lexicons ../../backend/lexicons --out src/lexicons --clear --pretty=false --index-file",
     "build": "tsc -p tsconfig.json",
+    "prepack": "pnpm run build",
     "lint": "eslint .",
     "test": "vitest run src",
     "format": "tsc -p tsconfig.json --noEmit"
