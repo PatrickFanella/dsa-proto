@@ -9,7 +9,7 @@ files plus standard package metadata, this README, and the license; `dist/` is
 built deterministically by `prepack`.
 
 The GPL-3.0-only corresponding source is maintained in the public
-[`dsa-proto` repository](https://git.subcult.tv/subculture-collective/dsa-proto/src/branch/main/packages/foundation-client).
+[`dsa-proto` repository](https://git.subcult.tv/patrickfanella/dsa-proto/src/branch/main/packages/foundation-client).
 Each published version must reference its immutable release commit or tag.
 
 ```ts

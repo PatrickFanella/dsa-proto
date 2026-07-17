@@ -4,7 +4,7 @@
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://git.subcult.tv/subculture-collective/dsa-proto.git",
+    "url": "https://git.subcult.tv/patrickfanella/dsa-proto.git",
     "directory": "packages/foundation-client"
   },
   "type": "module",
