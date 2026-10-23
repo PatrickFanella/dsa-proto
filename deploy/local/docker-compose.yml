@@ -17,7 +17,7 @@ services:
     networks: [private]
 
   pds:
-    image: ${PDS_IMAGE:-ghcr.io/bluesky-social/pds:0.4.219}
+    image: ${PDS_IMAGE:-ghcr.io/bluesky-social/pds:0.4.5046@sha256:048b1ca076907bf7f271fc4ac13d4804cdf5f04ad56939bfec3fef1a18bfc757}
     environment:
       PDS_HOSTNAME: localhost
       PDS_DEV_MODE: "true"
